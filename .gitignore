@@ -1,0 +1,54 @@
+/**/node_modules
+/**/__pycache__
+/**/.venv
+/**/venv
+/**/.pytest_cache
+/**/.angular
+/**/.vscode
+/**/.env
+/**/dist
+/**/coverage
+/**/.venv
+/**/.codex
+/**/.agents
+/**/.antigravity
+/**/agent-ops
+/**/.agent-ops/
+/**/.git/
+/**/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Environment
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+
+# Logs
+*.log
+logs/
+tail.log
+
+# Node / Angular
+node_modules/
+.angular/
+dist/
+
+# Testing
+.pytest_cache/
+coverage/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Other
+.DS_Store
+Thumbs.db
+*.swp

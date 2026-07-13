@@ -1,0 +1,220 @@
+import hashlib
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi.testclient import TestClient
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from app.main import app
+from app.security import hash_password, verify_password
+
+
+client = TestClient(app)
+
+
+def token() -> str:
+    response = client.post("/api/v1/auth/login", json={"username": "admin", "password": "admin123"})
+    assert response.status_code == 200
+    return response.json()["access_token"]
+
+
+def test_health():
+    assert client.get("/api/v1/health").json()["status"] == "ok"
+
+
+def test_frontend_root_is_served_when_build_exists():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+
+
+def test_password_hash_supports_pbkdf2_and_legacy_sha256():
+    password = "secret123"
+    modern_hash = hash_password(password)
+    assert modern_hash.startswith("pbkdf2_sha256$")
+    assert verify_password(password, modern_hash)
+    legacy_hash = hashlib.sha256(f"africensus:{password}".encode("utf-8")).hexdigest()
+    assert verify_password(password, legacy_hash)
+
+
+def test_login_and_dashboard():
+    access_token = token()
+    response = client.get("/api/v1/dashboard/summary", headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == 200
+    assert "totalPersons" in response.json()
+
+
+def test_login_rate_limit_after_repeated_failures():
+    username = f"missing-{uuid4().hex}"
+    last_response = None
+    for _ in range(6):
+        last_response = client.post("/api/v1/auth/login", json={"username": username, "password": "bad-password"})
+    assert last_response is not None
+    assert last_response.status_code == 429
+
+
+def test_i18n_catalog_and_content_language_header():
+    response = client.get("/api/v1/i18n/catalog", headers={"Accept-Language": "en-US,en;q=0.9"})
+    assert response.status_code == 200
+    assert response.headers["content-language"] == "en"
+    payload = response.json()
+    assert payload["language"] == "en"
+    assert payload["catalog"]["api.summary"] == "MVP API for AfriCensus Link"
+
+
+def test_i18n_field_metadata_supports_model_and_language():
+    response = client.get("/api/v1/i18n/fields?model=person&lang=en")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["language"] == "en"
+    assert payload["model"] == "person"
+    assert payload["fields"]["first_name"]["label"] == "First name"
+    assert payload["fields"]["household_id"]["help"] == "Attached household."
+
+
+def test_home_content_public_read_and_admin_update():
+    public_response = client.get("/api/v1/home-content")
+    assert public_response.status_code == 200
+    payload = public_response.json()
+    assert payload["brand"]
+    assert payload["hero"]["title"]
+
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    updated_payload = payload | {"brand": "AfriCensus Link Test"}
+    updated_payload["hero"] = payload["hero"] | {"title": {"fr": "Accueil administrable", "en": "Editable home"}}
+    update_response = client.put("/api/v1/home-content", headers=headers, json=updated_payload)
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["brand"] == "AfriCensus Link Test"
+    assert updated["hero"]["title"]["fr"] == "Accueil administrable"
+    localized_response = client.get("/api/v1/home-content?lang=en")
+    assert localized_response.status_code == 200
+    assert localized_response.json()["hero"]["title"] == "Editable home"
+    raw_response = client.get("/api/v1/home-content?raw=true")
+    assert raw_response.status_code == 200
+    assert raw_response.json()["hero"]["title"]["en"] == "Editable home"
+    restore_response = client.put("/api/v1/home-content", headers=headers, json=payload)
+    assert restore_response.status_code == 200
+
+
+def test_relation_cannot_self_reference():
+    access_token = token()
+    people = client.get("/api/v1/persons", headers={"Authorization": f"Bearer {access_token}"}).json()
+    person_id = people[0]["id"]
+    response = client.post(
+        "/api/v1/family-relations",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={
+            "campaign_id": people[0]["campaign_id"],
+            "source_person_id": person_id,
+            "target_person_id": person_id,
+            "relation_type": "CONJOINT_DE",
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_family_tree_endpoint_returns_nodes_and_links():
+    access_token = token()
+    people = client.get("/api/v1/persons", headers={"Authorization": f"Bearer {access_token}"}).json()
+    response = client.get(f"/api/v1/persons/{people[0]['id']}/family-tree?depth=2", headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["root"]["id"] == people[0]["id"]
+    assert payload["depth"] == 2
+    assert "nodes" in payload
+    assert "links" in payload
+
+
+def test_family_tree_depth_zero_limits_graph_to_root():
+    access_token = token()
+    people = client.get("/api/v1/persons", headers={"Authorization": f"Bearer {access_token}"}).json()
+    response = client.get(f"/api/v1/persons/{people[0]['id']}/family-tree?depth=0", headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["depth"] == 0
+    assert len(payload["nodes"]) == 1
+    assert payload["nodes"][0]["id"] == people[0]["id"]
+
+
+def test_medical_history_create_and_family_summary():
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    people = client.get("/api/v1/persons", headers=headers).json()
+    person = people[0]
+    created = client.post(
+        "/api/v1/medical-histories",
+        headers=headers,
+        json={
+            "person_id": person["id"],
+            "campaign_id": person["campaign_id"],
+            "condition_name": "Asthme familial",
+            "condition_code": "J45",
+            "category": "RESPIRATORY",
+            "diagnosis_age": 12,
+            "severity": "MODERATE",
+            "status": "MONITORED",
+            "hereditary_risk": True,
+            "notes": "Cas déclaré pendant le test.",
+        },
+    )
+    assert created.status_code == 201
+    payload = created.json()
+    assert payload["person_id"] == person["id"]
+    assert payload["zone_id"] == person["zone_id"]
+
+    summary = client.get(f"/api/v1/persons/{person['id']}/medical-family-summary?depth=2", headers=headers)
+    assert summary.status_code == 200
+    data = summary.json()
+    assert data["root_person_id"] == person["id"]
+    assert data["total_medical_records"] >= 1
+    assert any(condition["condition_name"] == "Asthme familial" for condition in data["conditions"])
+
+
+def test_sync_pull_returns_offline_cache_contract():
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = client.post("/api/v1/sync/pull", headers=headers)
+    assert response.status_code == 200
+    payload = response.json()
+    for key in ["zones", "campaigns", "households", "persons", "family_relations", "medical_histories", "corrections", "forms"]:
+        assert key in payload
+        assert isinstance(payload[key], list)
+
+
+def test_users_endpoints_create_update_and_deactivate_user():
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    username = f"agent.test.{uuid4().hex[:8]}"
+    created = client.post(
+        "/api/v1/users",
+        headers=headers,
+        json={
+            "username": username,
+            "full_name": "Agent Test",
+            "role": "AGENT",
+            "password": "secret123",
+            "active": True,
+            "zone_ids": [],
+        },
+    )
+    assert created.status_code == 201
+    user_id = created.json()["id"]
+    assert "password_hash" not in created.json()
+
+    listed = client.get("/api/v1/users", headers=headers)
+    assert listed.status_code == 200
+    assert any(item["id"] == user_id for item in listed.json())
+
+    role_change = client.post(f"/api/v1/users/{user_id}/role", headers=headers, json={"role": "AUDITOR"})
+    assert role_change.status_code == 200
+    assert role_change.json()["role"] == "AUDITOR"
+
+    deactivated = client.post(f"/api/v1/users/{user_id}/deactivate", headers=headers)
+    assert deactivated.status_code == 200
+    assert deactivated.json()["active"] is False
