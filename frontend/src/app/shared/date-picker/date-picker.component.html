@@ -1,0 +1,39 @@
+<div class="date-picker-wrapper">
+  <button class="date-trigger" type="button" [disabled]="disabled" (click)="toggleOpen()">
+    <span [class.has-value]="!!value">{{ displayValue() }}</span>
+    <lucide-icon name="calendar"></lucide-icon>
+  </button>
+
+  @if (isOpen()) {
+    <div class="popover">
+      <div class="calendar-header">
+        <button type="button" class="nav-btn" (click)="prevMonth($event)">
+          <lucide-icon name="chevron-left"></lucide-icon>
+        </button>
+        <div class="month-year">{{ monthYearDisplay() }}</div>
+        <button type="button" class="nav-btn" (click)="nextMonth($event)">
+          <lucide-icon name="chevron-right"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="calendar-grid">
+        @for (dayName of daysOfWeek(); track dayName) {
+          <div class="weekday">{{ dayName }}</div>
+        }
+        @for (day of calendarDays(); track day.formatted) {
+          <button
+            type="button"
+            class="day"
+            [class.current-month]="day.isCurrentMonth"
+            [class.other-month]="!day.isCurrentMonth"
+            [class.selected]="day.isSelected"
+            [class.today]="day.isToday"
+            (click)="selectDate(day, $event)"
+          >
+            {{ day.date.getDate() }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

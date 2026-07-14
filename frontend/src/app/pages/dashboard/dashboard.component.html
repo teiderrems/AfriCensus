@@ -12,10 +12,34 @@
 
       @if (summary(); as data) {
         <div class="stats">
-          <article class="card stat"><lucide-icon class="blue" name="house"></lucide-icon><p>{{ i18n.t('dashboard.enumeratedHouseholds') }}</p><strong>{{ data.totalHouseholds }}</strong></article>
-          <article class="card stat"><lucide-icon class="green" name="users"></lucide-icon><p>{{ i18n.t('dashboard.individuals') }}</p><strong>{{ data.totalPersons }}</strong></article>
-          <article class="card stat urgent"><lucide-icon name="triangle-alert"></lucide-icon><p>{{ i18n.t('dashboard.toValidate') }}</p><strong>{{ data.submitted }}</strong></article>
-          <article class="card stat"><lucide-icon class="earth" name="id-card"></lucide-icon><p>{{ i18n.t('dashboard.activeAgents') }}</p><strong>{{ data.activeAgents }}</strong></article>
+          <article class="card stat">
+            <div class="stat-header">
+              <p>{{ i18n.t('dashboard.enumeratedHouseholds') }}</p>
+              <div class="icon-wrapper primary"><lucide-icon name="house"></lucide-icon></div>
+            </div>
+            <strong>{{ data.totalHouseholds }}</strong>
+          </article>
+          <article class="card stat">
+            <div class="stat-header">
+              <p>{{ i18n.t('dashboard.individuals') }}</p>
+              <div class="icon-wrapper green"><lucide-icon name="users"></lucide-icon></div>
+            </div>
+            <strong>{{ data.totalPersons }}</strong>
+          </article>
+          <article class="card stat urgent">
+            <div class="stat-header">
+              <p>{{ i18n.t('dashboard.toValidate') }}</p>
+              <div class="icon-wrapper danger"><lucide-icon name="triangle-alert"></lucide-icon></div>
+            </div>
+            <strong>{{ data.submitted }}</strong>
+          </article>
+          <article class="card stat">
+            <div class="stat-header">
+              <p>{{ i18n.t('dashboard.activeAgents') }}</p>
+              <div class="icon-wrapper earth"><lucide-icon name="id-card"></lucide-icon></div>
+            </div>
+            <strong>{{ data.activeAgents }}</strong>
+          </article>
         </div>
 
         <div class="content-grid">

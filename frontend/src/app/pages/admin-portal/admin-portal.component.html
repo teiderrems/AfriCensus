@@ -264,8 +264,8 @@
               <h2>{{ i18n.t('admin.config.campaignWindow') }}</h2>
             </div>
             <div class="config-fields">
-              <div class="field"><label for="startDate">{{ i18n.t('admin.config.startDate') }}</label><input id="startDate" name="startDate" type="date" [ngModel]="collectionStart()" (ngModelChange)="collectionStart.set($event)" /></div>
-              <div class="field"><label for="endDate">{{ i18n.t('admin.config.endDate') }}</label><input id="endDate" name="endDate" type="date" [ngModel]="collectionEnd()" (ngModelChange)="collectionEnd.set($event)" /></div>
+              <div class="field"><label for="startDate">{{ i18n.t('admin.config.startDate') }}</label><acl-date-picker id="startDate" name="startDate" [ngModel]="collectionStart()" (ngModelChange)="collectionStart.set($event)"></acl-date-picker></div>
+              <div class="field"><label for="endDate">{{ i18n.t('admin.config.endDate') }}</label><acl-date-picker id="endDate" name="endDate" [ngModel]="collectionEnd()" (ngModelChange)="collectionEnd.set($event)"></acl-date-picker></div>
             </div>
             <label class="toggle-row">
               <span><strong>{{ i18n.t('admin.config.strictWindow') }}</strong><em>{{ i18n.t('admin.config.blockData') }}</em></span>

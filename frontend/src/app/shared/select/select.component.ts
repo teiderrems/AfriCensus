@@ -2,6 +2,8 @@ import { Component, Input, forwardRef, ElementRef, HostListener, signal, compute
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
+import { I18nService } from '@/app/core/i18n/i18n.service';
+import { TranslationKey } from '@/app/core/i18n/translations';
 
 export interface SelectOption {
   label: string;
@@ -40,28 +42,41 @@ export class SelectComponent implements ControlValueAccessor {
 
   readonly filteredOptions = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
-    if (!query) return this.options;
-    return this.options.filter(opt => opt.label.toLowerCase().includes(query));
+    const opts = this.options.map(opt => ({
+      ...opt,
+      label: this.i18n.t(opt.label as TranslationKey)
+    }));
+    if (!query) return opts;
+    return opts.filter(opt => opt.label.toLowerCase().includes(query));
   });
 
+  get translatedPlaceholder(): string {
+    if (this.placeholder === 'Sélectionner...') return this.i18n.t('action.select');
+    return this.i18n.t(this.placeholder as TranslationKey);
+  }
+
   readonly displayValue = computed(() => {
+    const placeholder = this.translatedPlaceholder;
     if (this.multiple) {
-      if (!Array.isArray(this.value) || this.value.length === 0) return this.placeholder;
+      if (!Array.isArray(this.value) || this.value.length === 0) return placeholder;
       return this.options
         .filter(opt => this.value.includes(opt.value))
-        .map(opt => opt.label)
+        .map(opt => this.i18n.t(opt.label as TranslationKey))
         .join(', ');
     } else {
-      if (this.value == null || this.value === '') return this.placeholder;
+      if (this.value == null || this.value === '') return placeholder;
       const selected = this.options.find(opt => opt.value === this.value);
-      return selected ? selected.label : this.placeholder;
+      return selected ? this.i18n.t(selected.label as TranslationKey) : placeholder;
     }
   });
 
   private onChange: (val: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  constructor(private readonly elementRef: ElementRef) {}
+  constructor(
+    private readonly elementRef: ElementRef,
+    public readonly i18n: I18nService
+  ) {}
 
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event) {

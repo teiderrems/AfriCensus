@@ -1,8 +1,9 @@
-import { SelectComponent } from '@/app/shared/select/select.component';
+
 import { LucideAngularModule } from 'lucide-angular';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { UpperCasePipe } from '@angular/common';
 
 import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
@@ -12,7 +13,7 @@ import { ThemeService } from '@/app/core/theme.service';
 
 @Component({
   selector: 'acl-home-page',
-  imports: [LucideAngularModule, FormsModule, RouterLink, SelectComponent],
+  imports: [LucideAngularModule, FormsModule, RouterLink, UpperCasePipe],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -48,5 +49,10 @@ export class HomeComponent implements OnInit {
   setLanguage(language: LanguageCode): void {
     this.i18n.setLanguage(language);
     this.loadContent();
+  }
+
+  toggleLanguage(): void {
+    const next = this.i18n.language() === 'fr' ? 'en' : 'fr';
+    this.setLanguage(next);
   }
 }

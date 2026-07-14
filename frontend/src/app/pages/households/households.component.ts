@@ -8,6 +8,7 @@ import { ConfirmService } from '@/app/core/confirm';
 import { HouseholdWriteDto, PersonWriteDto } from '@/app/core/dtos';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Campaign, HouseholdRecord, PersonRecord, Zone } from '@/app/core/models';
+import { ToastService } from '@/app/core/toast.service';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
 import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
@@ -42,7 +43,7 @@ export class HouseholdsComponent implements OnInit {
   readonly draft = signal<HouseholdWriteDto>(this.emptyDraft());
   readonly editingHouseholdId = signal<string | null>(null);
   readonly householdModalOpen = signal(false);
-  readonly formStatus = signal('');
+  readonly saving = signal(false);
   readonly search = signal('');
   readonly statusFilter = signal('');
   readonly page = signal(1);
@@ -104,7 +105,8 @@ export class HouseholdsComponent implements OnInit {
   constructor(
     private readonly api: ApiService,
     readonly i18n: I18nService,
-    private readonly confirmService: ConfirmService
+    private readonly confirmService: ConfirmService,
+    private readonly toastService: ToastService
   ) {}
   ngOnInit(): void {
     this.api.households().subscribe({
@@ -205,16 +207,18 @@ export class HouseholdsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     const id = this.editingHouseholdId();
     const request = id ? this.api.updateHousehold(id, this.draft()) : this.api.createHousehold(this.draft());
     request.subscribe({
       next: (household) => {
         this.upsertHousehold(household);
-        this.formStatus.set(id ? 'Ménage mis à jour.' : 'Ménage créé.');
+        this.toastService.success(id ? 'Ménage mis à jour.' : 'Ménage créé.');
         this.householdModalOpen.set(false);
         this.resetDraft();
+        this.saving.set(false);
       },
-      error: () => this.formStatus.set(this.i18n.t('households.status.saveError')),
+      error: () => this.saving.set(false),
     });
   }
 
@@ -222,14 +226,16 @@ export class HouseholdsComponent implements OnInit {
     const household = this.responsibleHousehold();
     const personId = this.responsiblePersonId();
     if (!household || !personId) return;
+    this.saving.set(true);
     const payload: HouseholdWriteDto = { ...this.householdToInput(household), head_person_id: personId };
     this.api.updateHousehold(household.id, payload).subscribe({
       next: (updated) => {
         this.upsertHousehold(updated);
-        this.formStatus.set(this.i18n.t('households.status.headAssigned'));
+        this.toastService.success(this.i18n.t('households.status.headAssigned'));
         this.closeResponsibleModal();
+        this.saving.set(false);
       },
-      error: () => this.formStatus.set(this.i18n.t('households.status.headAssignError')),
+      error: () => this.saving.set(false),
     });
   }
 
@@ -263,14 +269,16 @@ export class HouseholdsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     this.api.createPerson(this.responsiblePersonDraft()).subscribe({
       next: (person) => {
         this.persons.update((rows) => [person, ...rows.filter((row) => row.id !== person.id)]);
         this.responsiblePersonId.set(person.id);
         this.responsiblePersonModalOpen.set(false);
+        this.saving.set(false);
         this.assignResponsiblePerson();
       },
-      error: () => this.formStatus.set(this.i18n.t('households.status.headCreateError')),
+      error: () => this.saving.set(false),
     });
   }
 
@@ -300,9 +308,14 @@ export class HouseholdsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     this.api.submitHousehold(household.id).subscribe({
-      next: (updated) => this.upsertHousehold(updated),
-      error: () => this.formStatus.set(this.i18n.t('households.status.submitError')),
+      next: (updated) => {
+        this.upsertHousehold(updated);
+        this.toastService.success(this.i18n.t('households.status.submitted') || 'Ménage soumis avec succès.');
+        this.saving.set(false);
+      },
+      error: () => this.saving.set(false),
     });
   }
 
@@ -313,12 +326,15 @@ export class HouseholdsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     this.api.deleteHousehold(household.id).subscribe({
       next: () => {
         this.households.update((rows) => rows.filter((row) => row.id !== household.id));
         if (this.selectedHousehold()?.id === household.id) this.selectedHousehold.set(null);
+        this.toastService.success(this.i18n.t('households.status.deleted') || 'Ménage supprimé avec succès.');
+        this.saving.set(false);
       },
-      error: () => this.formStatus.set(this.i18n.t('households.status.deleteError')),
+      error: () => this.saving.set(false),
     });
   }
 

@@ -119,6 +119,7 @@ lucide-icon {
 lucide-icon > svg {
   width: 1em;
   height: 1em;
+  stroke-width: 1.75;
 }
 
 @layer components {
@@ -232,9 +233,42 @@ textarea:focus {
   outline-offset: 1px;
 }
 
-button.btn,
+button.btn {
+  appearance: none;
+}
+
 button.icon-action {
   appearance: none;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  font-size: 18px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button.icon-action:hover,
+button.icon-action:focus-visible {
+  background: var(--surface-high);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+button.icon-action.danger:hover,
+button.icon-action.danger:focus-visible {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+button.icon-action:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .field {
@@ -319,6 +353,12 @@ button.icon-action {
   background: var(--surface-high);
 }
 
+.row-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .table-wrap {
   overflow-x: auto;
   width: 100%;
@@ -384,6 +424,39 @@ td strong {
 a {
   color: inherit;
 }
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.toast.success { border-left-color: var(--growth); background: var(--secondary-soft); color: #285000; }
+.toast.success strong { color: #285000; }
+.toast.error { border-left-color: var(--error); background: var(--error-soft); color: #93000a; }
+.toast.error strong { color: #93000a; }
 
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -4,12 +4,16 @@
     h2 { margin: 0 0 18px; font-size: 24px; }
     p { color: var(--muted); margin: 0; }
     .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-    .stat { min-height: 168px; display: grid; align-content: space-between; }
-    .stat span { width: 44px; height: 44px; border-radius: 6px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); }
-    .stat .green { background: var(--secondary-soft); color: var(--secondary); }
-    .stat .earth { background: var(--terracotta-soft); color: var(--terracotta); }
-    .stat strong { font-size: 34px; }
-    .urgent { background: var(--error-soft); border-color: var(--error); }
+    .stat { display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 24px; min-height: 140px; }
+    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .stat-header p { font-size: 14px; font-weight: 700; color: var(--muted); line-height: 1.4; margin: 0; }
+    .icon-wrapper { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; display: grid; place-items: center; }
+    .icon-wrapper.primary { background: var(--primary-soft); color: var(--primary); }
+    .icon-wrapper.green { background: var(--secondary-soft); color: var(--secondary); }
+    .icon-wrapper.danger { background: var(--error-soft); color: var(--error); }
+    .icon-wrapper.earth { background: var(--terracotta-soft); color: var(--terracotta); }
+    .stat strong { font-size: 42px; font-weight: 900; line-height: 1; color: var(--ink); margin: 0; }
+    .urgent { background: color-mix(in srgb, var(--error-soft) 30%, transparent); border-color: color-mix(in srgb, var(--error) 30%, transparent); }
     .content-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
     .map { height: 210px; border: 1px solid var(--outline-soft); border-radius: 6px; background: repeating-linear-gradient(45deg, var(--surface-container), var(--surface-container) 12px, var(--surface) 12px, var(--surface) 24px); display: grid; place-items: center; margin-bottom: 18px; }
     .map span { font-size: 56px; color: var(--primary); }

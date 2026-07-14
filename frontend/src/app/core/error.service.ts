@@ -3,6 +3,8 @@ import { Injectable, signal } from '@angular/core';
 
 import { I18nService } from './i18n/i18n.service';
 
+import { ToastService } from './toast.service';
+
 export interface AppError {
   status: number;
   title: string;
@@ -22,7 +24,10 @@ type FastApiValidationError = {
 export class ErrorService {
   readonly current = signal<AppError | null>(null);
 
-  constructor(private readonly i18n: I18nService) {}
+  constructor(
+    private readonly i18n: I18nService,
+    private readonly toastService: ToastService
+  ) {}
 
   fromHttp(error: HttpErrorResponse): AppError {
     const details = this.extractDetails(error.error);
@@ -39,6 +44,8 @@ export class ErrorService {
 
   publish(error: AppError): void {
     this.current.set(error);
+    const fullMessage = error.details.length > 0 ? `${error.message} - ${error.details.join(', ')}` : error.message;
+    this.toastService.error(error.title, fullMessage);
   }
 
   clear(): void {

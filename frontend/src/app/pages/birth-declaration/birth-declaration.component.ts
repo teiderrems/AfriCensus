@@ -19,10 +19,11 @@ type ParticipantState = {
 };
 
 import { ConfirmService } from '@/app/core/confirm';
+import { DatePickerComponent } from '@/app/shared/date-picker/date-picker.component';
 
 @Component({
   selector: 'acl-birth-declaration-page',
-  imports: [LucideAngularModule, FormsModule, NgTemplateOutlet, SelectComponent],
+  imports: [LucideAngularModule, FormsModule, NgTemplateOutlet, SelectComponent, DatePickerComponent],
   templateUrl: './birth-declaration.component.html',
   styleUrl: './birth-declaration.component.css',
 })

@@ -10,31 +10,32 @@ import { LanguageCode, TranslationKey } from './core/i18n/translations';
 import { User } from './core/models';
 import { OfflineSyncService } from './core/offline-sync.service';
 import { ThemeService } from './core/theme.service';
-import { SelectComponent } from './shared/select/select.component';
+import { ToastService } from './core/toast.service';
+import { UpperCasePipe } from '@angular/common';
+import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'acl-root',
-  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, SelectComponent],
+  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, UpperCasePipe, ConfirmDialogComponent],
   template: `
     <a class="skip-link" href="#main-content">{{ i18n.t('a11y.skipToContent') }}</a>
-    @if (errorService.current(); as error) {
-      <section class="api-error" role="alert" aria-live="assertive">
-        <div>
-          <strong>{{ error.title }}</strong>
-          <p>{{ error.message }}</p>
-          @if (error.details.length > 1) {
-            <ul>
-              @for (detail of error.details.slice(1, 4); track detail) {
-                <li>{{ detail }}</li>
-              }
-            </ul>
-          }
+    
+    <div class="toast-container" aria-live="polite">
+      @for (toast of toastService.toasts(); track toast.id) {
+        <div class="toast" [class]="toast.type" role="alert">
+          <div>
+            <strong>{{ toast.title }}</strong>
+            @if (toast.message) {
+              <p>{{ toast.message }}</p>
+            }
+          </div>
+          <button type="button" aria-label="Close" (click)="toastService.remove(toast.id)">
+            <lucide-icon name="x"></lucide-icon>
+          </button>
         </div>
-        <button type="button" [attr.aria-label]="i18n.t('a11y.closeError')" (click)="errorService.clear()">
-          <lucide-icon name="x"></lucide-icon>
-        </button>
-      </section>
-    }
+      }
+    </div>
+
     @if (loggedIn() && !isPublicRoute()) {
       <div class="shell">
         <aside class="sidebar hide-mobile" aria-label="Navigation principale">
@@ -42,7 +43,7 @@ import { SelectComponent } from './shared/select/select.component';
             <div class="mark" aria-hidden="true">AL</div>
             <div>
               <strong>AfriCensus Link</strong>
-              <span>{{ user()?.role || i18n.t('app.portal') }}</span>
+              <span>{{ portalRoleLabel() }}</span>
             </div>
           </div>
           <nav aria-label="Sections applicatives">
@@ -65,28 +66,22 @@ import { SelectComponent } from './shared/select/select.component';
               <span>{{ user()?.full_name }}</span>
             </div>
             <button class="sync-status" type="button" [class.offline]="!offline.online()" [class.pending]="offline.hasPending()" (click)="offline.syncNow()">
-              <lucide-icon [name]="offline.online() ? \'cloud\' : \'cloud-off\'"></lucide-icon>
+              <lucide-icon [name]="offline.online() ? 'cloud' : 'cloud-off'"></lucide-icon>
               <strong>{{ offline.online() ? i18n.t('sync.online') : i18n.t('sync.offline') }}</strong>
               @if (offline.hasPending()) {
                 <em>{{ offline.pendingCount() }}</em>
               }
             </button>
             <div class="top-actions">
-              <label class="language-select">
-                <span class="sr-only">{{ i18n.t('a11y.language') }}</span>
-                <acl-select 
-                  [ariaLabel]="i18n.t('a11y.language')" 
-                  [ngModel]="i18n.language()" 
-                  (ngModelChange)="setLanguage($event)"
-                  [options]="languageOptions()">
-                </acl-select>
-              </label>
+              <button type="button" class="language-toggle" [attr.aria-label]="i18n.t('a11y.language')" (click)="toggleLanguage()">
+                {{ i18n.language() | uppercase }}
+              </button>
               <button type="button" [attr.aria-label]="i18n.t('a11y.notifications')" (click)="toggleNotifications()">
                 <lucide-icon name="bell"></lucide-icon>
               </button>
               <button type="button" [attr.aria-label]="i18n.t('a11y.help')" (click)="goToHelp()"><lucide-icon name="circle-question-mark"></lucide-icon></button>
               <button type="button" [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
-                <lucide-icon [name]="theme.theme() === \'dark\' ? \'sun\' : \'moon\'"></lucide-icon>
+                <lucide-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'"></lucide-icon>
               </button>
             </div>
           </header>
@@ -126,6 +121,7 @@ import { SelectComponent } from './shared/select/select.component';
     } @else {
       <router-outlet />
     }
+    <app-confirm-dialog />
   `,
   styles: `
     .skip-link {
@@ -133,19 +129,19 @@ import { SelectComponent } from './shared/select/select.component';
       background: var(--primary); color: var(--on-primary); padding: 10px 14px; border-radius: 6px; font-weight: 800;
     }
     .skip-link:focus { transform: translateY(0); outline: 3px solid var(--terracotta); outline-offset: 2px; }
-    .api-error {
-      position: fixed; top: 16px; right: 16px; z-index: 1001; width: min(520px, calc(100vw - 32px));
-      display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 16px;
-      border: 2px solid var(--error); border-radius: 8px; background: var(--error-soft); color: var(--ink);
-      box-shadow: 0 16px 34px rgba(0, 0, 0, .16);
+    .toast-container {
+      position: fixed; top: 16px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 12px;
     }
-    .api-error strong { display: block; color: var(--error); font-size: 16px; }
-    .api-error p { margin: 4px 0 0; color: var(--ink); }
-    .api-error ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
-    .api-error button {
-      width: 40px; height: 40px; border: 0; border-radius: 999px; background: transparent; color: var(--error);
-      display: grid; place-items: center; flex: 0 0 auto;
+    .toast {
+      width: 320px; padding: 16px; border-radius: 8px; background: var(--surface);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-left: 4px solid var(--primary);
+      display: flex; justify-content: space-between; align-items: start; gap: 12px;
     }
+    .toast.error { border-left-color: var(--error); }
+    .toast.success { border-left-color: var(--success); }
+    .toast strong { display: block; margin-bottom: 4px; }
+    .toast p { margin: 0; font-size: 14px; color: var(--muted); }
+    .toast button { background: none; border: none; cursor: pointer; color: var(--muted); }
     .shell { min-height: 100vh; display: flex; }
     .sidebar {
       width: 288px; background: var(--surface-low); border-right: 2px solid var(--outline-soft);
@@ -180,10 +176,8 @@ import { SelectComponent } from './shared/select/select.component';
     .top-actions button:hover {
       background: var(--surface-low);
     }
-    .language-select { min-height: 44px; display: flex; align-items: center; }
-    .language-select ::ng-deep select {
-      min-height: 44px; border-radius: 999px; border: 2px solid var(--outline-soft);
-      background: var(--surface); color: var(--ink); padding: 0 10px; font-weight: 900;
+    .language-toggle {
+      font-weight: 800; font-size: 14px;
     }
     .sr-only {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
@@ -237,8 +231,7 @@ import { SelectComponent } from './shared/select/select.component';
       .top-actions { gap: 2px; flex: 0 0 auto; }
       .top-actions button { width: 36px; height: 36px; }
       .top-actions lucide-icon { font-size: 18px; }
-      .language-select { min-height: 36px; }
-      .language-select select { min-height: 34px; max-width: 78px; padding: 0 6px; font-size: 11px; }
+      .language-toggle { font-size: 11px; }
       .sync-status { min-height: 34px; padding: 0 8px; gap: 4px; font-size: 11px; }
       .sync-status lucide-icon { font-size: 16px; }
       .sync-status em { min-width: 18px; height: 18px; }
@@ -263,6 +256,12 @@ export class AppComponent {
     return this.i18n.t('notifications.default');
   });
 
+  readonly portalRoleLabel = computed(() => {
+    const role = this.user()?.role;
+    if (!role) return this.i18n.t('app.portal');
+    return this.i18n.t(('role.' + role) as TranslationKey);
+  });
+
   languageOptions = computed(() => this.i18n.languages.map(l => ({
     value: l,
     label: this.i18n.t(l === 'fr' ? 'language.fr' : 'language.en')
@@ -270,11 +269,12 @@ export class AppComponent {
 
   constructor(
     readonly auth: AuthService,
-    readonly theme: ThemeService,
-    readonly errorService: ErrorService,
     readonly i18n: I18nService,
+    readonly theme: ThemeService,
     readonly offline: OfflineSyncService,
-    readonly router: Router,
+    readonly errorService: ErrorService,
+    readonly toastService: ToastService,
+    private readonly router: Router
   ) {}
 
   isPublicRoute(): boolean {
@@ -287,6 +287,11 @@ export class AppComponent {
 
   setLanguage(language: LanguageCode): void {
     this.i18n.setLanguage(language);
+  }
+
+  toggleLanguage(): void {
+    const next = this.i18n.language() === 'fr' ? 'en' : 'fr';
+    this.i18n.setLanguage(next);
   }
 
   goToHelp(): void {

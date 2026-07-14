@@ -2,13 +2,10 @@
       <header class="page-head">
         <div>
           <h1>{{ i18n.t('households.title') }}</h1>
-          @if (formStatus()) {
-            <p class="form-status" [class.error]="formStatus().startsWith('Erreur')">{{ formStatus() }}</p>
-          }
         </div>
         <button type="button" class="btn primary" (click)="openCreateHousehold()">
           <lucide-icon name="plus"></lucide-icon>
-          Créer un ménage
+          {{ i18n.t('household.create.title') }}
         </button>
       </header>
       <article class="card">
@@ -29,7 +26,7 @@
                   <td><strong>{{ row.household_code }}</strong></td>
                   <td>{{ row.address_text }}</td>
                   <td>{{ row.member_count }}</td>
-                  <td><span class="chip {{ row.validation_status }}">{{ row.validation_status }}</span></td>
+                  <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></td>
                   <td class="row-actions">
                     <button type="button" class="icon-action" aria-label="Voir les détails du ménage" (click)="openHousehold(row)">
                       <lucide-icon name="eye"></lucide-icon>
@@ -67,13 +64,13 @@
       <acl-detail-drawer
         [open]="householdDrawerOpen()"
         [title]="selectedHouseholdTitle()"
-        subtitle="Fiche ménage"
+        [subtitle]="i18n.t('households.drawer.subtitle')"
         [items]="selectedHouseholdDetails()"
         (closed)="selectedHousehold.set(null)"
       />
       <acl-modal
         [open]="responsibleModalOpen()"
-        [title]="'Responsable du ménage'"
+        [title]="i18n.t('households.responsible.title')"
         [subtitle]="responsibleHouseholdLabel()"
         (closed)="closeResponsibleModal()"
       >
@@ -84,28 +81,28 @@
           </div>
           <button type="button" class="btn secondary" (click)="openResponsiblePersonCreation()">
             <lucide-icon name="user-plus"></lucide-icon>
-            Ajouter une personne dans ce ménage
+            {{ i18n.t('households.responsible.addPerson') }}
           </button>
         </div>
         <ng-container modal-actions>
           <button type="button" class="btn secondary" (click)="closeResponsibleModal()">{{ i18n.t('action.cancel') }}</button>
-          <button type="button" class="btn primary" [disabled]="!responsiblePersonId()" (click)="assignResponsiblePerson()">
-            <lucide-icon name="link"></lucide-icon>
-            Associer
+          <button type="button" class="btn primary" [disabled]="!responsiblePersonId() || saving()" (click)="assignResponsiblePerson()">
+            <lucide-icon [name]="saving() ? 'loader' : 'link'" [class.animate-spin]="saving()"></lucide-icon>
+            {{ i18n.t('action.assign') }}
           </button>
         </ng-container>
       </acl-modal>
       <acl-person-form-modal
         [open]="responsiblePersonModalOpen()"
-        title="Ajouter une personne responsable"
-        subtitle="La personne sera créée directement dans le ménage sélectionné."
+        [title]="i18n.t('households.responsible.createTitle')"
+        [subtitle]="i18n.t('households.responsible.createSubtitle')"
         [draft]="responsiblePersonDraft()"
         [households]="responsibleHouseholdList()"
         [campaigns]="campaigns()"
         [zones]="zones()"
-        [disabled]="!canSaveResponsiblePerson()"
+        [disabled]="!canSaveResponsiblePerson() || saving()"
         submitIcon="user-plus"
-        submitLabel="Créer et associer"
+        [submitLabel]="i18n.t('action.createAndAssign')"
         (closed)="responsiblePersonModalOpen.set(false)"
         (draftChange)="responsiblePersonDraft.set($event)"
         (householdSelected)="selectResponsiblePersonHousehold($event)"
@@ -147,8 +144,8 @@
         </div>
         <ng-container modal-actions>
           <button type="button" class="btn secondary" (click)="closeHouseholdModal()">{{ i18n.t('household.cancel') }}</button>
-          <button class="btn primary" type="submit" [disabled]="!canSaveHousehold()">
-            <lucide-icon [name]="editingHouseholdId() ? 'save' : 'plus'"></lucide-icon>
+          <button class="btn primary" type="submit" [disabled]="!canSaveHousehold() || saving()">
+            <lucide-icon [name]="saving() ? 'loader' : (editingHouseholdId() ? 'save' : 'plus')" [class.animate-spin]="saving()"></lucide-icon>
             {{ editingHouseholdId() ? i18n.t('household.save.btn') : i18n.t('household.create.btn') }}
           </button>
         </ng-container>

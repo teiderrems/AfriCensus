@@ -73,8 +73,12 @@
       </div>
       <div class="field">
         <label [for]="key + 'BirthDate'">{{ i18n.t('birthDeclaration.birthDate') }}</label>
-        <input [id]="key + 'BirthDate'" [name]="key + 'BirthDate'" type="date" [ngModel]="state.draft.birth_date"
-          (ngModelChange)="updateDraft(key, 'birth_date', emptyToNull($event))" />
+        <acl-date-picker
+          [id]="key + 'BirthDate'"
+          [name]="key + 'BirthDate'"
+          [ngModel]="state.draft.birth_date"
+          (ngModelChange)="updateDraft(key, 'birth_date', $event)"
+        ></acl-date-picker>
       </div>
       <label class="check">
         <input type="checkbox" [name]="key + 'WithoutDocument'" [ngModel]="state.draft.is_without_document"

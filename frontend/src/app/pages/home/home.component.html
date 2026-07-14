@@ -15,10 +15,9 @@
               <a class="btn" [class.primary]="action.style === 'primary'" [class.secondary]="action.style !== 'primary'" [href]="action.href">{{ action.label }}</a>
             }
             <div class="public-controls" [attr.aria-label]="i18n.t('home.aria.displayPrefs')">
-              <label class="language-select">
-                <span class="sr-only">{{ i18n.t('a11y.language') }}</span>
-                <acl-select [ariaLabel]="i18n.t('a11y.language')" [ngModel]="i18n.language()" (ngModelChange)="setLanguage($event)" [options]="[{label: 'FR', value: 'fr'}, {label: 'EN', value: 'en'}, {label: 'SW', value: 'sw'}]"></acl-select>
-              </label>
+              <button type="button" class="language-toggle" [attr.aria-label]="i18n.t('a11y.language')" (click)="toggleLanguage()">
+                {{ i18n.language() | uppercase }}
+              </button>
               <button type="button" class="theme-toggle" [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
                 <lucide-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'"></lucide-icon>
               </button>

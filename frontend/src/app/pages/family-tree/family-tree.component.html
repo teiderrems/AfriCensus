@@ -22,6 +22,12 @@
                 <button type="button" [title]="i18n.t('familyTree.zoomOut')" (click)="zoomBy(0.85)">
                   <lucide-icon name="minus"></lucide-icon>
                 </button>
+                <button type="button" [title]="i18n.t('familyTree.exportSvg')" (click)="exportSvg()">
+                  <lucide-icon name="image"></lucide-icon>
+                </button>
+                <button type="button" [title]="i18n.t('familyTree.exportJson')" (click)="exportJson()">
+                  <lucide-icon name="file-json"></lucide-icon>
+                </button>
                 <button type="button" [title]="i18n.t('familyTree.recenter')" (click)="resetView()">
                   <lucide-icon name="focus"></lucide-icon>
                 </button>

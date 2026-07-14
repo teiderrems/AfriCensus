@@ -2,9 +2,6 @@
       <header class="page-head">
         <div>
           <h1>{{ i18n.t('persons.title') }}</h1>
-          @if (formStatus()) {
-            <p class="form-status" [class.error]="formStatus().startsWith('Erreur')">{{ formStatus() }}</p>
-          }
         </div>
         <button type="button" class="btn primary" (click)="openCreatePerson()">
           <lucide-icon name="plus"></lucide-icon>
@@ -27,9 +24,9 @@
               @for (row of pagedPersons(); track row.id) {
                 <tr>
                   <td><strong>{{ row.first_name }} {{ row.last_name }}</strong></td>
-                  <td>{{ row.gender }}</td>
+                  <td>{{ i18n.t($any('person.gender.' + row.gender)) }}</td>
                   <td>{{ row.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
-                  <td><span class="chip {{ row.validation_status }}">{{ row.validation_status }}</span></td>
+                  <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></td>
                   <td class="row-actions">
                     <button type="button" class="icon-action" aria-label="Voir les détails de la personne" (click)="openPerson(row)">
                       <lucide-icon name="eye"></lucide-icon>
@@ -75,8 +72,8 @@
         [households]="households()"
         [campaigns]="campaigns()"
         [zones]="zones()"
-        [disabled]="!canSavePerson()"
-        [submitIcon]="editingPersonId() ? 'save' : 'plus'"
+        [disabled]="!canSavePerson() || saving()"
+        [submitIcon]="saving() ? 'loader' : (editingPersonId() ? 'save' : 'plus')"
         [submitLabel]="editingPersonId() ? i18n.t('person.save.btn') : i18n.t('person.create.btn')"
         (closed)="closePersonModal()"
         (draftChange)="draft.set($event)"

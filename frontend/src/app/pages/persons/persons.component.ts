@@ -7,6 +7,7 @@ import { PersonWriteDto } from '@/app/core/dtos';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ConfirmService } from '@/app/core/confirm';
 import { Campaign, HouseholdRecord, PersonRecord, Zone } from '@/app/core/models';
+import { ToastService } from '@/app/core/toast.service';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
 import { PersonFormModalComponent } from '@/app/shared/person-form-modal/person-form-modal.component';
@@ -27,7 +28,7 @@ export class PersonsComponent implements OnInit {
   readonly draft = signal<PersonWriteDto>(this.emptyDraft());
   readonly editingPersonId = signal<string | null>(null);
   readonly personModalOpen = signal(false);
-  readonly formStatus = signal('');
+  readonly saving = signal(false);
   readonly search = signal('');
   readonly statusFilter = signal('');
   readonly page = signal(1);
@@ -71,7 +72,8 @@ export class PersonsComponent implements OnInit {
   constructor(
     private readonly api: ApiService,
     readonly i18n: I18nService,
-    private readonly confirmService: ConfirmService
+    private readonly confirmService: ConfirmService,
+    private readonly toastService: ToastService
   ) {}
   ngOnInit(): void {
     this.api.households().subscribe({
@@ -161,16 +163,18 @@ export class PersonsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     const id = this.editingPersonId();
     const request = id ? this.api.updatePerson(id, this.draft()) : this.api.createPerson(this.draft());
     request.subscribe({
       next: (person) => {
         this.upsertPerson(person);
-        this.formStatus.set(id ? this.i18n.t('persons.status.updated') : this.i18n.t('persons.status.created'));
+        this.toastService.success(id ? this.i18n.t('persons.status.updated') : this.i18n.t('persons.status.created'));
         this.personModalOpen.set(false);
         this.resetDraft();
+        this.saving.set(false);
       },
-      error: () => this.formStatus.set(this.i18n.t('persons.status.saveError')),
+      error: () => this.saving.set(false),
     });
   }
 
@@ -209,9 +213,14 @@ export class PersonsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     this.api.submitPerson(person.id).subscribe({
-      next: (updated) => this.upsertPerson(updated),
-      error: () => this.formStatus.set(this.i18n.t('persons.status.submitError')),
+      next: (updated) => {
+        this.upsertPerson(updated);
+        this.toastService.success(this.i18n.t('persons.status.submitted') || 'Personne soumise avec succès.');
+        this.saving.set(false);
+      },
+      error: () => this.saving.set(false),
     });
   }
 
@@ -222,12 +231,15 @@ export class PersonsComponent implements OnInit {
     );
     if (!confirmed) return;
 
+    this.saving.set(true);
     this.api.deletePerson(person.id).subscribe({
       next: () => {
         this.persons.update((rows) => rows.filter((row) => row.id !== person.id));
         if (this.selectedPerson()?.id === person.id) this.selectedPerson.set(null);
+        this.toastService.success(this.i18n.t('persons.status.deleted') || 'Personne supprimée avec succès.');
+        this.saving.set(false);
       },
-      error: () => this.formStatus.set(this.i18n.t('persons.status.deleteError')),
+      error: () => this.saving.set(false),
     });
   }
 

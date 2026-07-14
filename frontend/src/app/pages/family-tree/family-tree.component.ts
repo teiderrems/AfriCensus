@@ -205,6 +205,36 @@ export class FamilyTreeComponent implements OnInit {
     }
   }
 
+  exportJson(): void {
+    const tree = this.tree();
+    if (!tree) return;
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tree, null, 2));
+    const dl = document.createElement('a');
+    dl.setAttribute('href', dataStr);
+    dl.setAttribute('download', `family-tree-${this.selectedPersonId()}.json`);
+    document.body.appendChild(dl);
+    dl.click();
+    document.body.removeChild(dl);
+  }
+
+  exportSvg(): void {
+    const svg = document.querySelector('.family-graph');
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svg);
+    // add name spaces if not present
+    if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    const dataStr = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(source);
+    const dl = document.createElement('a');
+    dl.setAttribute('href', dataStr);
+    dl.setAttribute('download', `family-tree-${this.selectedPersonId()}.svg`);
+    document.body.appendChild(dl);
+    dl.click();
+    document.body.removeChild(dl);
+  }
+
   zoomBy(factor: number): void {
     this.scale.set(this.clampScale(this.scale() * factor));
   }

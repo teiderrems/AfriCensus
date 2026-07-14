@@ -1,3 +1,4 @@
+import { DatePickerComponent } from '@/app/shared/date-picker/date-picker.component';
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { Component, OnInit, computed, signal } from '@angular/core';
@@ -31,7 +32,7 @@ import { ConfirmService } from '@/app/core/confirm';
 
 @Component({
   selector: 'acl-admin-portal-page',
-  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent],
+  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent],
   templateUrl: './admin-portal.component.html',
   styleUrl: './admin-portal.component.css',
 })
