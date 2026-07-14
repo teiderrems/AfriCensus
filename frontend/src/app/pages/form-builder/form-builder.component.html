@@ -1,0 +1,57 @@
+<section class="builder">
+      <aside class="palette">
+        <h2>{{ i18n.t('formBuilder.palette.title') }}</h2>
+        @for (type of fieldTypes; track type.type) {
+          <button type="button" (click)="addField(type.type)">
+            <lucide-icon [name]="type.icon"></lucide-icon>
+            {{ i18n.t($any('formBuilder.fieldType.' + type.type)) }}
+          </button>
+        }
+      </aside>
+      <main class="canvas">
+        <header>
+          <div>
+            <h1>Household Demographics 2026</h1>
+            <p>{{ i18n.t('formBuilder.defaultDescription') }}</p>
+          </div>
+          <button class="btn primary" type="button" (click)="saveDraft()"><lucide-icon name="save"></lucide-icon> {{ i18n.t('formBuilder.saveDraft') }}</button>
+        </header>
+        <article class="form-title">
+          <acl-multilang-field [(ngModel)]="title" type="text" [aria-label]="i18n.t('formBuilder.titleAria')"></acl-multilang-field>
+          <acl-multilang-field [(ngModel)]="description" type="textarea" [aria-label]="i18n.t('formBuilder.descriptionAria')"></acl-multilang-field>
+        </article>
+        @for (field of fields(); track $index) {
+          <article class="question" [class.selected]="$index === selected()" (click)="selected.set($index)">
+            <div class="question-head">
+              <lucide-icon name="grip-vertical"></lucide-icon>
+              <acl-multilang-field class="question-field" [(ngModel)]="field.label" type="text" [aria-label]="i18n.t('formBuilder.questionAria')"></acl-multilang-field>
+              <button type="button" (click)="remove($index); $event.stopPropagation()"><lucide-icon name="trash-2"></lucide-icon></button>
+            </div>
+            <input disabled [placeholder]="placeholder(field.type)">
+          </article>
+        }
+        <button class="drop" type="button" (click)="addField('short_text')">{{ i18n.t('formBuilder.dropElement') }}</button>
+      </main>
+      <aside class="settings">
+        <h2>{{ i18n.t('formBuilder.settings.title') }}</h2>
+        @if (activeField(); as field) {
+          <div class="field">
+            <label>{{ i18n.t('formBuilder.settings.questionType') }}</label>
+            <acl-select [ngModel]="field.type" [options]="fieldTypeOptions()"></acl-select>
+          </div>
+          <label class="toggle">
+            <span>{{ i18n.t('formBuilder.settings.requiredField') }}</span>
+            <input type="checkbox" [(ngModel)]="field.required">
+          </label>
+          <button class="btn secondary" type="button" (click)="addBranchingRule()"><lucide-icon name="network"></lucide-icon> {{ i18n.t('formBuilder.settings.addBranchingRule') }}</button>
+          @if (field.branchingRule) {
+            <p class="saved-note">{{ field.branchingRule }}</p>
+          }
+        } @else {
+          <p>{{ i18n.t('formBuilder.settings.noSelection') }}</p>
+        }
+        @if (saveMessage()) {
+          <p class="saved-note">{{ saveMessage() }}</p>
+        }
+      </aside>
+    </section>

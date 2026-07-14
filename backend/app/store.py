@@ -5,8 +5,8 @@ from typing import Any
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from .database import Base, engine, SessionLocal
-from .models import AuditLog, Campaign, DuplicateCandidate, FamilyRelation, HomeContent, Household, MedicalHistory, Person, User, Zone
+from .database import Base, engine, SessionLocal, settings
+from .models import AuditLog, Campaign, DuplicateCandidate, FamilyRelation, FormDefinition, HomeContent, Household, MedicalHistory, Person, User, Zone
 from .schemas import CampaignStatus, Role, ValidationStatus, now_iso
 from .security import hash_password
 
@@ -19,6 +19,7 @@ MODEL_BY_COLLECTION = {
     "persons": Person,
     "family_relations": FamilyRelation,
     "medical_histories": MedicalHistory,
+    "form_definitions": FormDefinition,
     "audit_logs": AuditLog,
     "duplicate_candidates": DuplicateCandidate,
     "home_content": HomeContent,
@@ -32,6 +33,7 @@ COLLECTION_ORDER = (
     "persons",
     "family_relations",
     "medical_histories",
+    "form_definitions",
     "audit_logs",
     "duplicate_candidates",
     "home_content",
@@ -42,7 +44,8 @@ class OrmStore:
     def __init__(self, session_factory: sessionmaker[Session] = SessionLocal):
         self.session_factory = session_factory
         self.lock = threading.Lock()
-        Base.metadata.create_all(bind=engine)
+        if settings.auto_migrate:
+            Base.metadata.create_all(bind=engine)
         self._ensure_seed()
 
     def all(self) -> dict[str, Any]:
@@ -81,9 +84,7 @@ class OrmStore:
             self._ensure_home_content(session)
 
     def _ensure_home_content(self, session: Session) -> None:
-        has_home = session.scalar(select(HomeContent.id).limit(1))
-        if has_home:
-            return
+        session.execute(delete(HomeContent))
         session.add(HomeContent(**_clean_payload(HomeContent, default_home_content())))
 
 
@@ -117,6 +118,7 @@ def seed_data() -> dict[str, Any]:
     person_id = _id()
     spouse_id = _id()
     child_id = _id()
+    grandparent_id = _id()
     now = now_iso()
     return {
         "users": [
@@ -212,7 +214,7 @@ def seed_data() -> dict[str, Any]:
                 "gps_longitude": 1.2228,
                 "housing_type": "Maison familiale",
                 "occupancy_status": "Occupé",
-                "member_count": 3,
+                "member_count": 4,
                 "observation": None,
                 "validation_status": ValidationStatus.SUBMITTED.value,
                 "sync_status": "SYNCED",
@@ -317,6 +319,37 @@ def seed_data() -> dict[str, Any]:
                 "updated_at": now,
                 "deleted_at": None,
             },
+            {
+                "id": grandparent_id,
+                "local_id": "local-person-004",
+                "household_id": household_id,
+                "campaign_id": campaign_id,
+                "zone_id": district_id,
+                "first_name": "Yao",
+                "last_name": "Mensah",
+                "other_names": None,
+                "nickname": "Papavi",
+                "gender": "M",
+                "birth_date": "1958-11-10",
+                "birth_date_estimated": True,
+                "estimated_age": 68,
+                "birth_place": "Kpalimé",
+                "nationality": "Togolaise",
+                "primary_language": "Ewe",
+                "marital_status": "Veuf",
+                "occupation": "Retraité",
+                "education_level": "Primaire",
+                "phone": None,
+                "is_without_document": False,
+                "data_source_type": "DECLARATION",
+                "validation_status": ValidationStatus.SUBMITTED.value,
+                "sync_status": "SYNCED",
+                "decision_comment": None,
+                "created_by": agent_id,
+                "created_at": now,
+                "updated_at": now,
+                "deleted_at": None,
+            },
         ],
         "family_relations": [
             {
@@ -382,6 +415,27 @@ def seed_data() -> dict[str, Any]:
                 "updated_at": now,
                 "deleted_at": None,
             },
+            {
+                "id": _id(),
+                "local_id": "local-rel-004",
+                "campaign_id": campaign_id,
+                "zone_id": district_id,
+                "source_person_id": grandparent_id,
+                "target_person_id": spouse_id,
+                "relation_type": "PERE_DE",
+                "evidence_type": "DECLARATION",
+                "source_type": "AGENT",
+                "validation_status": ValidationStatus.SUBMITTED.value,
+                "sync_status": "SYNCED",
+                "start_date": None,
+                "end_date": None,
+                "comment": "Lien père-enfant (grand-père de la famille)",
+                "decision_comment": None,
+                "created_by": agent_id,
+                "created_at": now,
+                "updated_at": now,
+                "deleted_at": None,
+            },
         ],
         "medical_histories": [
             {
@@ -431,6 +485,26 @@ def seed_data() -> dict[str, Any]:
                 "deleted_at": None,
             },
         ],
+        "form_definitions": [
+            {
+                "id": "household-demographics",
+                "title": {"fr": "Démographie du ménage 2026", "en": "Household Demographics 2026"},
+                "description": {
+                    "fr": "Veuillez collecter les détails concernant le décideur principal du ménage.",
+                    "en": "Please collect details regarding the primary decision maker of the household.",
+                },
+                "fields": [
+                    {"label": {"fr": "Nom complet du répondant", "en": "Full Name of Respondent"}, "type": "short_text", "required": True},
+                    {"label": {"fr": "Date de naissance", "en": "Date of Birth"}, "type": "date", "required": True},
+                ],
+                "status": "DRAFT",
+                "version": 1,
+                "created_by": admin_id,
+                "created_at": now,
+                "updated_at": now,
+                "deleted_at": None,
+            }
+        ],
         "audit_logs": [],
         "duplicate_candidates": [],
         "home_content": [],
@@ -458,7 +532,7 @@ def default_home_content() -> dict[str, Any]:
             "image_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBkEyk2y_EuSE88mqJsQEfIuVaSidWe51IuW2wKt7n3ifzBfaYB8-GNKupyrFoQxC8wKTSc8dA_SKk2j2eojNt6TL-hN3vxAQQZ5G5CCexNt9-Y9ZIofYsKb2LK6CcX9UFFR_G4_7HIEjKY0iVGzzJZcotovAzIYMjVzJLUK0fEvVUnU3FRETTQ7_3qcUTzNQZZs_qjqiX-D7rHvICIbFcZHjxwk4KAsvFQgBzESaHBQDhS8efNFKb-IufH-eKLpDii-2z3UHNr0zA",
             "image_alt": "Ville africaine moderne avec agent de recensement utilisant une tablette",
             "actions": [
-                {"label": "Portail Superviseur", "href": "/dashboard", "icon": "dashboard", "style": "primary"},
+                {"label": "Portail Superviseur", "href": "/dashboard", "icon": "layout-dashboard", "style": "primary"},
                 {"label": "Accès Agent", "href": "/login", "icon": "smartphone", "style": "secondary"},
             ],
         },
@@ -468,9 +542,9 @@ def default_home_content() -> dict[str, Any]:
             {"value": "ZERO", "label": "Support Papier", "tone": "earth"},
         ],
         "values": [
-            {"icon": "location_on", "title": "Précision Terrain", "text": "Collecte hors-ligne synchronisée automatiquement avec cartographie GPS intégrée."},
-            {"icon": "monitoring", "title": "Analyse Temps Réel", "text": "Tableaux de bord interactifs pour suivre les zones et valider les enquêtes en direct."},
-            {"icon": "encrypted", "title": "Sécurité Totale", "text": "Chiffrement, contrôle des rôles et traçabilité des actions sensibles."},
+            {"icon": "map-pin", "title": "Précision Terrain", "text": "Collecte hors-ligne synchronisée automatiquement avec cartographie GPS intégrée."},
+            {"icon": "chart-line", "title": "Analyse Temps Réel", "text": "Tableaux de bord interactifs pour suivre les zones et valider les enquêtes en direct."},
+            {"icon": "lock", "title": "Sécurité Totale", "text": "Chiffrement, contrôle des rôles et traçabilité des actions sensibles."},
         ],
         "sections": [
             {

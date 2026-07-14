@@ -2,35 +2,39 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
 import { roleGuard } from './core/role.guard';
-import { AuditPageComponent } from './pages/audit-page.component';
-import { AdminPortalPageComponent } from './pages/admin-portal-page.component';
-import { BirthDeclarationPageComponent } from './pages/birth-declaration-page.component';
-import { DashboardPageComponent } from './pages/dashboard-page.component';
-import { FormBuilderPageComponent } from './pages/form-builder-page.component';
-import { FamilyTreePageComponent } from './pages/family-tree-page.component';
-import { HomePageComponent } from './pages/home-page.component';
-import { HouseholdsPageComponent } from './pages/households-page.component';
-import { LoginPageComponent } from './pages/login-page.component';
-import { MedicalHistoryPageComponent } from './pages/medical-history-page.component';
-import { PersonsPageComponent } from './pages/persons-page.component';
-import { ReportsPageComponent } from './pages/reports-page.component';
-import { RolePortalPageComponent } from './pages/role-portal-page.component';
-import { ValidationPageComponent } from './pages/validation-page.component';
+import { AuditComponent } from './pages/audit/audit.component';
+import { AdminPortalComponent } from './pages/admin-portal/admin-portal.component';
+import { BirthDeclarationComponent } from './pages/birth-declaration/birth-declaration.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { FormBuilderComponent } from './pages/form-builder/form-builder.component';
+import { FamilyTreeComponent } from './pages/family-tree/family-tree.component';
+import { HomeComponent } from './pages/home/home.component';
+import { HouseholdsComponent } from './pages/households/households.component';
+import { LoginComponent } from './pages/login/login.component';
+import { MedicalHistoryComponent } from './pages/medical-history/medical-history.component';
+import { PersonsComponent } from './pages/persons/persons.component';
+import { ReportsComponent } from './pages/reports/reports.component';
+import { RolePortalComponent } from './pages/role-portal/role-portal.component';
+import { ValidationComponent } from './pages/validation/validation.component';
+import { NotFoundComponent } from './pages/not-found/not-found.component';
+
+import { UnauthorizedComponent } from './pages/unauthorized/unauthorized.component';
 
 export const routes: Routes = [
-  { path: '', component: HomePageComponent },
-  { path: 'login', component: LoginPageComponent },
-  { path: 'portal', canActivate: [authGuard], component: RolePortalPageComponent },
-  { path: 'dashboard', canActivate: [authGuard], component: DashboardPageComponent },
-  { path: 'admin-portal', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, component: AdminPortalPageComponent },
-  { path: 'households', canActivate: [authGuard], component: HouseholdsPageComponent },
-  { path: 'persons', canActivate: [authGuard], component: PersonsPageComponent },
-  { path: 'birth-declaration', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AGENT'] }, component: BirthDeclarationPageComponent },
-  { path: 'family-tree', canActivate: [authGuard], component: FamilyTreePageComponent },
-  { path: 'medical-history', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN'] }, component: MedicalHistoryPageComponent },
-  { path: 'validation', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, component: ValidationPageComponent },
-  { path: 'forms', canActivate: [authGuard], component: FormBuilderPageComponent },
-  { path: 'reports', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN', 'AUDITOR'] }, component: ReportsPageComponent },
-  { path: 'audit', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, component: AuditPageComponent },
-  { path: '**', redirectTo: '' },
+  { path: '', component: HomeComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'unauthorized', component: UnauthorizedComponent },
+  { path: 'portal', canActivate: [authGuard], component: RolePortalComponent },
+  { path: 'dashboard', canActivate: [authGuard], component: DashboardComponent },
+  { path: 'admin-portal', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, component: AdminPortalComponent },
+  { path: 'households', canActivate: [authGuard], component: HouseholdsComponent },
+  { path: 'persons', canActivate: [authGuard], component: PersonsComponent },
+  { path: 'birth-declaration', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AGENT'] }, component: BirthDeclarationComponent },
+  { path: 'family-tree', canActivate: [authGuard], component: FamilyTreeComponent },
+  { path: 'medical-history', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN'] }, component: MedicalHistoryComponent },
+  { path: 'validation', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, component: ValidationComponent },
+  { path: 'forms', canActivate: [authGuard], component: FormBuilderComponent },
+  { path: 'reports', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN', 'AUDITOR'] }, component: ReportsComponent },
+  { path: 'audit', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, component: AuditComponent },
+  { path: '**', component: NotFoundComponent },
 ];

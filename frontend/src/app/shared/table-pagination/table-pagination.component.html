@@ -1,0 +1,7 @@
+    <div class="pagination" [attr.aria-label]="ariaLabel">
+      <span>{{ i18n.t('table.pagination.summary', { count: totalItems, page: page, totalPages: totalPages }) }}</span>
+      <div>
+        <button type="button" class="btn secondary" [disabled]="page <= 1" (click)="previous.emit()">{{ i18n.t('action.previous') }}</button>
+        <button type="button" class="btn secondary" [disabled]="page >= totalPages" (click)="next.emit()">{{ i18n.t('action.next') }}</button>
+      </div>
+    </div>

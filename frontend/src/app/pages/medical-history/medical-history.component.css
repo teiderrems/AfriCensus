@@ -1,0 +1,66 @@
+.page { padding: 40px; display: grid; gap: 24px; }
+    .page-head, .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+    h1 { margin: 0; font-size: 40px; line-height: 48px; }
+    h2 { margin: 0 0 18px; font-size: 24px; }
+    p { margin: 4px 0 0; color: var(--muted); }
+    .controls { display: grid; grid-template-columns: minmax(260px, 1fr) 140px; gap: 14px; min-width: 430px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .stat-card {
+      min-height: 132px; border: 2px solid var(--outline-soft); border-radius: 8px; padding: 18px;
+      background: var(--surface); display: grid; gap: 8px; align-content: start;
+    }
+    .stat-card span { color: var(--primary); }
+    .stat-card.risk span { color: var(--terracotta); }
+    .stat-card strong { font-size: 34px; line-height: 38px; }
+    .workspace { display: grid; grid-template-columns: minmax(320px, 440px) minmax(0, 1fr); gap: 24px; align-items: start; }
+    .medical-form { display: grid; gap: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .medical-form .field { min-width: 0; }
+    .medical-form input, .medical-form select, .medical-form textarea { min-width: 0; }
+    .check { min-height: 48px; display: flex; align-items: center; gap: 10px; font-weight: 800; }
+    .check input { width: 22px; height: 22px; accent-color: var(--primary); }
+    .condition-list { display: grid; gap: 12px; }
+    .condition-item {
+      min-height: 76px; border: 2px solid var(--outline-soft); border-radius: 8px; padding: 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .condition-item strong { display: block; font-size: 18px; }
+    .condition-item span, .muted { color: var(--muted); }
+    .condition-meta { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .pill { border: 1px solid var(--outline-soft); border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+    .severity { border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; background: var(--surface-container); }
+    .severity.HIGH, .severity.CRITICAL { background: var(--error-soft); color: var(--error); }
+    .severity.MODERATE { background: var(--terracotta-soft); color: var(--terracotta); }
+    .severity.LOW { background: var(--primary-soft); color: var(--primary); }
+    .icon-action { width: 42px; height: 42px; border: 1px solid var(--outline-soft); border-radius: 8px; background: var(--surface-low); color: var(--primary); display: inline-grid; place-items: center; cursor: pointer; }
+    .icon-action:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .empty { min-height: 120px; display: grid; place-items: center; border: 2px dashed var(--outline-soft); border-radius: 8px; padding: 20px; text-align: center; }
+    .table-controls { grid-template-columns: minmax(260px, 1fr) repeat(4, minmax(150px, 190px)); align-items: end; }
+    .responsive-card table { min-width: 880px; }
+    .responsive-table th, .responsive-table td { white-space: normal; }
+    .responsive-table td:last-child { width: 74px; }
+    @media(max-width: 1100px) {
+      .workspace { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .table-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media(max-width: 860px) {
+      .page { padding: 24px 16px; }
+      .page-head, .section-head { align-items: start; flex-direction: column; }
+      .controls, .form-row, .stats-grid, .table-controls { grid-template-columns: 1fr; min-width: 0; width: 100%; }
+      .condition-item { align-items: start; flex-direction: column; }
+      .condition-meta { justify-content: flex-start; }
+      h1 { font-size: 32px; line-height: 40px; }
+    }
+    @media(max-width: 520px) {
+      .page { padding: 16px 8px; gap: 16px; }
+      h1 { font-size: 28px; line-height: 36px; }
+      h2 { font-size: 20px; line-height: 28px; margin-bottom: 14px; }
+      .workspace { gap: 16px; }
+      .condition-item { padding: 12px; gap: 12px; }
+      .condition-item strong { overflow-wrap: anywhere; }
+      .condition-meta { gap: 6px; }
+      .pill { max-width: 100%; white-space: normal; line-height: 16px; }
+      .section-head { gap: 6px; }
+      .table-controls { margin: 14px 0; gap: 10px; }
+    }

@@ -177,6 +177,22 @@ class HomeContentOut(HomeContentIn):
     deleted_at: str | None = None
 
 
+class FormDefinitionIn(BaseModel):
+    title: dict[str, str] = Field(..., description="Titre multilingue du formulaire.")
+    description: dict[str, str] = Field(default_factory=dict, description="Description multilingue du formulaire.")
+    fields: list[dict[str, Any]] = Field(default_factory=list, description="Champs et règles du formulaire.")
+    status: str = Field(default="DRAFT", description="Statut de publication du formulaire.")
+    version: int = Field(default=1, ge=1, description="Version fonctionnelle du formulaire.")
+
+
+class FormDefinitionOut(FormDefinitionIn):
+    id: str
+    created_by: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    deleted_at: str | None = None
+
+
 class AuditLogOut(BaseModel):
     id: str
     user_id: str | None = None
@@ -304,6 +320,13 @@ class PersonIn(BaseModel):
     phone: str | None = None
     is_without_document: bool = Field(default=False, description="Indique si la personne est enregistrée sans document officiel.")
     data_source_type: str | None = None
+    vital_status: str | None = Field(default="ALIVE", description="Statut vital de la personne (ALIVE, DECEASED, UNKNOWN)")
+    death_date: str | None = None
+    death_place: str | None = None
+    cause_of_death: str | None = None
+    residency_status: str | None = Field(default=None, description="Statut de résidence (RESIDENT, TEMPORARY_ABSENT, MIGRATED, UNKNOWN)")
+    arrival_date: str | None = None
+    departure_date: str | None = None
 
 
 class FamilyRelationIn(BaseModel):

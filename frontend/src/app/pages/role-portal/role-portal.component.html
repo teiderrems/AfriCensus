@@ -1,0 +1,67 @@
+<section class="portal-page">
+      @if (config(); as portal) {
+        <header class="portal-hero {{ portal.tone }}">
+          <div>
+            <span>{{ portal.eyebrow }}</span>
+            <h1>{{ portal.title }}</h1>
+            <p>{{ portal.description }}</p>
+          </div>
+          <article class="focus-box">
+            <lucide-icon name="target"></lucide-icon>
+            <div>
+              <strong>{{ i18n.t('portal.priority') }}</strong>
+              <p>{{ portal.focus }}</p>
+            </div>
+          </article>
+        </header>
+
+        <section class="kpi-grid" aria-label="Indicateurs du portail">
+          @for (item of indicators(); track item.label) {
+            <article class="kpi-card">
+              <lucide-icon [name]="item.icon"></lucide-icon>
+              <strong>{{ item.value }}</strong>
+              <p>{{ item.label }}</p>
+            </article>
+          }
+        </section>
+
+        <section class="portal-grid">
+          <article class="card actions-panel">
+            <h2>{{ i18n.t('portal.quickActions') }}</h2>
+            <div class="action-list">
+              @for (action of portal.actions; track action.path + action.label) {
+                <a [routerLink]="action.path" [class.primary]="action.primary">
+                  <lucide-icon [name]="action.icon"></lucide-icon>
+                  <div>
+                    <strong>{{ action.label }}</strong>
+                    <p>{{ action.description }}</p>
+                  </div>
+                </a>
+              }
+            </div>
+          </article>
+
+          <article class="card scope-panel">
+            <h2>{{ i18n.t('portal.scope') }}</h2>
+            <dl>
+              <div>
+                <dt>{{ i18n.t('portal.user') }}</dt>
+                <dd>{{ user()?.full_name }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t('portal.role') }}</dt>
+                <dd>{{ i18n.t($any('role.' + (user()?.role || 'AGENT'))) }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t('portal.zones') }}</dt>
+                <dd>{{ user()?.zone_ids?.length || i18n.t('portal.national') }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t('portal.sessionState') }}</dt>
+                <dd>{{ i18n.t('portal.connected') }}</dd>
+              </div>
+            </dl>
+          </article>
+        </section>
+      }
+    </section>

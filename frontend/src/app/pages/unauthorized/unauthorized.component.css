@@ -1,0 +1,42 @@
+.error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 100vh;
+  padding: 32px;
+  background: var(--surface-low);
+  color: var(--ink);
+}
+
+.error-page lucide-angular {
+  width: 64px;
+  height: 64px;
+  color: var(--error);
+  margin-bottom: 24px;
+}
+
+.error-page h1 {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--primary);
+  margin: 0 0 16px 0;
+}
+
+.error-page p {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 500px;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.error-page .btn.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 0 24px;
+}

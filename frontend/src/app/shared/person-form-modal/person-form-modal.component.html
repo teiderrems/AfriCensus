@@ -1,0 +1,39 @@
+<acl-modal [open]="open" [title]="title" [subtitle]="subtitle" [isForm]="true" (submitted)="saved.emit()" (closed)="closed.emit()">
+      <div class="person-form">
+        <div class="field">
+          <label for="personModalFirstName">{{ i18n.t('person.firstName') }}</label>
+          <input id="personModalFirstName" name="firstName" required [ngModel]="draft.first_name" (ngModelChange)="update('first_name', $event)" />
+        </div>
+        <div class="field">
+          <label for="personModalLastName">{{ i18n.t('person.lastName') }}</label>
+          <input id="personModalLastName" name="lastName" required [ngModel]="draft.last_name" (ngModelChange)="update('last_name', $event)" />
+        </div>
+        <div class="field">
+          <label for="personModalGender">{{ i18n.t('person.gender') }}</label>
+          <acl-select id="personModalGender" name="gender" [ngModel]="draft.gender" (ngModelChange)="update('gender', $event)" [options]="genderOptions"></acl-select>
+        </div>
+        <div class="field">
+          <label for="personModalHousehold">{{ i18n.t('person.household') }}</label>
+          <acl-select id="personModalHousehold" name="household" [ngModel]="draft.household_id" (ngModelChange)="householdSelected.emit($event)" [options]="householdOptions"></acl-select>
+        </div>
+        <div class="field">
+          <label for="personModalCampaign">{{ i18n.t('person.campaign') }}</label>
+          <acl-select id="personModalCampaign" name="campaign" [ngModel]="draft.campaign_id" (ngModelChange)="update('campaign_id', $event)" [options]="campaignOptions"></acl-select>
+        </div>
+        <div class="field">
+          <label for="personModalZone">{{ i18n.t('person.zone') }}</label>
+          <acl-select id="personModalZone" name="zone" [ngModel]="draft.zone_id" (ngModelChange)="update('zone_id', $event)" [options]="zoneOptions"></acl-select>
+        </div>
+        <label class="check">
+          <input type="checkbox" name="withoutDocument" [ngModel]="draft.is_without_document" (ngModelChange)="update('is_without_document', $event)" />
+          {{ i18n.t('person.withoutDocument') }}
+        </label>
+      </div>
+      <ng-container modal-actions>
+        <button type="button" class="btn secondary" (click)="closed.emit()">{{ i18n.t('person.cancel') }}</button>
+        <button class="btn primary" type="submit" [disabled]="disabled">
+          <lucide-icon [name]="submitIcon"></lucide-icon>
+          {{ submitLabel }}
+        </button>
+      </ng-container>
+    </acl-modal>

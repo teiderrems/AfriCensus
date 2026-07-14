@@ -1,0 +1,25 @@
+<div class="multilang-field" [class.is-textarea]="type === 'textarea'">
+      <div class="lang-tabs">
+        <button type="button" [class.active]="activeLang === 'fr'" (click)="activeLang = 'fr'">FR</button>
+        <button type="button" [class.active]="activeLang === 'en'" (click)="activeLang = 'en'">EN</button>
+      </div>
+      @if (type === 'textarea') {
+        <textarea
+          [(ngModel)]="value[activeLang]"
+          (ngModelChange)="onInput()"
+          [placeholder]="placeholder"
+          [attr.aria-label]="ariaLabel"
+          [disabled]="disabled"
+          rows="3"
+        ></textarea>
+      } @else {
+        <input
+          type="text"
+          [(ngModel)]="value[activeLang]"
+          (ngModelChange)="onInput()"
+          [placeholder]="placeholder"
+          [attr.aria-label]="ariaLabel"
+          [disabled]="disabled"
+        />
+      }
+    </div>

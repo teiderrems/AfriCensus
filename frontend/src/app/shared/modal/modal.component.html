@@ -1,0 +1,49 @@
+@if (open) {
+      <section class="modal-backdrop" role="presentation" (click)="closed.emit()">
+        <!-- Mode Formulaire -->
+        @if (isForm) {
+          <form
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-labelledby]="titleId"
+            (click)="$event.stopPropagation()"
+            (ngSubmit)="submitted.emit()"
+          >
+            <ng-container *ngTemplateOutlet="modalInner" />
+          </form>
+        }
+        <!-- Mode Standard -->
+        @else {
+          <article
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-labelledby]="titleId"
+            (click)="$event.stopPropagation()"
+          >
+            <ng-container *ngTemplateOutlet="modalInner" />
+          </article>
+        }
+      </section>
+    }
+
+    <ng-template #modalInner>
+      <header class="modal-head">
+        <div>
+          <h2 [id]="titleId">{{ title }}</h2>
+          @if (subtitle) {
+            <p>{{ subtitle }}</p>
+          }
+        </div>
+        <button type="button" class="icon-action" aria-label="Fermer la modale" (click)="closed.emit()">
+          <lucide-icon name="x"></lucide-icon>
+        </button>
+      </header>
+      <div class="modal-body">
+        <ng-content />
+      </div>
+      <footer class="modal-actions">
+        <ng-content select="[modal-actions]" />
+      </footer>
+    </ng-template>

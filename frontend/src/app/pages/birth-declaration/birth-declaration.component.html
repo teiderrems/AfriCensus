@@ -1,0 +1,98 @@
+<section class="page">
+  <header class="page-head">
+    <div>
+      <h1>{{ i18n.t('birthDeclaration.title') }}</h1>
+      <p>{{ i18n.t('birthDeclaration.subtitle') }}</p>
+    </div>
+    <div class="field">
+      <label for="household">{{ i18n.t('birthDeclaration.household') }}</label>
+      <acl-select id="household" name="household" [ngModel]="selectedHouseholdId()"
+        (ngModelChange)="selectHousehold($event)" [options]="householdOptions()"></acl-select>
+    </div>
+  </header>
+
+  @if (status()) {
+  <p class="status" [class.error]="status().startsWith('Erreur')">{{ status() }}</p>
+  }
+
+  <section class="steps">
+    <article class="card participant">
+      <span class="step">1</span>
+      <h2>{{ i18n.t('birthDeclaration.child') }}</h2>
+      <p>{{ i18n.t('birthDeclaration.child.desc') }}</p>
+      <ng-container *ngTemplateOutlet="participantEditor; context: { key: 'child', state: child(), required: true }" />
+    </article>
+
+    <article class="card participant">
+      <span class="step">2</span>
+      <h2>{{ i18n.t('birthDeclaration.mother') }}</h2>
+      <p>{{ i18n.t('birthDeclaration.mother.desc') }}</p>
+      <ng-container
+        *ngTemplateOutlet="participantEditor; context: { key: 'mother', state: mother(), required: false }" />
+    </article>
+
+    <article class="card participant">
+      <span class="step">3</span>
+      <h2>{{ i18n.t('birthDeclaration.father') }}</h2>
+      <p>{{ i18n.t('birthDeclaration.father.desc') }}</p>
+      <ng-container
+        *ngTemplateOutlet="participantEditor; context: { key: 'father', state: father(), required: false }" />
+    </article>
+  </section>
+
+  <ng-template #participantEditor let-key="key" let-state="state" let-required="required">
+    <div class="mode-switch" role="group" [attr.aria-label]="'Mode de saisie ' + key">
+      <button type="button" [class.active]="state.mode === 'existing'" (click)="setMode(key, 'existing')">{{
+        i18n.t('birthDeclaration.existingPerson') }}</button>
+      <button type="button" [class.active]="state.mode === 'new'" (click)="setMode(key, 'new')">{{
+        i18n.t('birthDeclaration.newPerson') }}</button>
+    </div>
+
+    @if (state.mode === 'existing') {
+    <div class="field">
+      <label [for]="key + 'Existing'">{{ i18n.t('birthDeclaration.person') }}</label>
+      <acl-select [id]="key + 'Existing'" [name]="key + 'Existing'" [ngModel]="state.existingId"
+        (ngModelChange)="setExisting(key, $event)" [options]="personOptions()"></acl-select>
+    </div>
+    } @else {
+    <div class="person-form">
+      <div class="field">
+        <label [for]="key + 'FirstName'">{{ i18n.t('person.firstName') }}</label>
+        <input [id]="key + 'FirstName'" [name]="key + 'FirstName'" required [ngModel]="state.draft.first_name"
+          (ngModelChange)="updateDraft(key, 'first_name', $event)" />
+      </div>
+      <div class="field">
+        <label [for]="key + 'LastName'">{{ i18n.t('person.lastName') }}</label>
+        <input [id]="key + 'LastName'" [name]="key + 'LastName'" required [ngModel]="state.draft.last_name"
+          (ngModelChange)="updateDraft(key, 'last_name', $event)" />
+      </div>
+      <div class="field">
+        <label [for]="key + 'Gender'">{{ i18n.t('person.gender') }}</label>
+        <acl-select [id]="key + 'Gender'" [name]="key + 'Gender'" [ngModel]="state.draft.gender"
+          (ngModelChange)="updateDraft(key, 'gender', $event)" [options]="genderOptions()"></acl-select>
+      </div>
+      <div class="field">
+        <label [for]="key + 'BirthDate'">{{ i18n.t('birthDeclaration.birthDate') }}</label>
+        <input [id]="key + 'BirthDate'" [name]="key + 'BirthDate'" type="date" [ngModel]="state.draft.birth_date"
+          (ngModelChange)="updateDraft(key, 'birth_date', emptyToNull($event))" />
+      </div>
+      <label class="check">
+        <input type="checkbox" [name]="key + 'WithoutDocument'" [ngModel]="state.draft.is_without_document"
+          (ngModelChange)="updateDraft(key, 'is_without_document', $event)" />
+        {{ i18n.t('person.withoutDocument') }}
+      </label>
+    </div>
+    }
+  </ng-template>
+
+  <article class="card summary">
+    <div>
+      <h2>{{ i18n.t('birthDeclaration.summary') }}</h2>
+      <p>{{ summaryText() }}</p>
+    </div>
+    <button class="btn primary" type="button" [disabled]="!canSubmit() || saving()" (click)="submitDeclaration()">
+      <lucide-icon name="network"></lucide-icon>
+      {{ saving() ? i18n.t('birthDeclaration.creating') : i18n.t('birthDeclaration.create') }}
+    </button>
+  </article>
+</section>

@@ -1,0 +1,27 @@
+@if (open) {
+      <div class="drawer-backdrop" aria-hidden="true" (click)="closed.emit()"></div>
+      <aside class="detail-drawer" role="dialog" aria-modal="true" [attr.aria-label]="title">
+        <header>
+          <div>
+            <strong>{{ title }}</strong>
+            @if (subtitle) {
+              <span>{{ subtitle }}</span>
+            }
+          </div>
+          <button type="button" class="drawer-close" aria-label="Fermer les détails" (click)="closed.emit()">
+            <lucide-icon name="x"></lucide-icon>
+          </button>
+        </header>
+
+        <dl>
+          @for (item of items; track item.label) {
+            <div>
+              <dt>{{ item.label }}</dt>
+              <dd>{{ display(item.value) }}</dd>
+            </div>
+          }
+        </dl>
+
+        <ng-content />
+      </aside>
+    }

@@ -15,5 +15,5 @@ export const roleGuard: CanActivateFn = (route) => {
     return true;
   }
 
-  return inject(Router).createUrlTree(['/portal']);
+  return inject(Router).createUrlTree(['/unauthorized']);
 };

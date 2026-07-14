@@ -31,6 +31,8 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hmac.compare_digest(_legacy_hash_password(password), password_hash)
 
 
+import jwt
+
 def create_token(subject: str, role: str, token_type: str = "access") -> str:
     ttl = ACCESS_TOKEN_TTL if token_type == "access" else REFRESH_TOKEN_TTL
     payload = {
@@ -41,23 +43,19 @@ def create_token(subject: str, role: str, token_type: str = "access") -> str:
         "iat": int(time.time()),
         "exp": int(time.time()) + ttl,
     }
-    body = _b64(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
-    signature = _sign(body)
-    return f"{body}.{signature}"
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 
 def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     try:
-        body, signature = token.split(".", 1)
-    except ValueError as exc:
-        raise ValueError("Invalid token format") from exc
-    if not hmac.compare_digest(_sign(body), signature):
-        raise ValueError("Invalid token signature")
-    payload = json.loads(base64.urlsafe_b64decode(_pad(body)).decode("utf-8"))
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError as exc:
+        raise ValueError("Token expired") from exc
+    except jwt.InvalidTokenError as exc:
+        raise ValueError("Invalid token format or signature") from exc
+
     if payload.get("typ") != expected_type:
         raise ValueError("Invalid token type")
-    if int(payload.get("exp", 0)) < int(time.time()):
-        raise ValueError("Token expired")
     return payload
 
 

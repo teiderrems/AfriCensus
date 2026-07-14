@@ -13,11 +13,16 @@ dependencies = [
   "httpx==0.28.1",
   "sqlalchemy==2.0.41",
   "psycopg[binary]==3.2.9",
-  "pydantic-settings==2.10.1"
+  "pydantic-settings==2.10.1",
+  "alembic==1.14.0",
+  "PyJWT==2.10.1"
 ]
 
 [project.scripts]
 africensus-api = "app.main:main"
+africensus-migrate = "app.cli.migrate:main"
+africensus-makemigrations = "app.cli.migrate:makemigrations"
+africensus-reset = "app.cli.migrate:reset"
 
 [tool.poetry]
 packages = [{ include = "app" }]

@@ -1,6 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from './core/auth.service';
 import { ErrorService } from './core/error.service';
@@ -9,10 +10,11 @@ import { LanguageCode, TranslationKey } from './core/i18n/translations';
 import { User } from './core/models';
 import { OfflineSyncService } from './core/offline-sync.service';
 import { ThemeService } from './core/theme.service';
+import { SelectComponent } from './shared/select/select.component';
 
 @Component({
   selector: 'acl-root',
-  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, SelectComponent],
   template: `
     <a class="skip-link" href="#main-content">{{ i18n.t('a11y.skipToContent') }}</a>
     @if (errorService.current(); as error) {
@@ -29,7 +31,7 @@ import { ThemeService } from './core/theme.service';
           }
         </div>
         <button type="button" [attr.aria-label]="i18n.t('a11y.closeError')" (click)="errorService.clear()">
-          <span class="material-symbols-outlined">close</span>
+          <lucide-icon name="x"></lucide-icon>
         </button>
       </section>
     }
@@ -46,13 +48,13 @@ import { ThemeService } from './core/theme.service';
           <nav aria-label="Sections applicatives">
             @for (item of nav(); track item.path) {
               <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/' }">
-                <span class="material-symbols-outlined">{{ item.icon }}</span>
+                <lucide-icon [name]="item.icon"></lucide-icon>
                 {{ item.label }}
               </a>
             }
           </nav>
           <button class="logout" type="button" (click)="auth.logout()">
-            <span class="material-symbols-outlined">logout</span>
+            <lucide-icon name="log-out"></lucide-icon>
             {{ i18n.t('app.logout') }}
           </button>
         </aside>
@@ -63,7 +65,7 @@ import { ThemeService } from './core/theme.service';
               <span>{{ user()?.full_name }}</span>
             </div>
             <button class="sync-status" type="button" [class.offline]="!offline.online()" [class.pending]="offline.hasPending()" (click)="offline.syncNow()">
-              <span class="material-symbols-outlined">{{ offline.online() ? 'cloud_done' : 'cloud_off' }}</span>
+              <lucide-icon [name]="offline.online() ? \'cloud\' : \'cloud-off\'"></lucide-icon>
               <strong>{{ offline.online() ? i18n.t('sync.online') : i18n.t('sync.offline') }}</strong>
               @if (offline.hasPending()) {
                 <em>{{ offline.pendingCount() }}</em>
@@ -72,18 +74,19 @@ import { ThemeService } from './core/theme.service';
             <div class="top-actions">
               <label class="language-select">
                 <span class="sr-only">{{ i18n.t('a11y.language') }}</span>
-                <select [attr.aria-label]="i18n.t('a11y.language')" [ngModel]="i18n.language()" (ngModelChange)="setLanguage($event)">
-                  @for (language of i18n.languages; track language) {
-                    <option [value]="language">{{ i18n.t(language === 'fr' ? 'language.fr' : 'language.en') }}</option>
-                  }
-                </select>
+                <acl-select 
+                  [ariaLabel]="i18n.t('a11y.language')" 
+                  [ngModel]="i18n.language()" 
+                  (ngModelChange)="setLanguage($event)"
+                  [options]="languageOptions()">
+                </acl-select>
               </label>
               <button type="button" [attr.aria-label]="i18n.t('a11y.notifications')" (click)="toggleNotifications()">
-                <span class="material-symbols-outlined">notifications</span>
+                <lucide-icon name="bell"></lucide-icon>
               </button>
-              <button type="button" [attr.aria-label]="i18n.t('a11y.help')" (click)="goToHelp()"><span class="material-symbols-outlined">help</span></button>
+              <button type="button" [attr.aria-label]="i18n.t('a11y.help')" (click)="goToHelp()"><lucide-icon name="circle-question-mark"></lucide-icon></button>
               <button type="button" [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
-                <span class="material-symbols-outlined">{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
+                <lucide-icon [name]="theme.theme() === \'dark\' ? \'sun\' : \'moon\'"></lucide-icon>
               </button>
             </div>
           </header>
@@ -112,7 +115,7 @@ import { ThemeService } from './core/theme.service';
           <nav class="mobile-nav" aria-label="Navigation mobile">
             @for (item of nav(); track item.path) {
               <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/' }">
-                <span class="material-symbols-outlined">{{ item.icon }}</span>
+                <lucide-icon [name]="item.icon"></lucide-icon>
                 <span>{{ item.label }}</span>
               </a>
             }
@@ -171,12 +174,16 @@ import { ThemeService } from './core/theme.service';
     .topbar span { color: var(--muted); font-size: 14px; }
     .top-actions { display: flex; gap: 8px; }
     .top-actions button {
-      width: 48px; height: 48px; border: 0; border-radius: 999px; background: transparent; color: var(--muted);
+      width: 44px; height: 44px; display: grid; place-items: center; border: 2px solid var(--outline-soft);
+      border-radius: 999px; background: var(--surface); color: var(--primary); cursor: pointer;
     }
-    .language-select { min-height: 48px; display: flex; align-items: center; }
-    .language-select select {
-      min-height: 40px; border-radius: 999px; border: 2px solid var(--outline-soft);
-      background: var(--surface); color: var(--ink); padding: 0 10px; font-weight: 800;
+    .top-actions button:hover {
+      background: var(--surface-low);
+    }
+    .language-select { min-height: 44px; display: flex; align-items: center; }
+    .language-select ::ng-deep select {
+      min-height: 44px; border-radius: 999px; border: 2px solid var(--outline-soft);
+      background: var(--surface); color: var(--ink); padding: 0 10px; font-weight: 900;
     }
     .sr-only {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
@@ -196,7 +203,7 @@ import { ThemeService } from './core/theme.service';
       min-width: 22px; height: 22px; display: grid; place-items: center; border-radius: 999px;
       background: var(--terracotta); color: white; font-style: normal; font-size: 12px;
     }
-    .sync-status .material-symbols-outlined { font-size: 20px; }
+    .sync-status lucide-icon { font-size: 20px; }
     .sync-panel {
       position: fixed; top: 76px; left: 312px; z-index: 20; width: min(390px, calc(100vw - 32px));
       display: grid; gap: 10px; padding: 16px; border: 2px solid var(--outline-soft); border-radius: 8px;
@@ -229,17 +236,17 @@ import { ThemeService } from './core/theme.service';
       .topbar span { font-size: 11px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
       .top-actions { gap: 2px; flex: 0 0 auto; }
       .top-actions button { width: 36px; height: 36px; }
-      .top-actions .material-symbols-outlined { font-size: 18px; }
+      .top-actions lucide-icon { font-size: 18px; }
       .language-select { min-height: 36px; }
       .language-select select { min-height: 34px; max-width: 78px; padding: 0 6px; font-size: 11px; }
       .sync-status { min-height: 34px; padding: 0 8px; gap: 4px; font-size: 11px; }
-      .sync-status .material-symbols-outlined { font-size: 16px; }
+      .sync-status lucide-icon { font-size: 16px; }
       .sync-status em { min-width: 18px; height: 18px; }
       .notification-panel { top: 62px; right: 8px; width: calc(100vw - 16px); }
       .sync-panel { top: 112px; left: 8px; width: calc(100vw - 16px); }
       .mobile-nav { padding: 6px 8px; gap: 6px; }
       .mobile-nav a { min-height: 40px; padding: 0 10px; font-size: 13px; }
-      .mobile-nav .material-symbols-outlined { font-size: 18px; }
+      .mobile-nav lucide-icon { font-size: 18px; }
     }
   `,
 })
@@ -255,6 +262,11 @@ export class AppComponent {
     if (role === 'AUDITOR') return this.i18n.t('notifications.auditor');
     return this.i18n.t('notifications.default');
   });
+
+  languageOptions = computed(() => this.i18n.languages.map(l => ({
+    value: l,
+    label: this.i18n.t(l === 'fr' ? 'language.fr' : 'language.en')
+  })));
 
   constructor(
     readonly auth: AuthService,
@@ -301,47 +313,49 @@ export class AppComponent {
 
   private navForRole(role: User['role']): Array<{ path: string; label: string; icon: string }> {
     const item = (path: string, labelKey: TranslationKey, icon: string) => ({ path, label: this.i18n.t(labelKey), icon });
-    const base = [item('/portal', 'nav.myPortal', 'dashboard')];
+    const base = [item('/portal', 'nav.myPortal', 'layout-dashboard')];
     const byRole: Record<User['role'], Array<{ path: string; label: string; icon: string }>> = {
       ADMIN: [
-        item('/admin-portal', 'nav.adminPortal', 'admin_panel_settings'),
-        item('/dashboard', 'nav.dashboard', 'analytics'),
-        item('/households', 'nav.households', 'home'),
-        item('/persons', 'nav.persons', 'groups'),
-        item('/birth-declaration', 'nav.birthDeclaration', 'child_care'),
-        item('/family-tree', 'nav.family', 'account_tree'),
-        item('/medical-history', 'nav.medical', 'clinical_notes'),
-        item('/validation', 'nav.validation', 'verified'),
-        item('/reports', 'nav.reports', 'assessment'),
+        item('/admin-portal', 'nav.adminPortal', 'shield'),
+        item('/dashboard', 'nav.dashboard', 'layout-dashboard'),
+        item('/households', 'nav.households', 'house'),
+        item('/users', 'nav.persons', 'users'),
+        item('/birth-declaration', 'nav.birthDeclaration', 'baby'),
+        item('/family-tree', 'nav.family', 'network'),
+        item('/medical-history', 'nav.medical', 'clipboard-check'),
+        item('/validation', 'nav.validation', 'badge-check'),
+        item('/reports', 'nav.reports', 'chart-pie'),
         item('/audit', 'nav.audit', 'history'),
       ],
       SUPERVISOR: [
-        item('/dashboard', 'nav.dashboard', 'analytics'),
-        item('/validation', 'nav.validation', 'verified'),
-        item('/households', 'nav.households', 'home'),
-        item('/persons', 'nav.persons', 'groups'),
-        item('/birth-declaration', 'nav.birthDeclaration', 'child_care'),
-        item('/family-tree', 'nav.family', 'account_tree'),
-        item('/reports', 'nav.reports', 'assessment'),
+        item('/dashboard', 'nav.dashboard', 'layout-dashboard'),
+        item('/validation', 'nav.validation', 'badge-check'),
+        item('/households', 'nav.households', 'house'),
+        item('/persons', 'nav.persons', 'users'),
+        item('/birth-declaration', 'nav.birthDeclaration', 'baby'),
+        item('/family-tree', 'nav.family', 'network'),
+        item('/reports', 'nav.reports', 'chart-pie'),
       ],
       AGENT: [
-        item('/households', 'nav.households', 'home'),
-        item('/persons', 'nav.persons', 'groups'),
-        item('/birth-declaration', 'nav.birthDeclaration', 'child_care'),
-        item('/family-tree', 'nav.family', 'account_tree'),
+        item('/households', 'nav.households', 'house'),
+        item('/persons', 'nav.persons', 'users'),
+        item('/birth-declaration', 'nav.birthDeclaration', 'baby'),
+        item('/family-tree', 'nav.family', 'network'),
+        item('/medical-history', 'nav.medical', 'clipboard-check'),
+        item('/forms', 'nav.forms', 'list-todo'),
       ],
       STATISTICIAN: [
-        item('/dashboard', 'nav.dashboard', 'analytics'),
-        item('/reports', 'nav.reports', 'assessment'),
-        item('/medical-history', 'nav.medical', 'clinical_notes'),
-        item('/family-tree', 'nav.family', 'account_tree'),
-        item('/persons', 'nav.persons', 'groups'),
+        item('/dashboard', 'nav.dashboard', 'layout-dashboard'),
+        item('/reports', 'nav.reports', 'chart-pie'),
+        item('/medical-history', 'nav.medical', 'clipboard-check'),
+        item('/family-tree', 'nav.family', 'network'),
+        item('/persons', 'nav.persons', 'users'),
       ],
       AUDITOR: [
         item('/audit', 'nav.audit', 'history'),
-        item('/validation', 'nav.validation', 'verified'),
-        item('/admin-portal', 'nav.systemAlerts', 'security'),
-        item('/reports', 'nav.reports', 'assessment'),
+        item('/validation', 'nav.validation', 'badge-check'),
+        item('/admin-portal', 'nav.systemAlerts', 'shield'),
+        item('/reports', 'nav.reports', 'chart-pie'),
       ],
     };
     return [...base, ...byRole[role]];

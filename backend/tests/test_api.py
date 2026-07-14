@@ -187,6 +187,43 @@ def test_sync_pull_returns_offline_cache_contract():
         assert isinstance(payload[key], list)
 
 
+def test_form_definitions_can_be_listed_and_saved():
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    listed = client.get("/api/v1/forms", headers=headers)
+    assert listed.status_code == 200
+    assert isinstance(listed.json(), list)
+
+    created = client.post(
+        "/api/v1/forms",
+        headers=headers,
+        json={
+            "title": {"fr": "Questionnaire test", "en": "Test form"},
+            "description": {"fr": "Brouillon", "en": "Draft"},
+            "fields": [{"label": {"fr": "Nom", "en": "Name"}, "type": "short_text", "required": True}],
+            "status": "DRAFT",
+            "version": 1,
+        },
+    )
+    assert created.status_code == 201
+    form_id = created.json()["id"]
+
+    updated = client.put(
+        f"/api/v1/forms/{form_id}",
+        headers=headers,
+        json={
+            "title": {"fr": "Questionnaire test modifié", "en": "Updated test form"},
+            "description": {"fr": "Brouillon", "en": "Draft"},
+            "fields": [{"label": {"fr": "Nom complet", "en": "Full name"}, "type": "short_text", "required": True}],
+            "status": "DRAFT",
+            "version": 2,
+        },
+    )
+    assert updated.status_code == 200
+    assert updated.json()["version"] == 2
+    assert updated.json()["fields"][0]["label"]["fr"] == "Nom complet"
+
+
 def test_users_endpoints_create_update_and_deactivate_user():
     access_token = token()
     headers = {"Authorization": f"Bearer {access_token}"}

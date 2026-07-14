@@ -1,0 +1,164 @@
+<main id="main-content" class="home-page">
+      @if (content(); as data) {
+        <header class="home-nav" aria-label="Navigation publique">
+          <a class="brand" routerLink="/" [attr.aria-label]="data.brand + ' accueil'">
+            <lucide-icon name="chart-column"></lucide-icon>
+            <strong>{{ data.brand }}</strong>
+          </a>
+          <nav [attr.aria-label]="i18n.t('home.aria.nav')">
+            @for (link of data.nav_links; track link.href + link.label) {
+              <a [href]="link.href">{{ link.label }}</a>
+            }
+          </nav>
+          <div class="actions">
+            @for (action of data.actions; track action.href + action.label) {
+              <a class="btn" [class.primary]="action.style === 'primary'" [class.secondary]="action.style !== 'primary'" [href]="action.href">{{ action.label }}</a>
+            }
+            <div class="public-controls" [attr.aria-label]="i18n.t('home.aria.displayPrefs')">
+              <label class="language-select">
+                <span class="sr-only">{{ i18n.t('a11y.language') }}</span>
+                <acl-select [ariaLabel]="i18n.t('a11y.language')" [ngModel]="i18n.language()" (ngModelChange)="setLanguage($event)" [options]="[{label: 'FR', value: 'fr'}, {label: 'EN', value: 'en'}, {label: 'SW', value: 'sw'}]"></acl-select>
+              </label>
+              <button type="button" class="theme-toggle" [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
+                <lucide-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'"></lucide-icon>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <section class="hero">
+          <div class="hero-media" role="img" [attr.aria-label]="data.hero.image_alt || data.hero.title" [style.backgroundImage]="heroBackground(data)"></div>
+          <div class="hero-shade"></div>
+          <div class="hero-content">
+            <span class="trust-pill">
+              <lucide-icon name="badge-check"></lucide-icon>
+              {{ data.hero.badge }}
+            </span>
+            <h1>{{ data.hero.title }}</h1>
+            <p>{{ data.hero.subtitle }}</p>
+            <div class="hero-actions">
+              @for (action of data.hero.actions; track action.href + action.label) {
+                <a [class.hero-primary]="action.style === 'primary'" [class.hero-secondary]="action.style !== 'primary'" [href]="action.href">
+                  @if (action.icon) {
+                    <lucide-icon [name]="action.icon"></lucide-icon>
+                  }
+                  {{ action.label }}
+                </a>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section id="impact" class="trust-bar" [attr.aria-label]="i18n.t('home.aria.impact')">
+          @for (metric of data.metrics; track metric.value + metric.label) {
+            <article><strong [class.earth]="metric.tone === 'earth'">{{ metric.value }}</strong><span>{{ metric.label }}</span></article>
+          }
+        </section>
+
+        <section id="solution" class="value-section">
+          <div class="section-head">
+            <h2>{{ data.hero.badge }}</h2>
+            <p>{{ data.hero.subtitle }}</p>
+          </div>
+          <div class="value-grid">
+            @for (item of data.values; track item.title) {
+              <article class="value-card">
+                <lucide-icon [name]="item.icon"></lucide-icon>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.text }}</p>
+              </article>
+            }
+          </div>
+        </section>
+
+        @for (section of data.sections; track section.id; let index = $index) {
+          <section class="split-section" [class.reverse]="index % 2 === 1" [class.mobile-feature]="section.visual === 'phone'">
+            <article class="split-copy">
+              <span class="eyebrow" [class.earth]="section.tone === 'earth'">{{ section.eyebrow }}</span>
+              <h2>{{ section.title }}</h2>
+              <p>{{ section.text }}</p>
+              <ul [class.earth-list]="section.tone === 'earth'">
+                @for (bullet of section.bullets; track bullet) {
+                  <li><lucide-icon [name]="section.tone === 'earth' ? 'zap' : 'circle-check'"></lucide-icon> {{ bullet }}</li>
+                }
+              </ul>
+            </article>
+            @if (section.visual === 'phone') {
+              <article class="phone-preview" [attr.aria-label]="section.title">
+                <div class="phone-device">
+                  <div class="phone-status" aria-hidden="true">
+                    <span>09:41</span>
+                    <lucide-icon name="signal"></lucide-icon>
+                  </div>
+                  <div class="phone-appbar">
+                    <lucide-icon name="clipboard-check"></lucide-icon>
+                    <div>
+                      <strong>{{ section.title }}</strong>
+                      <small>{{ section.eyebrow }}</small>
+                    </div>
+                  </div>
+                  <div class="phone-progress" aria-hidden="true">
+                    <span></span>
+                  </div>
+                  <div class="phone-card active">
+                    <lucide-icon name="map-pin"></lucide-icon>
+                    <div>
+                      <strong>{{ i18n.t('home.phone.interview') }}</strong>
+                      <small>{{ i18n.t('home.phone.sections') }}</small>
+                    </div>
+                    <b>82%</b>
+                  </div>
+                  <div class="phone-fields" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                  <div class="phone-sync">
+                    <lucide-icon name="cloud-check"></lucide-icon>
+                    <span>{{ i18n.t('home.phone.syncReady') }}</span>
+                  </div>
+                  <button type="button" routerLink="/login">{{ data.actions[0]?.label || i18n.t('home.phone.open') }}</button>
+                </div>
+              </article>
+            } @else {
+              <article class="dashboard-preview" [attr.aria-label]="section.title">
+                <div class="preview-top"></div>
+                <div class="preview-grid"><span></span><span></span><span></span></div>
+                <div class="preview-map"></div>
+              </article>
+            }
+          </section>
+        }
+
+        <footer id="support" class="home-footer">
+          <div class="footer-inner">
+            <section class="footer-brand" [attr.aria-label]="i18n.t('home.aria.presentation')">
+              <a class="footer-logo" routerLink="/" [attr.aria-label]="data.brand + ' accueil'">
+                <lucide-icon name="chart-column"></lucide-icon>
+                <strong>{{ data.brand }}</strong>
+              </a>
+              <h2>{{ data.footer.title }}</h2>
+              <p>{{ data.footer.text }}</p>
+            </section>
+            <nav class="footer-links" [attr.aria-label]="i18n.t('home.aria.usefulLinks')">
+              <strong>{{ i18n.t('home.footer.navigation') }}</strong>
+              @for (link of data.nav_links; track link.href + link.label) {
+                <a [href]="link.href">{{ link.label }}</a>
+              }
+            </nav>
+            <address class="footer-contact">
+              <strong>{{ i18n.t('home.footer.contact') }}</strong>
+              @for (line of contactLines(data.footer.contact); track line) {
+                <span>{{ line }}</span>
+              }
+            </address>
+          </div>
+          <div class="footer-bottom">
+            <span>© 2026 {{ data.brand }}</span>
+            <span>{{ i18n.t('home.footer.securePlatform') }}</span>
+          </div>
+        </footer>
+      } @else {
+        <section class="home-loading" aria-live="polite">{{ i18n.t('home.loading') }}</section>
+      }
+    </main>

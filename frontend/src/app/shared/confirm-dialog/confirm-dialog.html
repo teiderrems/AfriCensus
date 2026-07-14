@@ -1,0 +1,16 @@
+@if (state.show) {
+<div class="confirm-overlay" (click)="cancel()">
+  <div class="confirm-dialog" (click)="$event.stopPropagation()">
+    <div class="confirm-header">
+      <h3>{{ state.title }}</h3>
+    </div>
+    <div class="confirm-body">
+      <p>{{ state.message }}</p>
+    </div>
+    <div class="confirm-actions">
+      <button class="secondary" (click)="cancel()">{{ i18n.t('action.cancel') || 'Cancel' }}</button>
+      <button class="primary" (click)="confirm()">{{ i18n.t('action.confirm') || 'Confirm' }}</button>
+    </div>
+  </div>
+</div>
+}

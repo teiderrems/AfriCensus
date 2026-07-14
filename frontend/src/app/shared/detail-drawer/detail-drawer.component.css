@@ -1,0 +1,92 @@
+.drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(15, 23, 42, .38);
+      backdrop-filter: blur(3px);
+    }
+    .detail-drawer {
+      position: fixed;
+      inset: 0 0 0 auto;
+      z-index: 80;
+      width: min(440px, 100vw);
+      min-height: 100dvh;
+      overflow-y: auto;
+      background: var(--surface);
+      color: var(--text);
+      border-left: 1px solid var(--outline-soft);
+      box-shadow: -24px 0 70px rgba(15, 23, 42, .22);
+      padding: 24px;
+      display: grid;
+      align-content: start;
+      gap: 24px;
+    }
+    header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--outline-soft);
+    }
+    header strong {
+      display: block;
+      font-size: 24px;
+      line-height: 30px;
+    }
+    header span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .drawer-close {
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--outline-soft);
+      border-radius: 8px;
+      background: var(--surface-low);
+      color: var(--text);
+      display: inline-grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .drawer-close:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    dl {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+    }
+    dl div {
+      display: grid;
+      gap: 6px;
+      padding: 14px;
+      border: 1px solid var(--outline-soft);
+      border-radius: 8px;
+      background: var(--surface-low);
+    }
+    dt {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    dd {
+      margin: 0;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 560px) {
+      .detail-drawer {
+        width: 100vw;
+        padding: 18px 16px;
+      }
+      header strong {
+        font-size: 21px;
+        line-height: 28px;
+      }
+    }

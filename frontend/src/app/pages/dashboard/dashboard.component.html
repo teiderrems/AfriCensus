@@ -1,0 +1,77 @@
+<section class="page">
+      <header class="page-head">
+        <div>
+          <h1>{{ i18n.t('dashboard.title') }}</h1>
+          <p>{{ i18n.t('dashboard.subtitle') }}</p>
+        </div>
+        <button class="btn secondary" type="button" [disabled]="loading()" (click)="load()">
+          <lucide-icon name="refresh-cw"></lucide-icon>
+          {{ loading() ? i18n.t('dashboard.refreshing') : i18n.t('dashboard.refresh') }}
+        </button>
+      </header>
+
+      @if (summary(); as data) {
+        <div class="stats">
+          <article class="card stat"><lucide-icon class="blue" name="house"></lucide-icon><p>{{ i18n.t('dashboard.enumeratedHouseholds') }}</p><strong>{{ data.totalHouseholds }}</strong></article>
+          <article class="card stat"><lucide-icon class="green" name="users"></lucide-icon><p>{{ i18n.t('dashboard.individuals') }}</p><strong>{{ data.totalPersons }}</strong></article>
+          <article class="card stat urgent"><lucide-icon name="triangle-alert"></lucide-icon><p>{{ i18n.t('dashboard.toValidate') }}</p><strong>{{ data.submitted }}</strong></article>
+          <article class="card stat"><lucide-icon class="earth" name="id-card"></lucide-icon><p>{{ i18n.t('dashboard.activeAgents') }}</p><strong>{{ data.activeAgents }}</strong></article>
+        </div>
+
+        <div class="content-grid">
+          <article class="card">
+            <h2>{{ i18n.t('dashboard.regionalProgress') }}</h2>
+            <div class="map">
+              <lucide-icon name="map-pin"></lucide-icon>
+            </div>
+            @for (zone of data.zoneProgress; track zone.id) {
+              <div class="zone-row">
+                <div>
+                  <strong>{{ zone.name }}</strong>
+                  <span>{{ zone.progress }}% {{ i18n.t('dashboard.completed') }}</span>
+                </div>
+                <progress [value]="zone.progress" max="100"></progress>
+              </div>
+            }
+          </article>
+
+          <article class="card submissions">
+            <h2>{{ i18n.t('dashboard.recentSubmissions') }}</h2>
+            <div class="table-controls" aria-label="Filtres des soumissions récentes">
+              <div class="field">
+                <label for="submissionSearch">{{ i18n.t('dashboard.search') }}</label>
+                <input id="submissionSearch" name="submissionSearch" type="search" [ngModel]="submissionSearch()" (ngModelChange)="setSubmissionSearch($event)" [placeholder]="i18n.t('dashboard.search.placeholder')" />
+              </div>
+              <acl-status-filter controlId="submissionStatus" [value]="submissionStatusFilter()" (valueChange)="setSubmissionStatusFilter($event)" />
+              <acl-page-size-select controlId="submissionPageSize" [value]="submissionPageSize()" [options]="pageSizes" (valueChange)="setSubmissionPageSize($event)" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>{{ i18n.t('dashboard.table.record') }}</th><th>{{ i18n.t('dashboard.table.zone') }}</th><th>{{ i18n.t('dashboard.table.status') }}</th><th>{{ i18n.t('dashboard.table.updatedAt') }}</th></tr></thead>
+                <tbody>
+                  @for (row of pagedSubmissions(); track row.id) {
+                    <tr>
+                      <td><strong>{{ row.household_code || (row.first_name + ' ' + row.last_name) }}</strong></td>
+                      <td>{{ zoneLabel(row.zone_id) }}</td>
+                      <td><span class="chip {{ row.validation_status }}">{{ row.validation_status }}</span></td>
+                      <td>{{ row.updated_at }}</td>
+                    </tr>
+                  }
+                  @if (!pagedSubmissions().length) {
+                    <tr><td colspan="4" class="empty-cell">{{ i18n.t('dashboard.emptySubmissions') }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <acl-table-pagination
+              ariaLabel="Pagination des soumissions récentes"
+              [totalItems]="filteredSubmissions().length"
+              [page]="submissionPage()"
+              [totalPages]="submissionTotalPages()"
+              (previous)="previousSubmissionPage()"
+              (next)="nextSubmissionPage()"
+            />
+          </article>
+        </div>
+      }
+    </section>

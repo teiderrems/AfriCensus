@@ -1,0 +1,36 @@
+<div class="acl-custom-select" [class.is-open]="isOpen()" [class.is-disabled]="disabled">
+  <div class="acl-select-trigger" [attr.aria-label]="ariaLabel" tabindex="0" (click)="toggleOpen()">
+    <div class="acl-select-value" [class.is-placeholder]="!value || (multiple && value.length === 0)">
+      {{ displayValue() }}
+    </div>
+    <lucide-icon name="chevron-down" class="acl-select-icon"></lucide-icon>
+  </div>
+
+  @if (isOpen()) {
+    <div class="acl-select-dropdown">
+      @if (searchable) {
+        <div class="acl-select-search" (click)="$event.stopPropagation()">
+          <lucide-icon name="search"></lucide-icon>
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Rechercher..." />
+        </div>
+      }
+      <div class="acl-select-options">
+        @for (option of filteredOptions(); track option.value) {
+          <div class="acl-select-option" [class.selected]="isSelected(option.value)" (click)="selectOption(option, $event)">
+            @if (multiple) {
+              <div class="acl-checkbox" [class.checked]="isSelected(option.value)">
+                @if (isSelected(option.value)) {
+                  <lucide-icon name="check"></lucide-icon>
+                }
+              </div>
+            }
+            <span>{{ option.label }}</span>
+          </div>
+        }
+        @if (filteredOptions().length === 0) {
+          <div class="acl-select-empty">Aucun résultat trouvé</div>
+        }
+      </div>
+    </div>
+  }
+</div>

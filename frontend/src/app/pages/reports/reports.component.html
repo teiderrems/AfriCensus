@@ -1,0 +1,10 @@
+<section class="page">
+      <header>
+        <h1>{{ i18n.t('reports.title') }}</h1>
+        <a class="btn primary" href="/api/v1/exports/persons.csv"><lucide-icon name="download"></lucide-icon> {{ i18n.t('reports.exportCsv') }}</a>
+      </header>
+      <article class="card">
+        <h2>{{ i18n.t('reports.populationSummary') }}</h2>
+        <pre>{{ summary() | json }}</pre>
+      </article>
+    </section>

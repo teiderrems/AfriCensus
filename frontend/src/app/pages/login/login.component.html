@@ -1,0 +1,29 @@
+<section class="login-page">
+      <div class="login-panel">
+        <div class="brand">
+          <div class="mark">AL</div>
+          <div>
+            <h1>AfriCensus Link</h1>
+            <p>{{ i18n.t('login.subtitle') }}</p>
+          </div>
+        </div>
+        <form (ngSubmit)="submit()">
+          <div class="field">
+            <label for="username">{{ i18n.t('login.username') }}</label>
+            <input id="username" name="username" [(ngModel)]="username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="password">{{ i18n.t('login.password') }}</label>
+            <input id="password" name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required>
+          </div>
+          @if (error()) {
+            <p class="error">{{ error() }}</p>
+          }
+          <button class="btn primary" type="submit">
+            <lucide-icon name="log-in"></lucide-icon>
+            {{ i18n.t('login.submit') }}
+          </button>
+        </form>
+        <p class="hint">{{ i18n.t('login.hint') }}</p>
+      </div>
+    </section>

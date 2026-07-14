@@ -1,0 +1,366 @@
+<section class="admin-page">
+      <header class="admin-hero">
+        <div>
+          <span class="eyebrow">{{ i18n.t('admin.infra.eyebrow') }}</span>
+          <h1>{{ i18n.t('admin.infra.title') }}</h1>
+          <p>{{ i18n.t('admin.infra.subtitle') }}</p>
+        </div>
+        <div class="last-update" [attr.aria-label]="i18n.t('admin.infra.lastUpdatedAria')">
+          <span>{{ i18n.t('admin.infra.lastUpdated') }}</span>
+          <strong>{{ lastUpdated() }}</strong>
+        </div>
+      </header>
+
+      <nav class="admin-tabs" [attr.aria-label]="i18n.t('admin.tabs.aria')">
+        @for (tab of tabs(); track tab.id) {
+          <button type="button" [class.active]="activeTab() === tab.id" (click)="setTab(tab.id)">
+            <lucide-icon [name]="tab.icon"></lucide-icon>
+            {{ tab.label }}
+          </button>
+        }
+      </nav>
+
+      @if (activeTab() === 'infra') {
+        <section class="tab-header">
+          <div>
+            <h2>{{ i18n.t('admin.infra.overviewTitle') }}</h2>
+            <p><span class="live-dot"></span> {{ i18n.t('admin.infra.overviewSubtitle') }} {{ lastUpdated() }}.</p>
+          </div>
+          <button type="button" class="btn secondary" (click)="refreshAdminData()">
+            <lucide-icon name="history"></lucide-icon>
+            {{ i18n.t('admin.infra.viewLogs') }}
+          </button>
+        </section>
+
+        <section class="health-grid" aria-label="État du système">
+          @for (card of healthCards(); track card.label) {
+            <article class="health-card {{ card.tone }}">
+              <div class="health-top">
+                <lucide-icon class="icon" [name]="card.icon"></lucide-icon>
+                <span class="status">{{ card.status }}</span>
+              </div>
+              <span class="label">{{ card.label }}</span>
+              <strong>{{ card.value }}</strong>
+              @if (card.progress !== undefined) {
+                <div class="meter" aria-hidden="true"><i [style.width.%]="card.progress"></i></div>
+              }
+              <p>{{ card.detail }}</p>
+            </article>
+          }
+        </section>
+
+        <section class="infra-grid">
+          <article class="panel topology-panel">
+            <div class="panel-head compact">
+              <div>
+                <h2>{{ i18n.t('admin.infra.nodesTitle') }}</h2>
+                <p>{{ i18n.t('admin.infra.nodesSubtitle') }}</p>
+              </div>
+              <button type="button" class="link-button" (click)="refreshAdminData()">{{ i18n.t('admin.infra.viewFullMap') }}</button>
+            </div>
+            <div class="topology-map" aria-label="Carte de topologie infrastructure">
+              <span class="node alpha"><i></i>{{ i18n.t('admin.nodeAlpha') }}</span>
+              <span class="node beta"><i></i>{{ i18n.t('admin.nodeBeta') }}</span>
+              <span class="node gamma warning"><i></i>{{ i18n.t('admin.nodeGamma') }}</span>
+              <strong>{{ i18n.t('admin.topologyMap') }}</strong>
+            </div>
+          </article>
+          <article class="panel metrics-panel">
+            <h2>{{ i18n.t('admin.infra.metricsTitle') }}</h2>
+            <p>{{ i18n.t('admin.infra.apiVolume') }}</p>
+            <div class="bars" [attr.aria-label]="i18n.t('admin.infra.apiVolumeAria')">
+              @for (bar of apiVolume; track $index) {
+                <i [style.height.%]="bar"></i>
+              }
+            </div>
+            <div class="metric-row">
+              <span>{{ i18n.t('admin.infra.avgResponseTime') }}</span>
+              <strong>142ms</strong>
+            </div>
+            <div class="metric-row">
+              <span>{{ i18n.t('admin.infra.successRate') }}</span>
+              <strong class="success">99.98%</strong>
+            </div>
+          </article>
+        </section>
+      }
+
+      @if (activeTab() === 'users') {
+        <section class="tab-header">
+          <div>
+            <h2>{{ i18n.t('admin.users.title') }}</h2>
+            <p>{{ i18n.t('admin.users.subtitle') }}</p>
+          </div>
+          <div class="tab-actions">
+            <button type="button" class="btn secondary" (click)="toggleUserFilters()">
+              <lucide-icon name="list-filter"></lucide-icon>
+              {{ i18n.t('admin.users.filters') }}
+            </button>
+            <button type="button" class="btn primary" (click)="prepareNewUser()">
+              <lucide-icon name="user-plus"></lucide-icon>
+              {{ i18n.t('admin.users.createUser') }}
+            </button>
+          </div>
+        </section>
+
+        @if (userFiltersOpen()) {
+          <section class="panel filters-panel">
+            <div class="field">
+              <label for="adminUserSearch">{{ i18n.t('common.search') }}</label>
+              <input id="adminUserSearch" name="adminUserSearch" type="search" [ngModel]="userSearch()" (ngModelChange)="setUserSearch($event)" placeholder="Nom, rôle, zone..." />
+            </div>
+            <div class="field">
+              <label for="adminRoleFilter">{{ i18n.t('common.role') }}</label>
+              <acl-select id="adminRoleFilter" name="adminRoleFilter" [ngModel]="roleFilter()" (ngModelChange)="setRoleFilter($event)" [options]="adminRoleFilterOptions()"></acl-select>
+            </div>
+            <div class="field">
+              <label for="adminStatusFilter">{{ i18n.t('common.status') }}</label>
+              <acl-select id="adminStatusFilter" name="adminStatusFilter" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)" [options]="adminStatusFilterOptions()"></acl-select>
+            </div>
+          </section>
+        }
+        <article class="panel users-panel">
+          <div class="panel-head">
+            <div>
+              <h2>{{ i18n.t('admin.users.summaryTitle') }}</h2>
+              <p>{{ filteredUsers().length }} {{ i18n.t('admin.users.summaryFiltered') }} {{ users().length }}</p>
+            </div>
+            <a routerLink="/persons">{{ i18n.t('admin.users.viewAll') }}</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>{{ i18n.t('admin.users.table.user') }}</th><th>{{ i18n.t('admin.users.table.role') }}</th><th>{{ i18n.t('admin.users.table.zones') }}</th><th>{{ i18n.t('admin.users.table.status') }}</th><th>{{ i18n.t('admin.users.table.lastLogin') }}</th><th>{{ i18n.t('admin.users.table.actions') }}</th></tr>
+              </thead>
+              <tbody>
+                @for (user of pagedUsers(); track user.id) {
+                  <tr>
+                    <td>
+                      <div class="identity">
+                        <span>{{ initials(user.full_name) }}</span>
+                        <strong>{{ user.full_name }}</strong>
+                      </div>
+                    </td>
+                    <td>{{ roleLabel(user.role) }}</td>
+                    <td>{{ user.zone_ids.length || i18n.t('admin.users.zoneNational') }}</td>
+                    <td><span class="admin-chip" [class.offline]="!user.active">{{ user.active ? i18n.t('admin.users.statusActive') : i18n.t('admin.users.statusDraft') }}</span></td>
+                    <td class="muted-cell">{{ i18n.t('admin.users.recentSession') }}</td>
+                    <td class="row-actions">
+                      <button type="button" class="icon-action" [attr.aria-label]="i18n.t('admin.users.action.view')" (click)="openUserDrawer(user)">
+                        <lucide-icon name="eye"></lucide-icon>
+                      </button>
+                      <button type="button" class="icon-action" [attr.aria-label]="i18n.t('admin.users.action.edit')" (click)="editUser(user)">
+                        <lucide-icon name="pencil"></lucide-icon>
+                      </button>
+                      <button type="button" class="icon-action" [attr.aria-label]="user.active === false ? i18n.t('admin.users.action.activate') : i18n.t('admin.users.action.deactivate')" (click)="toggleUserActive(user)">
+                        <lucide-icon [name]="user.active === false ? 'toggle-right' : 'toggle-left'"></lucide-icon>
+                      </button>
+                      <button type="button" class="icon-action danger" [attr.aria-label]="i18n.t('admin.users.action.delete')" (click)="deleteUser(user)">
+                        <lucide-icon name="trash-2"></lucide-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <acl-table-pagination
+            [ariaLabel]="i18n.t('admin.users.paginationLabel')"
+            [totalItems]="filteredUsers().length"
+            [page]="userPage()"
+            [totalPages]="userTotalPages()"
+            (previous)="previousUserPage()"
+            (next)="nextUserPage()"
+          />
+        </article>
+      }
+
+      @if (activeTab() === 'security') {
+        <section class="tab-header">
+          <div>
+            <h2>{{ i18n.t('admin.security.title') }}</h2>
+            <p>{{ i18n.t('admin.security.subtitle') }}</p>
+          </div>
+          <button type="button" class="btn secondary" (click)="exportAuditLog()">
+            <lucide-icon name="download"></lucide-icon>
+            {{ i18n.t('admin.security.export') }}
+          </button>
+        </section>
+        <section class="security-grid">
+          <article class="security-card critical"><lucide-icon name="triangle-alert"></lucide-icon><small>{{ i18n.t('admin.security.criticalAlerts') }}</small><strong>{{ criticalAlerts().length }}</strong><p>{{ i18n.t('admin.security.requiresAction') }}</p></article>
+          <article class="security-card"><lucide-icon name="key"></lucide-icon><small>{{ i18n.t('admin.security.activeSessions') }}</small><strong>{{ activeSessions() }}</strong><p>{{ i18n.t('admin.security.fromYesterday') }}</p></article>
+          <article class="security-card warning"><lucide-icon name="ban"></lucide-icon><small>{{ i18n.t('admin.security.failedAttempts') }}</small><strong>{{ failedAttempts() }}</strong><p>{{ i18n.t('admin.security.last24Hours') }}</p></article>
+        </section>
+        <section class="panel filters-panel audit-filters">
+          <div class="field">
+            <label for="auditSeverity">{{ i18n.t('admin.security.severity') }}</label>
+            <acl-select id="auditSeverity" name="auditSeverity" [ngModel]="auditSeverity()" (ngModelChange)="setAuditSeverity($event)" [options]="auditSeverityOptions()"></acl-select>
+          </div>
+          <div class="field">
+            <label for="auditSearch">{{ i18n.t('admin.security.userIp') }}</label>
+            <input id="auditSearch" name="auditSearch" type="search" [ngModel]="auditSearch()" (ngModelChange)="setAuditSearch($event)" [placeholder]="i18n.t('admin.security.searchPlaceholder')" />
+          </div>
+          <button type="button" class="btn secondary" (click)="clearAuditFilters()">{{ i18n.t('admin.security.clearFilters') }}</button>
+        </section>
+        <section class="panel alerts-panel">
+          <div class="panel-head alert-head">
+            <div>
+              <h2>{{ i18n.t('admin.security.timelineTitle') }}</h2>
+              <p>{{ i18n.t('admin.security.timelineSubtitle') }}</p>
+            </div>
+            <span>{{ filteredAuditLogs().length }} {{ i18n.t('admin.security.events') }}</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>{{ i18n.t('admin.security.table.timestamp') }}</th><th>{{ i18n.t('admin.security.table.severity') }}</th><th>{{ i18n.t('admin.security.table.event') }}</th><th>{{ i18n.t('admin.security.table.user') }}</th><th>{{ i18n.t('admin.security.table.details') }}</th><th>{{ i18n.t('admin.security.table.action') }}</th></tr>
+              </thead>
+              <tbody>
+                @for (log of filteredAuditLogs(); track log.id) {
+                  <tr>
+                    <td>{{ log.created_at | aclLocalizedDate }}</td>
+                    <td><span class="severity-chip" [class.critical]="auditSeverityFor(log) === 'critical'" [class.warning]="auditSeverityFor(log) === 'warning'">{{ auditSeverityFor(log) }}</span></td>
+                    <td>{{ auditTitle(log.action) }}</td>
+                    <td>{{ log.user_name || userName(log.user_id) }}</td>
+                    <td>{{ log.entity_type }} {{ log.entity_name || (log.entity_id | aclShortId) }}</td>
+                    <td><button type="button" class="icon-action" aria-label="Voir les détails du journal" (click)="openAuditLog(log)"><lucide-icon name="eye"></lucide-icon></button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (activeTab() === 'config') {
+        <section class="config-savebar">
+          <div>
+            <h2>{{ i18n.t('admin.config.title') }}</h2>
+            <p>{{ i18n.t('admin.config.subtitle') }}</p>
+            @if (configStatus()) {
+              <p class="editor-status">{{ configStatus() }}</p>
+            }
+          </div>
+          <div class="tab-actions">
+            <button type="button" class="btn secondary" (click)="discardConfig()">{{ i18n.t('admin.config.discard') }}</button>
+            <button type="button" class="btn primary" (click)="saveSystemConfig()">{{ i18n.t('admin.config.save') }}</button>
+          </div>
+        </section>
+        <section class="config-grid">
+          <article class="panel config-card">
+            <div class="config-card-head">
+              <lucide-icon name="settings"></lucide-icon>
+              <h2>{{ i18n.t('admin.config.generalSettings') }}</h2>
+            </div>
+            <div class="config-fields">
+              <div class="field"><label for="systemName">{{ i18n.t('admin.config.systemName') }}</label><input id="systemName" name="systemName" [ngModel]="systemName()" (ngModelChange)="systemName.set($event)" /></div>
+              <div class="field"><label for="defaultLocale">{{ i18n.t('admin.config.defaultLocale') }}</label><acl-select id="defaultLocale" name="defaultLocale" [ngModel]="defaultLocale()" (ngModelChange)="defaultLocale.set($event)" [options]="defaultLocaleOptions()"></acl-select></div>
+              <div class="field wide"><label for="supportEmail">{{ i18n.t('admin.config.supportContact') }}</label><input id="supportEmail" name="supportEmail" type="email" [ngModel]="supportEmail()" (ngModelChange)="supportEmail.set($event)" /></div>
+            </div>
+          </article>
+          <article class="panel config-card">
+            <div class="config-card-head earth">
+              <lucide-icon name="megaphone"></lucide-icon>
+              <h2>{{ i18n.t('admin.config.campaignWindow') }}</h2>
+            </div>
+            <div class="config-fields">
+              <div class="field"><label for="startDate">{{ i18n.t('admin.config.startDate') }}</label><input id="startDate" name="startDate" type="date" [ngModel]="collectionStart()" (ngModelChange)="collectionStart.set($event)" /></div>
+              <div class="field"><label for="endDate">{{ i18n.t('admin.config.endDate') }}</label><input id="endDate" name="endDate" type="date" [ngModel]="collectionEnd()" (ngModelChange)="collectionEnd.set($event)" /></div>
+            </div>
+            <label class="toggle-row">
+              <span><strong>{{ i18n.t('admin.config.strictWindow') }}</strong><em>{{ i18n.t('admin.config.blockData') }}</em></span>
+              <input type="checkbox" [ngModel]="strictWindow()" (ngModelChange)="strictWindow.set($event)" />
+            </label>
+          </article>
+        </section>
+        <section class="panel home-content-panel">
+          <div class="panel-head">
+            <div>
+              <h2>{{ i18n.t('admin.config.homeContent') }}</h2>
+              <p>{{ i18n.t('admin.config.homeContentSubtitle') }}</p>
+            </div>
+            <button type="button" class="btn secondary" (click)="reloadHomeContent()">{{ i18n.t('admin.config.reload') }}</button>
+          </div>
+          <div class="home-editor">
+            <div class="field">
+              <label for="homeJson">{{ i18n.t('admin.config.jsonDocument') }}</label>
+              <textarea id="homeJson" name="homeJson" rows="18" [ngModel]="homeContentJson()" (ngModelChange)="homeContentJson.set($event)" spellcheck="false"></textarea>
+            </div>
+            @if (homeContentStatus()) {
+              <p class="editor-status" [class.error]="homeContentStatus().startsWith('Erreur')">{{ homeContentStatus() }}</p>
+            }
+            <div class="editor-actions">
+              <button type="button" class="btn primary" (click)="saveHomeContent()">{{ i18n.t('admin.config.publish') }}</button>
+            </div>
+          </div>
+        </section>
+      }
+
+      <footer class="admin-footer">
+        <span>{{ i18n.t('admin.footer.brand') }}</span>
+        <span><i></i> API V2.4.0</span>
+        <span><i></i> MAINNET</span>
+      </footer>
+      <acl-detail-drawer
+        [open]="userDrawerOpen()"
+        [title]="selectedUserTitle()"
+        subtitle="Compte utilisateur"
+        [items]="selectedUserDetails()"
+        (closed)="selectedUser.set(null)"
+      />
+      <acl-detail-drawer
+        [open]="auditDrawerOpen()"
+        [title]="selectedAuditTitle()"
+        subtitle="Événement de sécurité"
+        [items]="selectedAuditDetails()"
+        (closed)="selectedAuditLog.set(null)"
+      />
+      <acl-modal
+        [open]="userEditorOpen()"
+        [title]="editingUserId() ? i18n.t('admin.user.edit.title') : i18n.t('admin.user.create.title')"
+        [subtitle]="i18n.t('admin.user.draft.subtitle')"
+        [isForm]="true"
+        (submitted)="saveUser()"
+        (closed)="closeUserEditor()"
+      >
+        <div class="user-form">
+          @if (userFormStatus()) {
+            <p class="editor-status" [class.error]="userFormStatus().startsWith('Erreur')">{{ userFormStatus() }}</p>
+          }
+          <div class="field">
+            <label for="userName">{{ i18n.t('admin.user.username') }}</label>
+            <input id="userName" name="userName" required [ngModel]="userDraft().username" (ngModelChange)="updateUserDraft('username', $event)" />
+          </div>
+          <div class="field">
+            <label for="userFullName">{{ i18n.t('admin.user.fullName') }}</label>
+            <input id="userFullName" name="userFullName" required [ngModel]="userDraft().full_name" (ngModelChange)="updateUserDraft('full_name', $event)" />
+          </div>
+          <div class="field">
+            <label for="userRole">{{ i18n.t('admin.user.role') }}</label>
+            <acl-select id="userRole" name="userRole" [ngModel]="userDraft().role" (ngModelChange)="updateUserDraft('role', $event)" [options]="userRoleOptions()"></acl-select>
+          </div>
+          <div class="field wide">
+            <label for="userZones">{{ i18n.t('admin.user.zones') }}</label>
+            <acl-select id="userZones" name="userZones" [multiple]="true" [ngModel]="userDraft().zone_ids" (ngModelChange)="updateUserDraft('zone_ids', $event)" [options]="zoneOptions()"></acl-select>
+          </div>
+          <div class="field">
+            <label for="userPassword">{{ i18n.t('admin.user.password') }}</label>
+            <input id="userPassword" name="userPassword" type="password" [required]="!editingUserId()" [ngModel]="passwordDraft()" (ngModelChange)="passwordDraft.set($event)" />
+          </div>
+          <label class="toggle-row compact wide">
+            <span><strong>{{ i18n.t('admin.user.active') }}</strong><em>{{ i18n.t('admin.user.active.desc') }}</em></span>
+            <input type="checkbox" [ngModel]="userDraft().active" name="activeUser" (ngModelChange)="updateUserDraft('active', $event)" />
+          </label>
+        </div>
+        <ng-container modal-actions>
+          @if (editingUserId() && passwordDraft()) {
+            <button type="button" class="btn secondary" (click)="resetSelectedUserPassword()">{{ i18n.t('admin.user.resetPassword') }}</button>
+          }
+          <button type="button" class="btn secondary" (click)="closeUserEditor()">{{ i18n.t('admin.user.cancel') }}</button>
+          <button class="btn primary" type="submit" [disabled]="!canSaveUser()">
+            <lucide-icon [name]="editingUserId() ? 'save' : 'plus'"></lucide-icon>
+            {{ editingUserId() ? i18n.t('admin.user.save') : i18n.t('admin.user.create') }}
+          </button>
+        </ng-container>
+      </acl-modal>
+    </section>

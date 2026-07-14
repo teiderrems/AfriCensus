@@ -1,0 +1,6 @@
+.person-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: end; }
+    .check { min-height: 48px; display: flex; align-items: center; gap: 10px; font-weight: 800; }
+    .check input { width: 22px; height: 22px; accent-color: var(--primary); }
+    @media(max-width: 760px) {
+      .person-form { grid-template-columns: 1fr; }
+    }

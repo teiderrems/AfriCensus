@@ -76,5 +76,5 @@ def sync_pull(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
         ],
         "medical_histories": visible(data["medical_histories"], user),
         "corrections": [item for item in visible_persons + visible_households if item.get("validation_status") == "NEEDS_CORRECTION"],
-        "forms": [{"id": "household-demographics", "name": "Household Demographics 2026", "version": 1}],
+        "forms": data.get("form_definitions", []),
     }

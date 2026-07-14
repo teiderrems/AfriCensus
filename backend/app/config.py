@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: str = "development"
     database_url: str = Field(default="sqlite:///./data/africensus.db", alias="DATABASE_URL")
+    auto_migrate: bool = Field(default=True, alias="AUTO_MIGRATE")
     frontend_dist: str = Field(default="frontend/dist/africensus-link/browser", alias="FRONTEND_DIST")
     frontend_public_url: str = Field(default="", alias="FRONTEND_PUBLIC_URL")
     default_language: str = Field(default="fr", alias="DEFAULT_LANGUAGE")

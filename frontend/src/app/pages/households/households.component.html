@@ -1,0 +1,156 @@
+<section class="page">
+      <header class="page-head">
+        <div>
+          <h1>{{ i18n.t('households.title') }}</h1>
+          @if (formStatus()) {
+            <p class="form-status" [class.error]="formStatus().startsWith('Erreur')">{{ formStatus() }}</p>
+          }
+        </div>
+        <button type="button" class="btn primary" (click)="openCreateHousehold()">
+          <lucide-icon name="plus"></lucide-icon>
+          Créer un ménage
+        </button>
+      </header>
+      <article class="card">
+        <div class="table-controls" aria-label="Filtres des ménages">
+          <div class="field">
+            <label for="householdSearch">{{ i18n.t('common.search') }}</label>
+            <input id="householdSearch" name="householdSearch" type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" placeholder="Code, adresse, statut..." />
+          </div>
+          <acl-status-filter controlId="householdStatus" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
+          <acl-page-size-select controlId="householdPageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>{{ i18n.t('households.col.code') }}</th><th>{{ i18n.t('households.col.address') }}</th><th>{{ i18n.t('households.col.members') }}</th><th>{{ i18n.t('common.status') }}</th><th>{{ i18n.t('common.actions') }}</th></tr></thead>
+            <tbody>
+              @for (row of pagedHouseholds(); track row.id) {
+                <tr>
+                  <td><strong>{{ row.household_code }}</strong></td>
+                  <td>{{ row.address_text }}</td>
+                  <td>{{ row.member_count }}</td>
+                  <td><span class="chip {{ row.validation_status }}">{{ row.validation_status }}</span></td>
+                  <td class="row-actions">
+                    <button type="button" class="icon-action" aria-label="Voir les détails du ménage" (click)="openHousehold(row)">
+                      <lucide-icon name="eye"></lucide-icon>
+                    </button>
+                    <button type="button" class="icon-action" aria-label="Modifier le ménage" (click)="editHousehold(row)">
+                      <lucide-icon name="pencil"></lucide-icon>
+                    </button>
+                    <button type="button" class="icon-action" aria-label="Associer un responsable au ménage" (click)="openResponsibleModal(row)">
+                      <lucide-icon name="users"></lucide-icon>
+                    </button>
+                    <button type="button" class="icon-action" aria-label="Soumettre le ménage" (click)="submitHousehold(row)">
+                      <lucide-icon name="upload"></lucide-icon>
+                    </button>
+                    <button type="button" class="icon-action danger" aria-label="Supprimer le ménage" (click)="deleteHousehold(row)">
+                      <lucide-icon name="trash-2"></lucide-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+              @if (!pagedHouseholds().length) {
+                <tr><td colspan="5" class="empty-cell">{{ i18n.t('households.empty') }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <acl-table-pagination
+          ariaLabel="Pagination des ménages"
+          [totalItems]="filteredHouseholds().length"
+          [page]="page()"
+          [totalPages]="totalPages()"
+          (previous)="previousPage()"
+          (next)="nextPage()"
+        />
+      </article>
+      <acl-detail-drawer
+        [open]="householdDrawerOpen()"
+        [title]="selectedHouseholdTitle()"
+        subtitle="Fiche ménage"
+        [items]="selectedHouseholdDetails()"
+        (closed)="selectedHousehold.set(null)"
+      />
+      <acl-modal
+        [open]="responsibleModalOpen()"
+        [title]="'Responsable du ménage'"
+        [subtitle]="responsibleHouseholdLabel()"
+        (closed)="closeResponsibleModal()"
+      >
+        <div class="responsible-panel">
+          <div class="field">
+            <label for="responsiblePerson">{{ i18n.t('households.responsible') }}</label>
+            <acl-select id="responsiblePerson" name="responsiblePerson" [ngModel]="responsiblePersonId()" (ngModelChange)="responsiblePersonId.set($event)" [options]="responsiblePersonOptions()"></acl-select>
+          </div>
+          <button type="button" class="btn secondary" (click)="openResponsiblePersonCreation()">
+            <lucide-icon name="user-plus"></lucide-icon>
+            Ajouter une personne dans ce ménage
+          </button>
+        </div>
+        <ng-container modal-actions>
+          <button type="button" class="btn secondary" (click)="closeResponsibleModal()">{{ i18n.t('action.cancel') }}</button>
+          <button type="button" class="btn primary" [disabled]="!responsiblePersonId()" (click)="assignResponsiblePerson()">
+            <lucide-icon name="link"></lucide-icon>
+            Associer
+          </button>
+        </ng-container>
+      </acl-modal>
+      <acl-person-form-modal
+        [open]="responsiblePersonModalOpen()"
+        title="Ajouter une personne responsable"
+        subtitle="La personne sera créée directement dans le ménage sélectionné."
+        [draft]="responsiblePersonDraft()"
+        [households]="responsibleHouseholdList()"
+        [campaigns]="campaigns()"
+        [zones]="zones()"
+        [disabled]="!canSaveResponsiblePerson()"
+        submitIcon="user-plus"
+        submitLabel="Créer et associer"
+        (closed)="responsiblePersonModalOpen.set(false)"
+        (draftChange)="responsiblePersonDraft.set($event)"
+        (householdSelected)="selectResponsiblePersonHousehold($event)"
+        (saved)="createAndAssignResponsiblePerson()"
+      />
+      <acl-modal
+        [open]="householdModalOpen()"
+        [title]="editingHouseholdId() ? i18n.t('household.edit.title') : i18n.t('household.create.title')"
+        [subtitle]="i18n.t('household.draft.subtitle')"
+        [isForm]="true"
+        (submitted)="saveHousehold()"
+        (closed)="closeHouseholdModal()"
+      >
+        <div class="crud-form">
+          <div class="field">
+            <label for="householdCode">{{ i18n.t('household.code') }}</label>
+            <input id="householdCode" name="householdCode" required [ngModel]="draft().household_code" (ngModelChange)="updateDraft('household_code', $event)" />
+          </div>
+          <div class="field">
+            <label for="householdCampaign">{{ i18n.t('household.campaign') }}</label>
+            <acl-select id="householdCampaign" name="householdCampaign" [ngModel]="draft().campaign_id" (ngModelChange)="updateDraft('campaign_id', $event)" [options]="householdCampaignOptions()"></acl-select>
+          </div>
+          <div class="field">
+            <label for="householdZone">{{ i18n.t('household.zone') }}</label>
+            <acl-select id="householdZone" name="householdZone" [ngModel]="draft().zone_id" (ngModelChange)="updateDraft('zone_id', $event)" [options]="householdZoneOptions()"></acl-select>
+          </div>
+          <div class="field wide">
+            <label for="householdAddress">{{ i18n.t('household.address') }}</label>
+            <input id="householdAddress" name="householdAddress" required [ngModel]="draft().address_text" (ngModelChange)="updateDraft('address_text', $event)" />
+          </div>
+          <div class="field">
+            <label for="householdMembers">{{ i18n.t('household.members') }}</label>
+            <input id="householdMembers" name="householdMembers" type="number" min="0" [ngModel]="draft().member_count" (ngModelChange)="updateDraft('member_count', numberValue($event))" />
+          </div>
+          <div class="field wide">
+            <label for="householdObservation">{{ i18n.t('household.observation') }}</label>
+            <textarea id="householdObservation" name="householdObservation" rows="3" [ngModel]="draft().observation" (ngModelChange)="updateDraft('observation', $event)"></textarea>
+          </div>
+        </div>
+        <ng-container modal-actions>
+          <button type="button" class="btn secondary" (click)="closeHouseholdModal()">{{ i18n.t('household.cancel') }}</button>
+          <button class="btn primary" type="submit" [disabled]="!canSaveHousehold()">
+            <lucide-icon [name]="editingHouseholdId() ? 'save' : 'plus'"></lucide-icon>
+            {{ editingHouseholdId() ? i18n.t('household.save.btn') : i18n.t('household.create.btn') }}
+          </button>
+        </ng-container>
+      </acl-modal>
+    </section>

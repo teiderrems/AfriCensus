@@ -76,9 +76,15 @@ export class AuthService {
 
   private decodePayload(token: string): { exp?: number } | null {
     try {
-      const body = token.split('.')[0];
+      const body = token.split('.')[1];
       const normalized = body.replace(/-/g, '+').replace(/_/g, '/');
-      return JSON.parse(atob(normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '='))) as { exp?: number };
+      const decodedStr = decodeURIComponent(
+        atob(normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '='))
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(decodedStr) as { exp?: number };
     } catch {
       return null;
     }

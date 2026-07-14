@@ -111,9 +111,14 @@ button {
   }
 }
 
-.material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
-  line-height: 1;
+lucide-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+lucide-icon > svg {
+  width: 1em;
+  height: 1em;
 }
 
 @layer components {

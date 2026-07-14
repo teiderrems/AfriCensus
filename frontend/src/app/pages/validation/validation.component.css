@@ -1,0 +1,7 @@
+.page { padding: 40px; display: grid; gap: 24px; }
+    h1 { margin: 0; font-size: 40px; } p { color: var(--muted); margin: 4px 0 0; }
+    .queue { display: grid; gap: 16px; }
+    .queue-card { display: flex; justify-content: space-between; gap: 20px; align-items: center; border-left: 8px solid var(--primary); }
+    h2 { margin: 12px 0 4px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    @media(max-width: 860px){.page{padding:24px 16px}.queue-card{align-items:start; flex-direction:column}}

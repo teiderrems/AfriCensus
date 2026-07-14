@@ -1,0 +1,53 @@
+.portal-page { padding: 40px; display: grid; gap: 24px; }
+    .portal-hero {
+      min-height: 260px; display: flex; align-items: end; justify-content: space-between; gap: 24px;
+      border: 2px solid var(--outline-soft); border-radius: 8px; padding: 32px; background: var(--surface);
+      border-left-width: 8px;
+    }
+    .portal-hero.admin { border-left-color: var(--primary); }
+    .portal-hero.supervisor { border-left-color: var(--growth); }
+    .portal-hero.agent { border-left-color: var(--terracotta); }
+    .portal-hero.statistician { border-left-color: var(--secondary); }
+    .portal-hero.auditor { border-left-color: var(--error); }
+    .portal-hero > div > span { color: var(--primary); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+    h1 { margin: 8px 0 10px; font-size: 42px; line-height: 50px; }
+    h2 { margin: 0 0 18px; font-size: 24px; }
+    p { margin: 0; color: var(--muted); }
+    .focus-box {
+      width: min(100%, 360px); min-height: 120px; display: flex; align-items: start; gap: 14px;
+      border: 2px solid var(--outline-soft); border-radius: 8px; padding: 18px; background: var(--surface-low);
+    }
+    .focus-box lucide-icon { color: var(--terracotta); font-size: 32px; }
+    .focus-box strong { display: block; margin-bottom: 6px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .kpi-card {
+      min-height: 140px; border: 2px solid var(--outline-soft); border-radius: 8px; padding: 18px;
+      background: var(--surface); display: grid; gap: 8px; align-content: start;
+    }
+    .kpi-card lucide-icon { color: var(--primary); }
+    .kpi-card strong { font-size: 34px; line-height: 40px; }
+    .portal-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, .8fr); gap: 24px; align-items: start; }
+    .action-list { display: grid; gap: 12px; }
+    .action-list a {
+      min-height: 92px; display: flex; align-items: center; gap: 16px; border: 2px solid var(--outline-soft);
+      border-radius: 8px; padding: 16px; text-decoration: none; background: var(--surface); color: var(--ink);
+    }
+    .action-list a.primary { border-color: var(--primary); background: var(--primary-soft); }
+    .action-list lucide-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px; background: var(--surface-container); color: var(--primary); }
+    .action-list strong { display: block; margin-bottom: 4px; }
+    dl { display: grid; gap: 14px; margin: 0; }
+    dl div { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--surface-high); padding-bottom: 12px; }
+    dt { color: var(--muted); font-weight: 800; }
+    dd { margin: 0; font-weight: 900; text-align: right; }
+    @media(max-width: 1080px) {
+      .portal-hero, .portal-grid { align-items: stretch; flex-direction: column; grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media(max-width: 860px) {
+      .portal-page { padding: 24px 16px; }
+      .portal-hero { padding: 24px; }
+      h1 { font-size: 32px; line-height: 40px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      dl div { align-items: start; flex-direction: column; }
+      dd { text-align: left; }
+    }

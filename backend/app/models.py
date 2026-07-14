@@ -95,7 +95,9 @@ class Person(Base, DictMixin):
         "id", "local_id", "household_id", "campaign_id", "zone_id", "first_name", "last_name", "other_names",
         "nickname", "gender", "birth_date", "birth_date_estimated", "estimated_age", "birth_place", "nationality",
         "primary_language", "marital_status", "occupation", "education_level", "phone", "is_without_document",
-        "data_source_type", "validation_status", "sync_status", "decision_comment", "created_by", "created_at", "updated_at", "deleted_at",
+        "data_source_type", "vital_status", "death_date", "death_place", "cause_of_death", "residency_status",
+        "arrival_date", "departure_date", "validation_status", "sync_status", "decision_comment", "created_by",
+        "created_at", "updated_at", "deleted_at",
     )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -120,6 +122,13 @@ class Person(Base, DictMixin):
     phone: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
     is_without_document: Mapped[bool] = mapped_column(Boolean, default=False)
     data_source_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    vital_status: Mapped[str] = mapped_column(String(40), default="ALIVE", server_default="ALIVE")
+    death_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    death_place: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    cause_of_death: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    residency_status: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    arrival_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    departure_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
     validation_status: Mapped[str] = mapped_column(String(40), index=True)
     sync_status: Mapped[str] = mapped_column(String(40), index=True)
     decision_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -183,6 +192,22 @@ class MedicalHistory(Base, DictMixin):
     validation_status: Mapped[str] = mapped_column(String(40), index=True)
     sync_status: Mapped[str] = mapped_column(String(40), index=True)
     decision_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class FormDefinition(Base, DictMixin):
+    __tablename__ = "form_definitions"
+    dict_fields = ("id", "title", "description", "fields", "status", "version", "created_by", "created_at", "updated_at", "deleted_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    title: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    description: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    fields: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    status: Mapped[str] = mapped_column(String(40), default="DRAFT", index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
     created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)

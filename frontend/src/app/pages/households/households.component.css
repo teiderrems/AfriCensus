@@ -1,0 +1,22 @@
+.page { padding: 40px; display: grid; gap: 24px; }
+    .page-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+    h1 { margin: 0; font-size: 40px; }
+    h2 { margin: 0; font-size: 24px; }
+    p { margin: 4px 0 0; color: var(--muted); }
+    .form-status { font-weight: 800; color: var(--growth); }
+    .crud-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: end; }
+    .crud-form .wide { grid-column: span 2; }
+    .form-status { font-weight: 800; color: var(--growth); margin-bottom: 14px; }
+    .form-status.error { color: var(--error); }
+    .table-controls { grid-template-columns: minmax(220px, 1fr) 190px 130px; margin-top: 0; }
+    .icon-action { width: 42px; height: 42px; border: 1px solid var(--outline-soft); border-radius: 8px; background: var(--surface-low); color: var(--primary); display: inline-grid; place-items: center; cursor: pointer; }
+    .icon-action.danger { color: var(--error); }
+    .icon-action:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .responsible-panel { display: grid; gap: 16px; }
+    .responsible-panel .btn { justify-self: start; }
+    @media(max-width: 860px){
+      .page{padding:24px 16px}
+      .page-head { flex-direction: column; }
+      .crud-form, .crud-form .wide { grid-template-columns: 1fr; grid-column: auto; }
+    }

@@ -1,0 +1,54 @@
+<section class="page">
+      <h1>{{ i18n.t('audit.title') }}</h1>
+      <article class="card">
+        <div class="table-controls" [attr.aria-label]="i18n.t('audit.filtersLabel')">
+          <div class="field">
+            <label for="auditSearch">{{ i18n.t('audit.search') }}</label>
+            <input id="auditSearch" name="auditSearch" type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" [placeholder]="i18n.t('audit.search.placeholder')" />
+          </div>
+          <div class="field">
+            <label for="auditEntity">{{ i18n.t('audit.entity') }}</label>
+            <acl-select id="auditEntity" name="auditEntity" [ngModel]="entityFilter()" (ngModelChange)="setEntityFilter($event)" [options]="auditEntityOptions()"></acl-select>
+          </div>
+          <acl-page-size-select controlId="auditPageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>{{ i18n.t('audit.table.date') }}</th><th>{{ i18n.t('audit.table.action') }}</th><th>{{ i18n.t('audit.table.entity') }}</th><th>{{ i18n.t('audit.table.user') }}</th><th>{{ i18n.t('audit.table.details') }}</th></tr></thead>
+            <tbody>
+              @for (log of pagedLogs(); track log.id) {
+                <tr>
+                  <td>{{ log.created_at | aclLocalizedDate }}</td>
+                  <td><strong>{{ log.action }}</strong></td>
+                  <td>{{ log.entity_type }} · {{ log.entity_name || (log.entity_id | aclShortId) }}</td>
+                  <td>{{ log.user_name || userName(log.user_id) }}</td>
+                  <td>
+                    <button type="button" class="icon-action" [attr.aria-label]="i18n.t('audit.table.viewDetails')" (click)="openLog(log)">
+                      <lucide-icon name="eye"></lucide-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+              @if (!pagedLogs().length) {
+                <tr><td colspan="5" class="empty-cell">{{ i18n.t('audit.emptyLogs') }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <acl-table-pagination
+          [ariaLabel]="i18n.t('audit.paginationLabel')"
+          [totalItems]="filteredLogs().length"
+          [page]="page()"
+          [totalPages]="totalPages()"
+          (previous)="previousPage()"
+          (next)="nextPage()"
+        />
+      </article>
+      <acl-detail-drawer
+        [open]="logDrawerOpen()"
+        [title]="selectedLogTitle()"
+        [subtitle]="i18n.t('audit.drawer.subtitle')"
+        [items]="selectedLogDetails()"
+        (closed)="selectedLog.set(null)"
+      />
+    </section>
