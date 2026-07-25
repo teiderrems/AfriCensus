@@ -13,7 +13,7 @@
       min-height: 100dvh;
       overflow-y: auto;
       background: var(--surface);
-      color: var(--text);
+      color: var(--ink);
       border-left: 1px solid var(--outline-soft);
       box-shadow: -24px 0 70px rgba(15, 23, 42, .22);
       padding: 24px;
@@ -46,13 +46,13 @@
       border: 1px solid var(--outline-soft);
       border-radius: 8px;
       background: var(--surface-low);
-      color: var(--text);
+      color: var(--ink);
       display: inline-grid;
       place-items: center;
       cursor: pointer;
     }
     .drawer-close:focus-visible {
-      outline: 3px solid var(--focus);
+      outline: 3px solid var(--focus-ring);
       outline-offset: 2px;
     }
     dl {

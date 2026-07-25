@@ -15,25 +15,27 @@ import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size
 import { PersonFormModalComponent } from '@/app/shared/person-form-modal/person-form-modal.component';
 import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
+import { CardComponent } from '@/app/shared/card/card.component';
+import { ButtonComponent } from '@/app/shared/button/button';
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
-  selector: 'acl-households-page',
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, ModalComponent, PageSizeSelectComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, SelectComponent],
+  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, ModalComponent, PageSizeSelectComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './households.component.html',
   styleUrl: './households.component.css',
 })
 export class HouseholdsComponent implements OnInit {
   responsiblePersonOptions = computed(() => [
-    {label: this.i18n.t('household.selectResponsible'), value: ''},
-    ...this.persons().map(p => ({label: p.first_name + ' ' + p.last_name, value: p.id}))
+    { label: this.i18n.t('household.selectResponsible'), value: '' },
+    ...this.persons().map(p => ({ label: p.first_name + ' ' + p.last_name, value: p.id }))
   ]);
   householdCampaignOptions = computed(() => [
-    {label: this.i18n.t('admin.campaign.select'), value: ''},
-    ...this.campaigns().map(c => ({label: c.name, value: c.id}))
+    { label: this.i18n.t('admin.campaign.select'), value: '' },
+    ...this.campaigns().map(c => ({ label: c.name, value: c.id }))
   ]);
   householdZoneOptions = computed(() => [
-    {label: this.i18n.t('admin.zone.select'), value: ''},
-    ...this.zones().map(z => ({label: z.name, value: z.id}))
+    { label: this.i18n.t('admin.zone.select'), value: '' },
+    ...this.zones().map(z => ({ label: z.name, value: z.id }))
   ]);
 
   readonly households = signal<HouseholdRecord[]>([]);
@@ -107,16 +109,16 @@ export class HouseholdsComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly confirmService: ConfirmService,
     private readonly toastService: ToastService
-  ) {}
+  ) { }
   ngOnInit(): void {
     this.api.households().subscribe({
-      next: (rows) => this.households.set(rows),
+      next: (rows) => this.households.set(rows.items),
       error: () => this.households.set([]),
     });
     this.api.campaigns().subscribe({
       next: (rows) => {
-        this.campaigns.set(rows);
-        const firstCampaign = rows[0];
+        this.campaigns.set(rows.items);
+        const firstCampaign = rows.items[0];
         if (firstCampaign && !this.draft().campaign_id) {
           this.updateDraft('campaign_id', firstCampaign.id);
         }
@@ -125,8 +127,8 @@ export class HouseholdsComponent implements OnInit {
     });
     this.api.zones().subscribe({
       next: (rows) => {
-        this.zones.set(rows);
-        const firstZone = rows[0];
+        this.zones.set(rows.items);
+        const firstZone = rows.items[0];
         if (firstZone && !this.draft().zone_id) {
           this.updateDraft('zone_id', firstZone.id);
         }
@@ -366,7 +368,7 @@ export class HouseholdsComponent implements OnInit {
 
   private loadPersons(): void {
     this.api.persons().subscribe({
-      next: (rows) => this.persons.set(rows),
+      next: (rows) => this.persons.set(rows.items),
       error: () => this.persons.set([]),
     });
   }

@@ -12,6 +12,7 @@ export interface UserCreateDto {
 export interface UserUpdateDto {
   username?: string;
   full_name?: string;
+  role?: string;
   active?: boolean;
   zone_ids?: string[];
 }
@@ -91,4 +92,34 @@ export interface FieldMetadataDto {
 export interface FieldCatalogDto {
   language: string;
   models: Record<string, Record<string, FieldMetadataDto>>;
+}
+
+export interface FormDefinitionWriteDto {
+  title: Record<string, string>;
+  description: Record<string, string>;
+  fields: any[];
+  status: string;
+  version?: number;
+}
+
+export interface ZoneWriteDto {
+  name: string;
+  code: string;
+  type: string;
+  parent_id?: string | null;
+  status?: string;
+}
+
+export interface CampaignWriteDto {
+  name: string;
+  status: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  zone_ids: string[];
+}
+
+export interface AppRoleWriteDto {
+  name: string;
+  description?: string | null;
+  permissions: string[];
 }

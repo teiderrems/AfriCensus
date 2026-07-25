@@ -1,195 +1,224 @@
 <section class="page">
-      <header class="page-head">
-        <div>
-          <h1>{{ i18n.t('familyTree.title') }}</h1>
-          <p>{{ i18n.t('familyTree.subtitle') }}</p>
-        </div>
-        <div class="field selector">
-          <label for="person">{{ i18n.t('familyTree.centralPerson') }}</label>
-          <acl-select id="person" name="person" [ngModel]="selectedPersonId()" (ngModelChange)="selectPerson($event)" [options]="personOptions()"></acl-select>
-        </div>
-        <div class="field depth-selector">
-          <label for="depth">{{ i18n.t('familyTree.graphDepth') }}</label>
-          <acl-select id="depth" name="depth" [ngModel]="depth()" (ngModelChange)="setDepth($event)" [options]="depthOptions"></acl-select>
-        </div>
-      </header>
+  <header class="page-head">
+    <div>
+      <h1>{{ i18n.t('familyTree.title') }}</h1>
+      <p>{{ i18n.t('familyTree.subtitle') }}</p>
+    </div>
+    <div class="field selector">
+      <label for="person">{{ i18n.t('familyTree.centralPerson') }}</label>
+      <acl-select id="person" name="person" [ngModel]="selectedPersonId()" (ngModelChange)="selectPerson($event)"
+        [options]="personOptions()"></acl-select>
+    </div>
+    <div class="field depth-selector">
+      <label for="depth">{{ i18n.t('familyTree.graphDepth') }}</label>
+      <acl-select id="depth" name="depth" [ngModel]="depth()" (ngModelChange)="setDepth($event)"
+        [options]="depthOptions"></acl-select>
+    </div>
+  </header>
 
-      @if (tree(); as family) {
-        <section class="workspace">
-          <article class="graph-panel">
-            <div class="toolbar">
-              <div class="tool-group">
-                <button type="button" [title]="i18n.t('familyTree.zoomOut')" (click)="zoomBy(0.85)">
-                  <lucide-icon name="minus"></lucide-icon>
-                </button>
-                <button type="button" [title]="i18n.t('familyTree.exportSvg')" (click)="exportSvg()">
-                  <lucide-icon name="image"></lucide-icon>
-                </button>
-                <button type="button" [title]="i18n.t('familyTree.exportJson')" (click)="exportJson()">
-                  <lucide-icon name="file-json"></lucide-icon>
-                </button>
-                <button type="button" [title]="i18n.t('familyTree.recenter')" (click)="resetView()">
-                  <lucide-icon name="focus"></lucide-icon>
-                </button>
-                <button type="button" [title]="i18n.t('familyTree.resetLayout')" (click)="resetLayout()">
-                  <lucide-icon name="git-merge"></lucide-icon>
-                </button>
-                <button type="button" [title]="i18n.t('familyTree.zoomIn')" (click)="zoomBy(1.15)">
-                  <lucide-icon name="plus"></lucide-icon>
-                </button>
-              </div>
-              <div class="legend" [attr.aria-label]="i18n.t('familyTree.relationsLegend')">
-                <span><i class="legend-line parent-child"></i>{{ i18n.t('familyTree.relation.parentChild') }}</span>
-                <span><i class="legend-line spouse"></i>{{ i18n.t('familyTree.relation.spouse') }}</span>
-                <span><i class="legend-line guardian"></i>{{ i18n.t('familyTree.relation.guardian') }}</span>
-              </div>
-              <span class="zoom-label">{{ zoomPercent() }}%</span>
+  @if (tree(); as family) {
+  <section class="workspace" [class.no-details]="!showDetails()">
+    <article class="graph-panel">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button type="button" [aclTooltip]="i18n.t('familyTree.toggleDetails')" (click)="toggleDetails()" [class.active-tool]="showDetails()">
+            <lucide-icon [name]="showDetails() ? 'panel-right-close' : 'panel-right-open'"></lucide-icon>
+          </button>
+          <button type="button" [aclTooltip]="showTable() ? i18n.t('familyTree.hideTable') : i18n.t('familyTree.showTable')" (click)="showTable.set(!showTable())">
+            <lucide-icon [name]="showTable() ? 'table-2' : 'table'"></lucide-icon>
+          </button>
+          <button type="button" [aclTooltip]="i18n.t('familyTree.zoomOut')" (click)="zoomBy(0.85)">
+            <lucide-icon name="minus"></lucide-icon>
+          </button>
+          <div class="export-dropdown-container">
+            <button type="button" class="export-toggle-btn" [aclTooltip]="i18n.t('action.export')" (click)="toggleExportMenu($event)" [class.active-tool]="showExportMenu()">
+              <lucide-icon name="download"></lucide-icon>
+              <lucide-icon name="chevron-down" class="chevron"></lucide-icon>
+            </button>
+            @if (showExportMenu()) {
+            <div class="export-menu" (click)="$event.stopPropagation()">
+              <button type="button" class="export-item" (click)="triggerExport('png')">
+                <lucide-icon name="image"></lucide-icon>
+                <span>Image PNG</span>
+              </button>
+              <button type="button" class="export-item" (click)="triggerExport('svg')">
+                <lucide-icon name="file-code"></lucide-icon>
+                <span>Vecteur SVG</span>
+              </button>
+              <button type="button" class="export-item" (click)="triggerExport('pdf')">
+                <lucide-icon name="file-text"></lucide-icon>
+                <span>Document PDF</span>
+              </button>
+              <div class="export-menu-divider"></div>
+              <button type="button" class="export-item" (click)="triggerExport('csv')">
+                <lucide-icon name="table"></lucide-icon>
+                <span>Données CSV</span>
+              </button>
+              <button type="button" class="export-item" (click)="triggerExport('json')">
+                <lucide-icon name="file-braces"></lucide-icon>
+                <span>Fichier JSON</span>
+              </button>
             </div>
-
-            <svg
-              class="family-graph"
-              viewBox="0 0 1100 620"
-              role="img"
-              aria-label="Graphe interactif des relations familiales"
-              (wheel)="onWheel($event)"
-              (pointerdown)="startPan($event)"
-              (pointermove)="movePan($event)"
-              (pointerup)="endInteraction($event)"
-              (pointercancel)="endInteraction($event)"
-              (pointerleave)="endPan()"
-            >
-              <defs>
-                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
-                </marker>
-              </defs>
-
-              <g [attr.transform]="transform()">
-                @for (link of visibleLinks(); track link.id) {
-                  @if (nodeById(link.source); as source) {
-                    @if (nodeById(link.target); as target) {
-                      <path
-                        class="edge"
-                        [class.active]="isSelectedLink(link)"
-                        [class.parent-child]="link.category === 'parent_child'"
-                        [class.spouse]="link.category === 'spouse'"
-                        [class.guardian]="link.category === 'guardian'"
-                        [class.dragging]="draggedLinkId() === link.id"
-                        [attr.d]="edgePath(link, source, target)"
-                        (pointerdown)="startLinkDrag(link, $event)"
-                        marker-end="url(#arrow)"
-                      ></path>
-                    }
-                  }
-                }
-
-                @for (node of layoutNodes(); track node.id) {
-                  <g
-                    class="node"
-                    [class.root]="node.group === 'root'"
-                    [class.selected]="selectedNode()?.id === node.id"
-                    [class.dragging]="draggedNodeId() === node.id"
-                    [attr.transform]="'translate(' + node.x + ' ' + node.y + ')'"
-                    (pointerdown)="selectNode(node, $event)"
-                    (dblclick)="selectPerson(node.id)"
-                    tabindex="0"
-                    role="button"
-                  >
-                    <rect x="-86" y="-42" width="172" height="84" rx="8"></rect>
-                    <circle cx="-62" cy="-14" r="15"></circle>
-                    <text class="node-icon" x="-62" y="-8">{{ iconGlyph(node) }}</text>
-                    <text class="node-title" x="-38" y="-12">{{ node.label }}</text>
-                    <text class="node-meta" x="-38" y="12">{{ nodeMeta(node) }}</text>
-                    <text class="node-group" x="-76" y="31">{{ labelGroup(node.group) }}</text>
-                  </g>
-                }
-
-                @for (link of visibleLinks(); track link.id + '-label') {
-                  @if (nodeById(link.source); as source) {
-                    @if (nodeById(link.target); as target) {
-                      <g class="edge-label-wrap" [attr.transform]="edgeLabelTransform(link, source, target)">
-                        <text class="edge-label" text-anchor="middle" dominant-baseline="middle">
-                          {{ shortRelation(link.type) }}
-                        </text>
-                      </g>
-                    }
-                  }
-                }
-              </g>
-            </svg>
-          </article>
-
-          <aside class="details card">
-            @if (selectedNode(); as node) {
-              <span class="chip {{ node.validation_status }}">{{ node.validation_status }}</span>
-              <h2>{{ node.label }}</h2>
-              <p>{{ labelGroup(node.group) }} · {{ nodeMeta(node) }}</p>
-              <div class="detail-actions">
-                <button class="btn primary" type="button" (click)="selectPerson(node.id)">
-                  <lucide-icon name="network"></lucide-icon>
-                  {{ i18n.t('familyTree.setAsCenter') }}
-                </button>
-                <button class="btn secondary" type="button" (click)="focusNode(node.id)">
-                  <lucide-icon name="locate-fixed"></lucide-icon>
-                  {{ i18n.t('familyTree.focus') }}
-                </button>
-              </div>
-              <h3>{{ i18n.t('familyTree.directRelations') }}</h3>
-              <div class="relation-list">
-                @for (link of linksFor(node.id); track link.id) {
-                  <button type="button" (click)="selectLinkedNode(link, node.id)">
-                    <strong>{{ shortRelation(link.type) }}</strong>
-                    <span>{{ labelFor(otherNodeId(link, node.id)) }}</span>
-                  </button>
-                }
-                @if (!linksFor(node.id).length) {
-                  <span class="empty">{{ i18n.t('familyTree.noDirectLink') }}</span>
-                }
-              </div>
             }
-          </aside>
-        </section>
+          </div>
+          <button type="button" [aclTooltip]="i18n.t('familyTree.recenter')" (click)="resetView()">
+            <lucide-icon name="focus"></lucide-icon>
+          </button>
+          <button type="button" [aclTooltip]="i18n.t('familyTree.resetLayout')" (click)="resetLayout()">
+            <lucide-icon name="git-merge"></lucide-icon>
+          </button>
+          <button type="button" [aclTooltip]="i18n.t('familyTree.zoomIn')" (click)="zoomBy(1.15)">
+            <lucide-icon name="plus"></lucide-icon>
+          </button>
+        </div>
+        <div class="legend" [attr.aria-label]="i18n.t('familyTree.relationsLegend')">
+          <span><i class="legend-line parent-child"></i>{{ i18n.t('familyTree.relation.parentChild') }}</span>
+          <span><i class="legend-line spouse"></i>{{ i18n.t('familyTree.relation.spouse') }}</span>
+          <span><i class="legend-line guardian"></i>{{ i18n.t('familyTree.relation.guardian') }}</span>
+        </div>
+        <span class="zoom-label">{{ zoomPercent() }}%</span>
+      </div>
 
-        <article class="card">
-          <h2>{{ i18n.t('familyTree.familyLinks') }}</h2>
-          <div class="table-controls" aria-label="Filtres des liens familiaux">
-            <div class="field">
-              <label for="relationSearch">{{ i18n.t('familyTree.search') }}</label>
-              <input id="relationSearch" name="relationSearch" type="search" [ngModel]="relationSearch()" (ngModelChange)="setRelationSearch($event)" [placeholder]="i18n.t('familyTree.search.placeholder')" />
-            </div>
-            <div class="field">
-              <label for="relationCategory">{{ i18n.t('familyTree.category') }}</label>
-              <acl-select id="relationCategory" name="relationCategory" [ngModel]="relationCategoryFilter()" (ngModelChange)="setRelationCategoryFilter($event)" [options]="relationCategoryOptions()"></acl-select>
-            </div>
-            <acl-page-size-select controlId="relationPageSize" [value]="relationPageSize()" [options]="pageSizes" (valueChange)="setRelationPageSize($event)" />
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>{{ i18n.t('familyTree.table.source') }}</th><th>{{ i18n.t('familyTree.table.relation') }}</th><th>{{ i18n.t('familyTree.category') }}</th><th>{{ i18n.t('familyTree.table.target') }}</th><th>{{ i18n.t('familyTree.table.status') }}</th></tr></thead>
-              <tbody>
-                @for (link of pagedRelationLinks(); track link.id) {
-                  <tr [class.selected-row]="isSelectedLink(link)">
-                    <td>{{ labelFor(link.source) }}</td>
-                    <td><strong>{{ link.type }}</strong></td>
-                    <td><span class="relation-chip {{ link.category }}">{{ labelCategory(link.category) }}</span></td>
-                    <td>{{ labelFor(link.target) }}</td>
-                    <td><span class="chip {{ link.status }}">{{ link.status }}</span></td>
-                  </tr>
-                }
-                @if (!pagedRelationLinks().length) {
-                  <tr><td colspan="5" class="empty-cell">{{ i18n.t('familyTree.emptyLinks') }}</td></tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <acl-table-pagination
-            ariaLabel="Pagination des liens familiaux"
-            [totalItems]="filteredRelationLinks().length"
-            [page]="relationPage()"
-            [totalPages]="relationTotalPages()"
-            (previous)="previousRelationPage()"
-            (next)="nextRelationPage()"
-          />
-        </article>
+      <svg class="family-graph" viewBox="0 0 1100 620" role="img"
+        aria-label="Graphe interactif des relations familiales" (wheel)="onWheel($event)"
+        (pointerdown)="startPan($event)" (pointermove)="movePan($event)" (pointerup)="endInteraction($event)"
+        (pointercancel)="endInteraction($event)" (pointerleave)="endPan()">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+          </marker>
+        </defs>
+
+        <g [attr.transform]="transform()">
+          @for (link of visibleLinks(); track link.id) {
+          @if (nodeById(link.source); as source) {
+          @if (nodeById(link.target); as target) {
+          <path class="edge-hitbox" [attr.d]="edgePath(link, source, target)"
+            (pointerdown)="startLinkDrag(link, $event)"></path>
+          <path class="edge" [class.active]="isSelectedLink(link)"
+            [class.parent-child]="link.category === 'parent_child'" [class.spouse]="link.category === 'spouse'"
+            [class.guardian]="link.category === 'guardian'" [class.dragging]="draggedLinkId() === link.id"
+            [attr.d]="edgePath(link, source, target)" (pointerdown)="startLinkDrag(link, $event)"
+            marker-end="url(#arrow)"></path>
+          <circle class="edge-target-hitbox" [attr.cx]="target.x + (manualLinkOffsets()[link.id]?.tx || 0)" [attr.cy]="target.y - 42" r="16"
+            fill="transparent" style="cursor: ew-resize;" (pointerdown)="startTargetDrag(link, $event)"></circle>
+          }
+          }
+          }
+
+          @for (node of layoutNodes(); track node.id) {
+          <g class="node" [class.root]="node.group === 'root'" [class.selected]="selectedNode()?.id === node.id"
+            [class.dragging]="draggedNodeId() === node.id" [attr.transform]="'translate(' + node.x + ' ' + node.y + ')'"
+            (pointerdown)="selectNode(node, $event)" (dblclick)="selectPerson(node.id)" tabindex="0" role="button">
+            <rect x="-86" y="-42" width="172" height="84" rx="8"></rect>
+            <circle cx="-62" cy="-14" r="15"></circle>
+            <text class="node-icon" x="-62" y="-8">{{ iconGlyph(node) }}</text>
+            <text class="node-title" x="-38" y="-12">{{ node.label }}</text>
+            <text class="node-meta" x="-38" y="12">{{ nodeMeta(node) }}</text>
+            <text class="node-group" x="-76" y="31">{{ labelGroup(node.group) }}</text>
+          </g>
+          }
+
+          @for (link of visibleLinks(); track link.id + '-label') {
+          @if (nodeById(link.source); as source) {
+          @if (nodeById(link.target); as target) {
+          <g class="edge-label-wrap" [attr.transform]="edgeLabelTransform(link, source, target)"
+            (pointerdown)="startLinkDrag(link, $event)">
+            <text class="edge-label" text-anchor="middle" dominant-baseline="middle">
+              {{ shortRelation(link.type) }}
+            </text>
+          </g>
+          }
+          }
+          }
+        </g>
+      </svg>
+    </article>
+
+    @if (showDetails()) {
+    <aside class="details card">
+      @if (selectedNode(); as node) {
+      <span class="chip {{ node.validation_status }}">{{ node.validation_status }}</span>
+      <h2>{{ node.label }}</h2>
+      <p>{{ labelGroup(node.group) }} · {{ nodeMeta(node) }}</p>
+      <div class="detail-actions">
+        <acl-button type="button" (click)="selectPerson(node.id)">
+          <lucide-icon name="network"></lucide-icon>
+          {{ i18n.t('familyTree.setAsCenter') }}
+        </acl-button>
+        <acl-button variant="secondary" type="button" (click)="focusNode(node.id)">
+          <lucide-icon name="locate-fixed"></lucide-icon>
+          {{ i18n.t('familyTree.focus') }}
+        </acl-button>
+      </div>
+      <h3>{{ i18n.t('familyTree.directRelations') }}</h3>
+      <div class="relation-list">
+        @for (link of linksFor(node.id); track link.id) {
+        <button type="button" (click)="selectLinkedNode(link, node.id)">
+          <strong>{{ shortRelation(link.type) }}</strong>
+          <span>{{ labelFor(otherNodeId(link, node.id)) }}</span>
+        </button>
+        }
+        @if (!linksFor(node.id).length) {
+        <span class="empty">{{ i18n.t('familyTree.noDirectLink') }}</span>
+        }
+      </div>
       }
-    </section>
+    </aside>
+    }
+  </section>
+
+  @if (showTable()) {
+  <acl-card class="card">
+    <h2>{{ i18n.t('familyTree.familyLinks') }}</h2>
+    <div class="table-controls" aria-label="Filtres des liens familiaux">
+      <div class="field">
+        <label for="relationSearch">{{ i18n.t('familyTree.search') }}</label>
+        <input id="relationSearch" name="relationSearch" type="search" [ngModel]="relationSearch()"
+          (ngModelChange)="setRelationSearch($event)" [placeholder]="i18n.t('familyTree.search.placeholder')" />
+      </div>
+      <div class="field">
+        <label for="relationCategory">{{ i18n.t('familyTree.category') }}</label>
+        <acl-select id="relationCategory" name="relationCategory" [ngModel]="relationCategoryFilter()"
+          (ngModelChange)="setRelationCategoryFilter($event)" [options]="relationCategoryOptions()"></acl-select>
+      </div>
+      <acl-page-size-select controlId="relationPageSize" [value]="relationPageSize()" [options]="pageSizes"
+        (valueChange)="setRelationPageSize($event)" />
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ i18n.t('familyTree.table.source') }}</th>
+            <th>{{ i18n.t('familyTree.table.relation') }}</th>
+            <th>{{ i18n.t('familyTree.category') }}</th>
+            <th>{{ i18n.t('familyTree.table.target') }}</th>
+            <th>{{ i18n.t('familyTree.table.status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (link of pagedRelationLinks(); track link.id) {
+          <tr [class.selected-row]="isSelectedLink(link)">
+            <td>{{ labelFor(link.source) }}</td>
+            <td><strong>{{ link.type }}</strong></td>
+            <td><span class="relation-chip {{ link.category }}">{{ labelCategory(link.category) }}</span></td>
+            <td>{{ labelFor(link.target) }}</td>
+            <td><span class="chip {{ link.status }}">{{ link.status }}</span></td>
+          </tr>
+          }
+          @if (!pagedRelationLinks().length) {
+          <tr>
+            <td colspan="5" class="empty-cell">{{ i18n.t('familyTree.emptyLinks') }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <acl-table-pagination ariaLabel="Pagination des liens familiaux" [totalItems]="filteredRelationLinks().length"
+      [page]="relationPage()" [totalPages]="relationTotalPages()" (previous)="previousRelationPage()"
+      (next)="nextRelationPage()" />
+  </acl-card>
+  }
+  }
+</section>

@@ -1,11 +1,12 @@
-from typing import Any
+from typing import Any, Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
 
 from .schemas import Role
 from .security import decode_token
-from .services import find_item
+from .database import get_db
 
 
 bearer_scheme = HTTPBearer(
@@ -15,22 +16,53 @@ bearer_scheme = HTTPBearer(
 )
 
 
-def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)) -> dict[str, Any]:
+def current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db)
+) -> Any:
     if not credentials:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
     try:
         payload = decode_token(credentials.credentials)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    user = find_item("users", payload["sub"])
-    if not user or not user.get("active"):
+    from .models import User
+    user = db.query(User).filter(User.id == payload["sub"]).first()
+    if not user or not user.active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive or unknown user")
-    return user
+    return user.to_dict()
 
 
-def require_roles(*roles: Role):
-    def dependency(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
-        if user["role"] not in {role.value for role in roles}:
+async def get_current_user_ws(token: str) -> Any:
+    try:
+        payload = decode_token(token)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+    
+    from .database import SessionLocal
+    from .models import User
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.id == payload["sub"]).first()
+        if not user or not user.active:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive or unknown user")
+        return user.to_dict()
+
+
+def require_roles(*roles_args):
+    # Flatten the arguments in case a list is passed (e.g. ["ADMIN", "SUPERVISOR"])
+    allowed_roles = set()
+    for r in roles_args:
+        if isinstance(r, list):
+            for item in r:
+                allowed_roles.add(item.value if hasattr(item, "value") else item)
+        else:
+            allowed_roles.add(r.value if hasattr(r, "value") else r)
+
+    def dependency(user: Any = Depends(current_user)) -> Any:
+        user_role = user.get("role") if isinstance(user, dict) else getattr(user, "role", None)
+        if hasattr(user_role, "value"):
+            user_role = user_role.value
+        if user_role not in allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return user
 

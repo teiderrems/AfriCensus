@@ -1,4 +1,4 @@
-<acl-modal [open]="open" [title]="title" [subtitle]="subtitle" [isForm]="true" (submitted)="saved.emit()" (closed)="closed.emit()">
+<acl-modal [open]="open" [title]="title" [subtitle]="subtitle || i18n.t('person.draft.subtitle')" [isForm]="true" (submitted)="saved.emit()" (closed)="closed.emit()">
       <div class="person-form">
         <div class="field">
           <label for="personModalFirstName">{{ i18n.t('person.firstName') }}</label>
@@ -11,6 +11,10 @@
         <div class="field">
           <label for="personModalGender">{{ i18n.t('person.gender') }}</label>
           <acl-select id="personModalGender" name="gender" [ngModel]="draft.gender" (ngModelChange)="update('gender', $event)" [options]="genderOptions"></acl-select>
+        </div>
+        <div class="field">
+          <label for="personModalBirthDate">{{ i18n.t('person.birthDate') }}</label>
+          <acl-date-picker id="personModalBirthDate" name="birthDate" [ngModel]="draft.birth_date" (ngModelChange)="update('birth_date', $event)"></acl-date-picker>
         </div>
         <div class="field">
           <label for="personModalHousehold">{{ i18n.t('person.household') }}</label>
@@ -30,10 +34,10 @@
         </label>
       </div>
       <ng-container modal-actions>
-        <button type="button" class="btn secondary" (click)="closed.emit()">{{ i18n.t('person.cancel') }}</button>
-        <button class="btn primary" type="submit" [disabled]="disabled">
+        <acl-button variant="secondary" type="button" (click)="closed.emit()">{{ i18n.t('person.cancel') }}</acl-button>
+        <acl-button type="submit" [disabled]="disabled">
           <lucide-icon [name]="submitIcon" [class.animate-spin]="submitIcon === 'loader'"></lucide-icon>
           {{ submitLabel }}
-        </button>
+        </acl-button>
       </ng-container>
     </acl-modal>

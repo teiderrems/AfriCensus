@@ -1,4 +1,2 @@
-.field { display: grid; gap: 8px; min-width: 0; }
-    label { color: var(--ink); font-size: 14px; font-weight: 800; line-height: 20px; }
-    select { width: 100%; min-height: 48px; border: 2px solid var(--outline-soft); border-radius: 6px; background: var(--surface); color: var(--ink); padding: 9px 12px; }
-    select:focus { border-color: var(--primary); outline: 3px solid color-mix(in srgb, var(--primary) 28%, transparent); outline-offset: 1px; }
+.page-size-control { display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 44px; }
+.page-size-label { color: var(--muted); font-size: 13px; font-weight: 700; white-space: nowrap; margin: 0; }

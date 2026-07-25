@@ -13,10 +13,12 @@ import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size
 import { PersonFormModalComponent } from '@/app/shared/person-form-modal/person-form-modal.component';
 import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
+import { CardComponent } from '@/app/shared/card/card.component';
+import { ButtonComponent } from "@/app/shared/button/button";
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
-  selector: 'acl-persons-page',
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent],
+  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './persons.component.html',
   styleUrl: './persons.component.css',
 })
@@ -74,27 +76,27 @@ export class PersonsComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly confirmService: ConfirmService,
     private readonly toastService: ToastService
-  ) {}
+  ) { }
   ngOnInit(): void {
     this.api.households().subscribe({
       next: (rows) => {
-        this.households.set(rows);
-        if (rows.length && !this.draft().household_id) {
-          this.selectHousehold(rows[0].id);
+        this.households.set(rows.items);
+        if (rows.items.length && !this.draft().household_id) {
+          this.selectHousehold(rows.items[0].id);
         }
       },
       error: () => this.households.set([]),
     });
     this.api.persons().subscribe({
-      next: (rows) => this.persons.set(rows),
+      next: (rows) => this.persons.set(rows.items),
       error: () => this.persons.set([]),
     });
     this.api.campaigns().subscribe({
-      next: (rows) => this.campaigns.set(rows),
+      next: (rows) => this.campaigns.set(rows.items),
       error: () => this.campaigns.set([]),
     });
     this.api.zones().subscribe({
-      next: (rows) => this.zones.set(rows),
+      next: (rows) => this.zones.set(rows.items),
       error: () => this.zones.set([]),
     });
   }

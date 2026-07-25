@@ -6,7 +6,8 @@
     p { margin: 4px 0 0; color: var(--muted); }
     .selector { min-width: 280px; }
     .depth-selector { min-width: 170px; }
-    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: stretch; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: stretch; transition: grid-template-columns 0.25s ease; }
+    .workspace.no-details { grid-template-columns: 1fr; }
     .graph-panel {
       min-height: 680px; background: var(--surface); border: 2px solid var(--outline-soft);
       border-radius: 8px; overflow: hidden; display: grid; grid-template-rows: auto 1fr;
@@ -18,7 +19,85 @@
     .tool-group { display: flex; gap: 6px; }
     .toolbar button {
       width: 44px; height: 44px; border: 1px solid var(--outline-soft); border-radius: 6px;
-      background: var(--surface); color: var(--primary); display: grid; place-items: center;
+      background: var(--surface); color: var(--primary); display: grid; place-items: center; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .toolbar button.active-tool {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+    }
+
+    .export-dropdown-container {
+      position: relative;
+      display: inline-block;
+    }
+    .export-toggle-btn {
+      width: auto !important;
+      padding: 0 10px !important;
+      display: flex !important;
+      align-items: center;
+      gap: 6px;
+    }
+    .export-toggle-btn .chevron {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+    }
+    .export-toggle-btn.active-tool .chevron {
+      transform: rotate(180deg);
+    }
+    .export-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 100;
+      min-width: 170px;
+      background: var(--surface);
+      border: 1.5px solid var(--outline-soft);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      padding: 6px;
+      display: grid;
+      gap: 2px;
+      animation: fadeInDown 0.15s ease-out;
+    }
+    .export-item {
+      width: 100% !important;
+      height: 38px !important;
+      padding: 0 12px !important;
+      border: none !important;
+      border-radius: 6px !important;
+      background: transparent !important;
+      color: var(--ink) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .export-item:hover {
+      background: var(--surface-container) !important;
+      color: var(--primary) !important;
+    }
+    .export-item lucide-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+    }
+    .export-item:hover lucide-icon {
+      color: var(--primary);
+    }
+    .export-menu-divider {
+      height: 1px;
+      background: var(--outline-soft);
+      margin: 4px 0;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .legend { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 12px; font-weight: 800; }
     .legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -40,7 +119,10 @@
     .edge.guardian { stroke: var(--growth); stroke-dasharray: 4 5; }
     .edge.active { stroke: var(--terracotta); stroke-width: 4; opacity: 1; }
     .edge.dragging { cursor: grabbing; opacity: 1; stroke-width: 5; }
-    .edge-label-wrap { pointer-events: none; }
+    .edge-hitbox { fill: none; stroke: transparent; stroke-width: 24px; cursor: grab; pointer-events: stroke; }
+    .edge-hitbox:active { cursor: grabbing; }
+    .edge-label-wrap { pointer-events: auto; cursor: grab; }
+    .edge-label-wrap:active { cursor: grabbing; }
     .edge-label {
       fill: var(--ink); font-size: 13px; font-weight: 900;
       paint-order: stroke; stroke: var(--sand-bg); stroke-width: 8; stroke-linejoin: round;

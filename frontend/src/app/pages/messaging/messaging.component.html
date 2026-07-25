@@ -1,0 +1,323 @@
+<div class="messaging-page">
+  <!-- WhatsApp Web Style 2-Column App Container -->
+  <div class="whatsapp-container" [class.mobile-chat-open]="mobileShowChat()">
+
+    <!-- LEFT SIDEBAR: Conversations List -->
+    <aside class="wa-sidebar">
+      <!-- Sidebar Header -->
+      <header class="wa-sidebar-header">
+        <div class="user-profile">
+          <div class="avatar user-avatar">
+            <span>{{ getInitials(currentUser()?.full_name || currentUser()?.username || 'AL') }}</span>
+          </div>
+          <div class="user-info">
+            <strong>{{ currentUser()?.full_name || currentUser()?.username }}</strong>
+            <span class="status-indicator">
+              <span class="realtime-status-dot" [class.active]="messaging.isRealtimeActive()"
+                [attr.title]="messaging.isRealtimeActive() ? i18n.t('messaging.status.realtime') : i18n.t('messaging.status.http')"></span>
+              {{ messaging.isRealtimeActive() ? i18n.t('messaging.status.online') : i18n.t('messaging.status.syncHttp') }}
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <acl-button variant="action-btn" type="button"
+            [aclTooltip]="i18n.t('messaging.newGroup')" (click)="openGroupModal()">
+            <lucide-icon name="plus"></lucide-icon>
+          </acl-button>
+        </div>
+      </header>
+
+      <!-- Search & Filters -->
+      <div class="wa-search-container">
+        <div class="search-box">
+          <lucide-icon name="search"></lucide-icon>
+          <input type="text" [placeholder]="i18n.t('messaging.searchPlaceholder')" [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)" />
+        </div>
+        <div class="filter-chips">
+          <button type="button" class="chip" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">
+            {{ i18n.t('messaging.filterAll') }}
+          </button>
+          <button type="button" class="chip" [class.active]="activeFilter() === 'DIRECT'" (click)="setFilter('DIRECT')">
+            {{ i18n.t('messaging.filterDirect') }}
+          </button>
+          <button type="button" class="chip" [class.active]="activeFilter() === 'GROUPS'" (click)="setFilter('GROUPS')">
+            {{ i18n.t('messaging.filterGroups') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Conversations List -->
+      <div class="conversations-list" role="list" aria-label="Liste des conversations">
+        @for (conv of filteredConversations(); track conv.id) {
+        <div class="conversation-item" role="listitem" [class.active]="conv.id === activeConv()?.id"
+          [class.has-unread]="conv.unread_count > 0" (click)="selectConversation(conv)">
+          <div class="avatar" [class.is-group]="conv.is_group">
+            @if (conv.is_group) {
+            <lucide-icon name="hash"></lucide-icon>
+            } @else {
+            <span>{{ getInitials(conv.name) }}</span>
+            }
+          </div>
+          <div class="conv-details">
+            <div class="conv-top">
+              <strong class="name">{{ conv.name }}</strong>
+              <span class="time" [class.highlight]="conv.unread_count > 0">{{ formatTime(conv.last_timestamp) }}</span>
+            </div>
+            <div class="conv-bottom">
+              <p class="last-msg">{{ conv.last_message }}</p>
+              @if (conv.unread_count > 0) {
+              <span class="unread-badge">{{ conv.unread_count }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        } @empty {
+        <div class="empty-state">
+          <lucide-icon name="message-square-off"></lucide-icon>
+          <p>{{ i18n.t('messaging.emptyConversations') }}</p>
+        </div>
+        }
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN PANEL: Active Chat Conversation -->
+    <main class="wa-chat-panel">
+      @if (activeConv()) {
+      <!-- Chat Header -->
+      <header class="wa-chat-header">
+        <button type="button" class="back-to-list-btn show-mobile" (click)="backToConversations()"
+          [aclTooltip]="i18n.t('messaging.backToList')">
+          <lucide-icon name="arrow-left"></lucide-icon>
+        </button>
+        <div class="chat-target-info">
+          <div class="avatar" [class.is-group]="activeConv()?.is_group">
+            @if (activeConv()?.is_group) {
+            <lucide-icon name="hash"></lucide-icon>
+            } @else {
+            <span>{{ getInitials(activeConv()?.name || '') }}</span>
+            }
+          </div>
+          <div>
+            <h3>{{ activeConv()?.name }}</h3>
+            <span class="role-tag">{{ activeConv()?.role || (activeConv()?.is_group ? i18n.t('messaging.role.institutional') : i18n.t('messaging.role.agent'))
+              }}</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Messages Stream with date separators -->
+      <div class="messages-stream" #messagesContainer role="log" aria-live="polite" aria-atomic="false"
+        aria-relevant="additions">
+        @for (group of groupedMessages(); track group.dateLabel) {
+
+        <!-- Date Separator -->
+        <div class="date-separator">
+          <span class="date-label">{{ group.dateLabel }}</span>
+        </div>
+
+        @for (msg of group.messages; track msg.id) {
+        <div class="message-wrapper" role="listitem" [class.own]="msg.sender_id === currentUser()?.id"
+          [class.deleted]="msg.content === i18n.t('messaging.messageDeleted')">
+          <!-- Hover Actions Bar — shown only if not deleted -->
+          @if (msg.content !== i18n.t('messaging.messageDeleted')) {
+          <div class="bubble-actions">
+            <!-- Reply -->
+            <button type="button" class="action-icon-btn" [aclTooltip]="i18n.t('messaging.action.reply')" (click)="setReplyTo(msg)">
+              <lucide-icon name="reply"></lucide-icon>
+            </button>
+            <!-- Divider -->
+            <span class="actions-divider"></span>
+            <!-- Reactions -->
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.like')" (click)="addReaction(msg, '👍')">👍</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.heart')" (click)="addReaction(msg, '❤️')">❤️</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.laugh')" (click)="addReaction(msg, '😂')">😂</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.surprised')"
+              (click)="addReaction(msg, '😮')">😮</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.thanks')" (click)="addReaction(msg, '🙏')">🙏</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.fire')" (click)="addReaction(msg, '🔥')">🔥</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.party')" (click)="addReaction(msg, '🎉')">🎉</button>
+            <!-- Divider -->
+            <span class="actions-divider"></span>
+            <!-- Copy -->
+            <button type="button" class="action-icon-btn" [aclTooltip]="i18n.t('messaging.action.copy')" (click)="copyMessage(msg.content)">
+              <lucide-icon name="copy"></lucide-icon>
+            </button>
+            <!-- Delete (own messages only) -->
+            @if (msg.sender_id === currentUser()?.id) {
+            <button type="button" class="action-icon-btn danger" [aclTooltip]="i18n.t('action.delete')"
+              (click)="deleteMessage(msg)">
+              <lucide-icon name="trash-2"></lucide-icon>
+            </button>
+            }
+          </div>
+          }
+
+          <div class="message-bubble">
+            <!-- Group sender name -->
+            @if (activeConv()?.is_group && msg.sender_id !== currentUser()?.id) {
+            <span class="sender-name">{{ msg.sender_name }}</span>
+            }
+
+            <!-- Reply snippet with real content -->
+            @if (msg.reply_to) {
+            <div class="reply-snippet">
+              <div class="reply-author">{{ getReplyAuthor(msg.reply_to) }}</div>
+              <span class="reply-content">{{ getReplyContent(msg.reply_to) }}</span>
+            </div>
+            }
+
+            <!-- Message content -->
+            @if (msg.content === i18n.t('messaging.messageDeleted')) {
+            <p class="msg-content deleted-content">
+              <lucide-icon name="ban"></lucide-icon>
+              {{ i18n.t('messaging.deletedText') }}
+            </p>
+            } @else {
+            <p class="msg-content">{{ msg.content }}</p>
+            }
+
+            <!-- Message Meta & Time -->
+            <div class="msg-meta">
+              <span class="timestamp">{{ formatTime(msg.timestamp) }}</span>
+              @if (msg.sender_id === currentUser()?.id) {
+              <lucide-icon [name]="msg.read ? 'check-check' : 'check'" [class.is-read]="msg.read"></lucide-icon>
+              }
+            </div>
+
+            <!-- Reactions list -->
+            @if (msg.reactions && (msg.reactions | keyvalue)?.length) {
+            <div class="reactions-list">
+              @for (r of msg.reactions | keyvalue; track r.key) {
+              <span class="reaction-pill" [class.user-reacted]="r.value.includes(currentUser()?.id || '')"
+                (click)="addReaction(msg, r.key)">
+                {{ r.key }} <em>{{ r.value.length }}</em>
+              </span>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        }
+        } @empty {
+        <div class="empty-messages">
+          <lucide-icon name="sparkles"></lucide-icon>
+          <p>{{ i18n.t('messaging.empty') }}</p>
+        </div>
+        }
+      </div>
+
+      <!-- Typing Indicator -->
+      @if (typingUsersArray().length > 0) {
+      <div class="typing-indicator" aria-live="polite" aria-atomic="true">
+        <span class="typing-dots"><span></span><span></span><span></span></span>
+        <span class="typing-label">
+          @if (typingUsersArray().length === 1) {
+          {{ typingUsersArray()[0] }} {{ i18n.t('messaging.typing.single') }}
+          } @else {
+          {{ i18n.t('messaging.typing.multiple') }}
+          }
+        </span>
+      </div>
+      }
+
+      <!-- Chat Input Footer (WhatsApp Web Style) -->
+      <footer class="wa-chat-footer">
+        @if (replyingTo()) {
+        <div class="reply-preview">
+          <div class="reply-info">
+            <lucide-icon name="reply"></lucide-icon>
+            <div class="reply-preview-content">
+              <span class="reply-preview-author">{{ getReplyAuthor(replyingTo()?.id) || i18n.t('messaging.you') }}</span>
+              <span>{{ replyingTo()?.content }}</span>
+            </div>
+          </div>
+          <button type="button" [aclTooltip]="i18n.t('messaging.cancelReply')" (click)="cancelReply()">
+            <lucide-icon name="x"></lucide-icon>
+          </button>
+        </div>
+        }
+
+        <div class="input-row">
+          <!-- Emoji Picker Button & Popover -->
+          <div class="emoji-picker-container">
+            <button type="button" class="emoji-toggle-btn" [class.active]="showEmojiPicker()"
+              (click)="toggleEmojiPicker()" [aclTooltip]="i18n.t('messaging.emoji.insert')">
+              <lucide-icon name="smile"></lucide-icon>
+            </button>
+
+            @if (showEmojiPicker()) {
+            <div class="emoji-popover">
+              <div class="emoji-search-box">
+                <lucide-icon name="search"></lucide-icon>
+                <input type="text" [placeholder]="i18n.t('messaging.emoji.search')" [ngModel]="emojiSearch()"
+                  (ngModelChange)="emojiSearch.set($event)" (click)="$event.stopPropagation()" />
+              </div>
+
+              <div class="emoji-scroll-area">
+                @for (cat of filteredEmojiCategories(); track cat.name) {
+                <div class="emoji-category">
+                  <span class="category-name">{{ i18n.t(cat.name) }}</span>
+                  <div class="emoji-grid">
+                    @for (e of cat.emojis; track e) {
+                    <button type="button" class="emoji-item" (click)="insertEmoji(e)">
+                      {{ e }}
+                    </button>
+                    }
+                  </div>
+                </div>
+                } @empty {
+                <div class="emoji-empty">{{ i18n.t('messaging.emoji.empty') }}</div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Expandable Textarea (Shift+Enter = newline, Enter = send) -->
+          <textarea #messageTextarea class="wa-input" [attr.aria-label]="i18n.t('messaging.typePlaceholder')"
+            [placeholder]="i18n.t('messaging.typePlaceholder')" [ngModel]="newMessageText()"
+            (ngModelChange)="newMessageText.set($event)" (input)="messaging.sendTypingStart(); autoResizeTextarea()"
+            (blur)="messaging.sendTypingStop()" (keydown)="onTextareaKeydown($event)" rows="1"></textarea>
+
+          <button type="button" class="wa-send-btn" [disabled]="!newMessageText().trim() || messaging.sending()"
+            (click)="onSendMessage()">
+            <lucide-icon name="send"></lucide-icon>
+          </button>
+        </div>
+      </footer>
+      } @else {
+      <div class="select-prompt">
+        <div class="prompt-icon-wrapper">
+          <lucide-icon name="messages-square"></lucide-icon>
+        </div>
+        <h3>AfriCensus Link Messaging</h3>
+        <p>{{ i18n.t('messaging.selectPrompt') }}</p>
+      </div>
+      }
+    </main>
+  </div>
+
+  <!-- Create Group Modal -->
+  <acl-modal [open]="showGroupModal()" [title]="i18n.t('messaging.createGroupTitle')" (closed)="closeGroupModal()">
+    <form (ngSubmit)="submitGroup()" class="modal-form"
+      style="width: 100%; display: flex; flex-direction: column; gap: 16px;">
+      <div class="form-group" style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
+        <label for="groupName" style="font-weight: 700; font-size: 13.5px; color: var(--ink);">{{
+          i18n.t('messaging.groupName') }} *</label>
+        <input id="groupName" type="text"
+          style="width: 100%; height: 44px; padding: 0 16px; border-radius: 10px; border: 1.5px solid var(--outline-soft); background: var(--surface-low); font-size: 14px; box-sizing: border-box;"
+          [placeholder]="i18n.t('messaging.groupNamePlaceholder')" [ngModel]="newGroupName()"
+          (ngModelChange)="newGroupName.set($event)" name="groupName" required />
+      </div>
+
+      <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+        <acl-button variant="secondary" type="button"
+          style="height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 700;"
+          (click)="closeGroupModal()">{{ i18n.t('action.cancel') }}</acl-button>
+        <acl-button type="submit" style="height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 700;"
+          [disabled]="!newGroupName().trim()">{{ i18n.t('messaging.action.createChannel') }}</acl-button>
+      </div>
+    </form>
+  </acl-modal>
+</div>

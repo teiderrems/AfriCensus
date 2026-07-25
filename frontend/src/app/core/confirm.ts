@@ -5,6 +5,7 @@ export interface ConfirmState {
   show: boolean;
   title: string;
   message: string;
+  variant?: 'default' | 'danger' | 'warning';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -16,12 +17,13 @@ export class ConfirmService {
   private confirmState = new Subject<ConfirmState>();
   confirmState$ = this.confirmState.asObservable();
 
-  ask(title: string, message: string): Promise<boolean> {
+  ask(title: string, message: string, variant: 'default' | 'danger' | 'warning' = 'default'): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       this.confirmState.next({
         show: true,
         title,
         message,
+        variant,
         onConfirm: () => resolve(true),
         onCancel: () => resolve(false)
       });

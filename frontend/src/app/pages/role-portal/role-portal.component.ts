@@ -6,6 +6,7 @@ import { ApiService } from '@/app/core/api.service';
 import { AuthService } from '@/app/core/auth.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { DashboardSummary, User } from '@/app/core/models';
+import { CardComponent } from '@/app/shared/card/card.component';
 
 type PortalAction = {
   label: string;
@@ -26,7 +27,7 @@ type PortalConfig = {
 
 @Component({
   selector: 'acl-role-portal-page',
-  imports: [LucideAngularModule, RouterLink],
+  imports: [LucideAngularModule, RouterLink, CardComponent],
   templateUrl: './role-portal.component.html',
   styleUrl: './role-portal.component.css',
 })

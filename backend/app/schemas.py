@@ -1,8 +1,17 @@
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
+
+T = TypeVar("T")
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 from .field_i18n import field_metadata
 
@@ -208,7 +217,14 @@ class PopulationSummaryOut(BaseModel):
     totalPersons: int
     totalHouseholds: int
     personsByGender: dict[str, int]
+    personsByAgeGroup: dict[str, int] = {}
+    personsByValidationStatus: dict[str, int] = {}
+    personsByZone: dict[str, int] = {}
+    withoutDocumentCount: int = 0
+    vulnerablePersonsCount: int = 0
     averageMembersPerHousehold: float
+    householdsByHousingType: dict[str, int] = {}
+    householdsByOccupancyStatus: dict[str, int] = {}
 
 
 class MedicalHistoryIn(BaseModel):
@@ -383,7 +399,125 @@ class SyncPullResponse(BaseModel):
     medical_histories: list[dict[str, Any]]
     corrections: list[dict[str, Any]]
     forms: list[dict[str, Any]]
+    documents: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AppRoleIn(BaseModel):
+    name: str = Field(..., description="Nom du rôle.")
+    description: str | None = None
+    permissions: list[str] = Field(default_factory=list)
+
+class AppRoleOut(AppRoleIn):
+    id: str
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class AssignmentIn(BaseModel):
+    user_id: str
+    zone_id: str
+
+class AssignmentOut(AssignmentIn):
+    id: str
+    assigned_by: str | None = None
+    created_at: str | None = None
+
+
+class DocumentIn(BaseModel):
+    local_id: str | None = None
+    person_id: str
+    document_type: str = Field(..., description="Type de document (ID, PASSPORT, etc.)")
+    document_number: str
+    issue_date: str | None = None
+    expiry_date: str | None = None
+
+class DocumentOut(DocumentIn):
+    id: str
+    created_by: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 def now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+class ChatMessageCreate(BaseModel):
+    content: str
+    receiver_id: str
+    is_group: bool = False
+    reply_to: str | None = None
+
+class ChatMessageOut(BaseModel):
+    id: str
+    content: str
+    sender_id: str
+    receiver_id: str
+    is_group: bool
+    timestamp: str
+    read: bool
+    reply_to: str | None = None
+    reactions: dict[str, list[str]] = Field(default_factory=dict)
+    sender_name: str | None = None
+
+
+class ReactionAdd(BaseModel):
+    emoji: str
+
+
+class ConversationSummary(BaseModel):
+    id: str
+    name: str
+    is_group: bool
+    avatar: str | None = None
+    role: str | None = None
+    last_message: str | None = None
+    last_timestamp: str | None = None
+    unread_count: int = 0
+
+
+class ChatGroupCreate(BaseModel):
+    name: str
+
+class ChatGroupOut(BaseModel):
+    id: str
+    name: str
+    created_at: str
+
+
+class SupportTicketCreate(BaseModel):
+    title: str
+    description: str
+
+class SupportTicketOut(BaseModel):
+    id: str
+    title: str
+    description: str
+    status: str
+    user_id: str
+    created_at: str
+
+
+class FaqCreate(BaseModel):
+    question: str
+    answer: str
+    category: str | None = None
+    order: int = 0
+    is_active: bool = True
+
+class FaqUpdate(BaseModel):
+    question: str | None = None
+    answer: str | None = None
+    category: str | None = None
+    order: int | None = None
+    is_active: bool | None = None
+
+class FaqOut(BaseModel):
+    id: str
+    question: str
+    answer: str
+    category: str | None
+    order: int
+    is_active: bool
+    created_at: str | None
+    updated_at: str | None

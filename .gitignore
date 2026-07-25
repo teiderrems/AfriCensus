@@ -17,38 +17,54 @@
 /**/.git/
 /**/data/
 
-# Python
 __pycache__/
 *.py[cod]
 *$py.class
 
 
-# Environment
 venv/
 .venv/
 env/
 *.egg-info/
 dist/
+mobile/build/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/
 
-# Logs
 *.log
 logs/
 tail.log
 
-# Node / Angular
 node_modules/
 .angular/
 dist/
 
-# Testing
 .pytest_cache/
 coverage/
 
-# Editor / IDE
 .vscode/
 .idea/
 
-# Other
 .DS_Store
 Thumbs.db
 *.swp
+
+# Flutter / Mobile Builds
+mobile/build/
+mobile/.dart_tool/
+mobile/ios/Pods/
+mobile/ios/Runner.xcworkspace/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework/
+mobile/ios/Flutter/Flutter.podspec
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/windows/flutter/ephemeral/
+mobile/macos/Flutter/ephemeral/
+mobile/macos/Pods/
+mobile/linux/flutter/ephemeral/
+mobile/.idea/

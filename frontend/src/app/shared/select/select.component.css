@@ -1,14 +1,23 @@
+:host {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
 .acl-custom-select {
   position: relative;
   width: 100%;
+  min-width: 0;
 }
 
 .acl-select-trigger {
   min-height: 48px;
   width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 0 14px;
   border: 2px solid var(--outline-soft);
   border-radius: 8px;
@@ -18,6 +27,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+  overflow: hidden;
 }
 
 .acl-custom-select.is-open .acl-select-trigger {
@@ -31,7 +41,8 @@
 }
 
 .acl-select-value {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -67,8 +78,19 @@
   animation: slideDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.acl-custom-select.open-above .acl-select-dropdown {
+  top: auto;
+  bottom: calc(100% + 8px);
+  animation: slideUp 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -118,8 +140,11 @@
   font-weight: 700;
 }
 
-.acl-select-option:hover {
+.acl-select-option:hover,
+.acl-select-option.is-focused {
   background: var(--surface-low);
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 
 .acl-select-option.selected {

@@ -3,12 +3,12 @@
         <div>
           <h1>{{ i18n.t('persons.title') }}</h1>
         </div>
-        <button type="button" class="btn primary" (click)="openCreatePerson()">
+        <acl-button type="button" (click)="openCreatePerson()">
           <lucide-icon name="plus"></lucide-icon>
           {{ i18n.t('persons.create') }}
-        </button>
+        </acl-button>
       </header>
-      <article class="card">
+      <acl-card class="card">
         <div class="table-controls" aria-label="Filtres des personnes">
           <div class="field">
             <label for="personSearch">{{ i18n.t('persons.search') }}</label>
@@ -28,18 +28,18 @@
                   <td>{{ row.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
                   <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></td>
                   <td class="row-actions">
-                    <button type="button" class="icon-action" aria-label="Voir les détails de la personne" (click)="openPerson(row)">
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')" (click)="openPerson(row)">
                       <lucide-icon name="eye"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action" aria-label="Modifier la personne" (click)="editPerson(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')" (click)="editPerson(row)">
                       <lucide-icon name="pencil"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action" aria-label="Soumettre la personne" (click)="submitPerson(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.submit')" (click)="submitPerson(row)">
                       <lucide-icon name="upload"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action danger" aria-label="Supprimer la personne" (click)="deletePerson(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deletePerson(row)">
                       <lucide-icon name="trash-2"></lucide-icon>
-                    </button>
+                    </acl-button>
                   </td>
                 </tr>
               }
@@ -57,7 +57,7 @@
           (previous)="previousPage()"
           (next)="nextPage()"
         />
-      </article>
+      </acl-card>
       <acl-detail-drawer
         [open]="personDrawerOpen()"
         [title]="selectedPersonTitle()"

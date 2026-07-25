@@ -1,7 +1,57 @@
-    <div class="pagination" [attr.aria-label]="ariaLabel">
-      <span>{{ i18n.t('table.pagination.summary', { count: totalItems, page: page, totalPages: totalPages }) }}</span>
-      <div>
-        <button type="button" class="btn secondary" [disabled]="page <= 1" (click)="previous.emit()">{{ i18n.t('action.previous') }}</button>
-        <button type="button" class="btn secondary" [disabled]="page >= totalPages" (click)="next.emit()">{{ i18n.t('action.next') }}</button>
-      </div>
+<nav class="pagination-container" [attr.aria-label]="ariaLabel">
+  @if (page < totalPages) {
+    <button type="button" class="mobile-load-more-btn" (click)="next.emit()">
+      <lucide-icon name="circle-arrow-down"></lucide-icon>
+      <span>{{ i18n.t('action.loadMore') || 'Charger la suite' }}</span>
+    </button>
+  }
+
+  <div class="pagination-summary">
+    <span class="summary-badge">
+      <lucide-icon name="list-filter" class="summary-icon"></lucide-icon>
+      {{ i18n.t('table.pagination.summary', { count: totalItems, page: page, totalPages: totalPages }) }}
+    </span>
+  </div>
+
+  <div class="pagination-controls">
+    <!-- First Page -->
+    <acl-button variant="nav-btn" [iconOnly]="true" type="button" [disabled]="page <= 1" (click)="goTo(1)" [aclTooltip]="i18n.t('action.firstPage')">
+      <lucide-icon name="chevrons-left"></lucide-icon>
+    </acl-button>
+
+    <!-- Previous Page -->
+    <acl-button variant="nav-btn" type="button" class="prev-btn" [disabled]="page <= 1" (click)="goTo(page - 1)" [aclTooltip]="i18n.t('action.previous')">
+      <lucide-icon name="chevron-left"></lucide-icon>
+      <span class="btn-label">{{ i18n.t('action.previous') }}</span>
+    </acl-button>
+
+    <!-- Page Numbers -->
+    <div class="page-numbers">
+      @for (item of pages; track $index) {
+        @if (item === '...') {
+          <span class="page-ellipsis">…</span>
+        } @else {
+          <button
+            type="button"
+            class="page-num"
+            [class.active]="item === page"
+            (click)="goTo(item)"
+          >
+            {{ item }}
+          </button>
+        }
+      }
     </div>
+
+    <!-- Next Page -->
+    <acl-button variant="nav-btn" type="button" class="next-btn" [disabled]="page >= totalPages" (click)="goTo(page + 1)" [aclTooltip]="i18n.t('action.next')">
+      <span class="btn-label">{{ i18n.t('action.next') }}</span>
+      <lucide-icon name="chevron-right"></lucide-icon>
+    </acl-button>
+
+    <!-- Last Page -->
+    <acl-button variant="nav-btn" [iconOnly]="true" type="button" [disabled]="page >= totalPages" (click)="goTo(totalPages)" [aclTooltip]="i18n.t('action.lastPage')">
+      <lucide-icon name="chevrons-right"></lucide-icon>
+    </acl-button>
+  </div>
+</nav>

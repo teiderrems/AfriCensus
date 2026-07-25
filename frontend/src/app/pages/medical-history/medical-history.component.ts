@@ -12,10 +12,13 @@ import { OfflineSyncService } from '@/app/core/offline-sync.service';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
+import { CardComponent } from '@/app/shared/card/card.component';
+import { ButtonComponent } from '@/app/shared/button/button';
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
   selector: 'acl-medical-history-page',
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, TablePaginationComponent, SelectComponent],
+  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './medical-history.component.html',
   styleUrl: './medical-history.component.css',
 })
@@ -125,9 +128,9 @@ export class MedicalHistoryComponent implements OnInit {
   ngOnInit(): void {
     this.api.persons().subscribe({
       next: (persons) => {
-        this.persons.set(persons);
-        if (persons.length) {
-          this.selectPerson(persons[0].id);
+        this.persons.set(persons.items);
+        if (persons.items.length) {
+          this.selectPerson(persons.items[0].id);
         }
       },
       error: () => this.persons.set([]),

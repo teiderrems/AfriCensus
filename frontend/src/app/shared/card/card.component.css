@@ -1,0 +1,24 @@
+:host {
+  display: block;
+}
+
+:host.padding-none {
+  padding: 0;
+}
+
+:host.padding-normal {
+  padding: 24px;
+}
+
+:host.padding-large {
+  padding: 32px;
+}
+
+@media (max-width: 560px) {
+  :host.padding-normal {
+    padding: 16px;
+  }
+  :host.padding-large {
+    padding: 20px;
+  }
+}

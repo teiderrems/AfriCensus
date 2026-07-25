@@ -1,15 +1,55 @@
 @if (state.show) {
-<div class="confirm-overlay" (click)="cancel()">
-  <div class="confirm-dialog" (click)="$event.stopPropagation()">
+<div class="confirm-overlay" [class.is-danger]="state.variant === 'danger'" (click)="cancel()">
+  <div class="confirm-dialog" [class.dialog-danger]="state.variant === 'danger'" [class.dialog-warning]="state.variant === 'warning'" (click)="$event.stopPropagation()">
+    
+    <div class="dialog-accent" [class.danger]="state.variant === 'danger'" [class.warning]="state.variant === 'warning'" [class.default]="!state.variant || state.variant === 'default'"></div>
+
     <div class="confirm-header">
-      <h3>{{ state.title }}</h3>
+      <div class="title-wrapper">
+        @if (state.variant === 'danger') {
+          <div class="icon-badge danger">
+            <lucide-icon name="trash-2" class="icon"></lucide-icon>
+          </div>
+        } @else if (state.variant === 'warning') {
+          <div class="icon-badge warning">
+            <lucide-icon name="alert-triangle" class="icon"></lucide-icon>
+          </div>
+        } @else {
+          <div class="icon-badge info">
+            <lucide-icon name="circle-question-mark" class="icon"></lucide-icon>
+          </div>
+        }
+        <div class="title-text">
+          <h3 [class.text-danger]="state.variant === 'danger'">{{ state.title }}</h3>
+          @if (state.variant === 'danger') {
+            <span class="danger-tag">{{ i18n.t('action.irreversible') || 'Action irréversible' }}</span>
+          }
+        </div>
+      </div>
     </div>
+
     <div class="confirm-body">
       <p>{{ state.message }}</p>
     </div>
+
     <div class="confirm-actions">
-      <button class="secondary" (click)="cancel()">{{ i18n.t('action.cancel') || 'Cancel' }}</button>
-      <button class="primary" (click)="confirm()">{{ i18n.t('action.confirm') || 'Confirm' }}</button>
+      <acl-button variant="secondary" (click)="cancel()">{{ i18n.t('action.cancel') || 'Annuler' }}</acl-button>
+      @if (state.variant === 'danger') {
+        <acl-button variant="danger" (click)="confirm()">
+          <lucide-icon name="trash-2"></lucide-icon>
+          {{ i18n.t('action.delete') || 'Supprimer' }}
+        </acl-button>
+      } @else if (state.variant === 'warning') {
+        <acl-button variant="warning" (click)="confirm()">
+          <lucide-icon name="alert-triangle"></lucide-icon>
+          {{ i18n.t('action.confirm') || 'Confirmer' }}
+        </acl-button>
+      } @else {
+        <acl-button variant="primary" (click)="confirm()">
+          <lucide-icon name="check"></lucide-icon>
+          {{ i18n.t('action.confirm') || 'Confirmer' }}
+        </acl-button>
+      }
     </div>
   </div>
 </div>

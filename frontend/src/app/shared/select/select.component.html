@@ -1,22 +1,30 @@
-<div class="acl-custom-select" [class.is-open]="isOpen()" [class.is-disabled]="disabled">
-  <div class="acl-select-trigger" [attr.aria-label]="ariaLabel" tabindex="0" (click)="toggleOpen()">
-    <div class="acl-select-value" [class.is-placeholder]="!value || (multiple && value.length === 0)">
+<div class="acl-custom-select" [class.is-open]="isOpen()" [class.is-disabled]="disabled" [class.open-above]="openAbove()">
+  <div class="acl-select-trigger" 
+       role="combobox" 
+       [attr.aria-label]="ariaLabel" 
+       [attr.aria-expanded]="isOpen()" 
+       aria-haspopup="listbox" 
+       tabindex="0" 
+       (click)="toggleOpen()" 
+       (keydown.enter)="toggleOpen()" 
+       (keydown.space)="$event.preventDefault(); toggleOpen()">
+    <div class="acl-select-value" [class.is-placeholder]="value() == null || (multiple && value().length === 0)">
       {{ displayValue() }}
     </div>
     <lucide-icon name="chevron-down" class="acl-select-icon"></lucide-icon>
   </div>
 
   @if (isOpen()) {
-    <div class="acl-select-dropdown">
+    <div class="acl-select-dropdown" role="listbox" [attr.aria-multiselectable]="multiple">
       @if (searchable) {
         <div class="acl-select-search" (click)="$event.stopPropagation()">
           <lucide-icon name="search"></lucide-icon>
-          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Rechercher..." />
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" [placeholder]="i18n.t('action.searchPlaceholder')" />
         </div>
       }
-      <div class="acl-select-options">
-        @for (option of filteredOptions(); track option.value) {
-          <div class="acl-select-option" [class.selected]="isSelected(option.value)" (click)="selectOption(option, $event)">
+      <div class="acl-select-options" [style.maxHeight.px]="maxDropdownHeight()">
+        @for (option of filteredOptions(); track option.value; let idx = $index) {
+          <div class="acl-select-option" role="option" tabindex="0" [attr.aria-selected]="isSelected(option.value)" [class.selected]="isSelected(option.value)" [class.is-focused]="idx === focusedIndex()" (click)="selectOption(option, $event)" (keydown.enter)="selectOption(option, $event)" (keydown.space)="$event.preventDefault(); selectOption(option, $event)">
             @if (multiple) {
               <div class="acl-checkbox" [class.checked]="isSelected(option.value)">
                 @if (isSelected(option.value)) {
@@ -28,7 +36,7 @@
           </div>
         }
         @if (filteredOptions().length === 0) {
-          <div class="acl-select-empty">Aucun résultat trouvé</div>
+          <div class="acl-select-empty">{{ i18n.t('ui.noResults') }}</div>
         }
       </div>
     </div>

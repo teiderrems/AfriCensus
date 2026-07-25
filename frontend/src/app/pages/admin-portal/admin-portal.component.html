@@ -26,10 +26,10 @@
             <h2>{{ i18n.t('admin.infra.overviewTitle') }}</h2>
             <p><span class="live-dot"></span> {{ i18n.t('admin.infra.overviewSubtitle') }} {{ lastUpdated() }}.</p>
           </div>
-          <button type="button" class="btn secondary" (click)="refreshAdminData()">
+          <acl-button variant="secondary" type="button" (click)="refreshAdminData()">
             <lucide-icon name="history"></lucide-icon>
             {{ i18n.t('admin.infra.viewLogs') }}
-          </button>
+          </acl-button>
         </section>
 
         <section class="health-grid" aria-label="État du système">
@@ -92,14 +92,14 @@
             <p>{{ i18n.t('admin.users.subtitle') }}</p>
           </div>
           <div class="tab-actions">
-            <button type="button" class="btn secondary" (click)="toggleUserFilters()">
+            <acl-button variant="secondary" type="button" (click)="toggleUserFilters()">
               <lucide-icon name="list-filter"></lucide-icon>
               {{ i18n.t('admin.users.filters') }}
-            </button>
-            <button type="button" class="btn primary" (click)="prepareNewUser()">
+            </acl-button>
+            <acl-button type="button" (click)="prepareNewUser()">
               <lucide-icon name="user-plus"></lucide-icon>
               {{ i18n.t('admin.users.createUser') }}
-            </button>
+            </acl-button>
           </div>
         </section>
 
@@ -146,18 +146,18 @@
                     <td><span class="admin-chip" [class.offline]="!user.active">{{ user.active ? i18n.t('admin.users.statusActive') : i18n.t('admin.users.statusDraft') }}</span></td>
                     <td class="muted-cell">{{ i18n.t('admin.users.recentSession') }}</td>
                     <td class="row-actions">
-                      <button type="button" class="icon-action" [attr.aria-label]="i18n.t('admin.users.action.view')" (click)="openUserDrawer(user)">
+                      <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.view')" (click)="openUserDrawer(user)">
                         <lucide-icon name="eye"></lucide-icon>
-                      </button>
-                      <button type="button" class="icon-action" [attr.aria-label]="i18n.t('admin.users.action.edit')" (click)="editUser(user)">
+                      </acl-button>
+                      <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.edit')" (click)="editUser(user)">
                         <lucide-icon name="pencil"></lucide-icon>
-                      </button>
-                      <button type="button" class="icon-action" [attr.aria-label]="user.active === false ? i18n.t('admin.users.action.activate') : i18n.t('admin.users.action.deactivate')" (click)="toggleUserActive(user)">
+                      </acl-button>
+                      <acl-button variant="icon-action" type="button" [aclTooltip]="user.active === false ? i18n.t('admin.users.action.activate') : i18n.t('admin.users.action.deactivate')" (click)="toggleUserActive(user)">
                         <lucide-icon [name]="user.active === false ? 'toggle-right' : 'toggle-left'"></lucide-icon>
-                      </button>
-                      <button type="button" class="icon-action danger" [attr.aria-label]="i18n.t('admin.users.action.delete')" (click)="deleteUser(user)">
+                      </acl-button>
+                      <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('admin.users.action.delete')" (click)="deleteUser(user)">
                         <lucide-icon name="trash-2"></lucide-icon>
-                      </button>
+                      </acl-button>
                     </td>
                   </tr>
                 }
@@ -181,10 +181,10 @@
             <h2>{{ i18n.t('admin.security.title') }}</h2>
             <p>{{ i18n.t('admin.security.subtitle') }}</p>
           </div>
-          <button type="button" class="btn secondary" (click)="exportAuditLog()">
+          <acl-button variant="secondary" type="button" (click)="exportAuditLog()">
             <lucide-icon name="download"></lucide-icon>
             {{ i18n.t('admin.security.export') }}
-          </button>
+          </acl-button>
         </section>
         <section class="security-grid">
           <article class="security-card critical"><lucide-icon name="triangle-alert"></lucide-icon><small>{{ i18n.t('admin.security.criticalAlerts') }}</small><strong>{{ criticalAlerts().length }}</strong><p>{{ i18n.t('admin.security.requiresAction') }}</p></article>
@@ -200,7 +200,7 @@
             <label for="auditSearch">{{ i18n.t('admin.security.userIp') }}</label>
             <input id="auditSearch" name="auditSearch" type="search" [ngModel]="auditSearch()" (ngModelChange)="setAuditSearch($event)" [placeholder]="i18n.t('admin.security.searchPlaceholder')" />
           </div>
-          <button type="button" class="btn secondary" (click)="clearAuditFilters()">{{ i18n.t('admin.security.clearFilters') }}</button>
+          <acl-button variant="secondary" type="button" (click)="clearAuditFilters()">{{ i18n.t('admin.security.clearFilters') }}</acl-button>
         </section>
         <section class="panel alerts-panel">
           <div class="panel-head alert-head">
@@ -223,7 +223,7 @@
                     <td>{{ auditTitle(log.action) }}</td>
                     <td>{{ log.user_name || userName(log.user_id) }}</td>
                     <td>{{ log.entity_type }} {{ log.entity_name || (log.entity_id | aclShortId) }}</td>
-                    <td><button type="button" class="icon-action" aria-label="Voir les détails du journal" (click)="openAuditLog(log)"><lucide-icon name="eye"></lucide-icon></button></td>
+                    <td><acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('audit.table.viewDetails')" (click)="openAuditLog(log)"><lucide-icon name="eye"></lucide-icon></acl-button></td>
                   </tr>
                 }
               </tbody>
@@ -242,8 +242,8 @@
             }
           </div>
           <div class="tab-actions">
-            <button type="button" class="btn secondary" (click)="discardConfig()">{{ i18n.t('admin.config.discard') }}</button>
-            <button type="button" class="btn primary" (click)="saveSystemConfig()">{{ i18n.t('admin.config.save') }}</button>
+            <acl-button variant="secondary" type="button" (click)="discardConfig()">{{ i18n.t('admin.config.discard') }}</acl-button>
+            <acl-button type="button" (click)="saveSystemConfig()">{{ i18n.t('admin.config.save') }}</acl-button>
           </div>
         </section>
         <section class="config-grid">
@@ -279,7 +279,7 @@
               <h2>{{ i18n.t('admin.config.homeContent') }}</h2>
               <p>{{ i18n.t('admin.config.homeContentSubtitle') }}</p>
             </div>
-            <button type="button" class="btn secondary" (click)="reloadHomeContent()">{{ i18n.t('admin.config.reload') }}</button>
+            <acl-button variant="secondary" type="button" (click)="reloadHomeContent()">{{ i18n.t('admin.config.reload') }}</acl-button>
           </div>
           <div class="home-editor">
             <div class="field">
@@ -290,7 +290,7 @@
               <p class="editor-status" [class.error]="homeContentStatus().startsWith('Erreur')">{{ homeContentStatus() }}</p>
             }
             <div class="editor-actions">
-              <button type="button" class="btn primary" (click)="saveHomeContent()">{{ i18n.t('admin.config.publish') }}</button>
+              <acl-button type="button" (click)="saveHomeContent()">{{ i18n.t('admin.config.publish') }}</acl-button>
             </div>
           </div>
         </section>
@@ -354,13 +354,13 @@
         </div>
         <ng-container modal-actions>
           @if (editingUserId() && passwordDraft()) {
-            <button type="button" class="btn secondary" (click)="resetSelectedUserPassword()">{{ i18n.t('admin.user.resetPassword') }}</button>
+            <acl-button variant="secondary" type="button" (click)="resetSelectedUserPassword()">{{ i18n.t('admin.user.resetPassword') }}</acl-button>
           }
-          <button type="button" class="btn secondary" (click)="closeUserEditor()">{{ i18n.t('admin.user.cancel') }}</button>
-          <button class="btn primary" type="submit" [disabled]="!canSaveUser()">
+          <acl-button variant="secondary" type="button" (click)="closeUserEditor()">{{ i18n.t('admin.user.cancel') }}</acl-button>
+          <acl-button type="submit" [disabled]="!canSaveUser()">
             <lucide-icon [name]="editingUserId() ? 'save' : 'plus'"></lucide-icon>
             {{ editingUserId() ? i18n.t('admin.user.save') : i18n.t('admin.user.create') }}
-          </button>
+          </acl-button>
         </ng-container>
       </acl-modal>
     </section>

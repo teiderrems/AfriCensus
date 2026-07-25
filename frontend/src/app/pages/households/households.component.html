@@ -3,16 +3,16 @@
         <div>
           <h1>{{ i18n.t('households.title') }}</h1>
         </div>
-        <button type="button" class="btn primary" (click)="openCreateHousehold()">
+        <acl-button type="button" (click)="openCreateHousehold()">
           <lucide-icon name="plus"></lucide-icon>
           {{ i18n.t('household.create.title') }}
-        </button>
+        </acl-button>
       </header>
-      <article class="card">
+      <acl-card class="card">
         <div class="table-controls" aria-label="Filtres des ménages">
           <div class="field">
             <label for="householdSearch">{{ i18n.t('common.search') }}</label>
-            <input id="householdSearch" name="householdSearch" type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" placeholder="Code, adresse, statut..." />
+            <input id="householdSearch" name="householdSearch" type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" [placeholder]="i18n.t('households.searchPlaceholder')" />
           </div>
           <acl-status-filter controlId="householdStatus" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
           <acl-page-size-select controlId="householdPageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
@@ -28,21 +28,21 @@
                   <td>{{ row.member_count }}</td>
                   <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></td>
                   <td class="row-actions">
-                    <button type="button" class="icon-action" aria-label="Voir les détails du ménage" (click)="openHousehold(row)">
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')" (click)="openHousehold(row)">
                       <lucide-icon name="eye"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action" aria-label="Modifier le ménage" (click)="editHousehold(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')" (click)="editHousehold(row)">
                       <lucide-icon name="pencil"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action" aria-label="Associer un responsable au ménage" (click)="openResponsibleModal(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('households.responsible.createTitle')" (click)="openResponsibleModal(row)">
                       <lucide-icon name="users"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action" aria-label="Soumettre le ménage" (click)="submitHousehold(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.submit')" (click)="submitHousehold(row)">
                       <lucide-icon name="upload"></lucide-icon>
-                    </button>
-                    <button type="button" class="icon-action danger" aria-label="Supprimer le ménage" (click)="deleteHousehold(row)">
+                    </acl-button>
+                    <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deleteHousehold(row)">
                       <lucide-icon name="trash-2"></lucide-icon>
-                    </button>
+                    </acl-button>
                   </td>
                 </tr>
               }
@@ -60,7 +60,7 @@
           (previous)="previousPage()"
           (next)="nextPage()"
         />
-      </article>
+      </acl-card>
       <acl-detail-drawer
         [open]="householdDrawerOpen()"
         [title]="selectedHouseholdTitle()"
@@ -79,17 +79,17 @@
             <label for="responsiblePerson">{{ i18n.t('households.responsible') }}</label>
             <acl-select id="responsiblePerson" name="responsiblePerson" [ngModel]="responsiblePersonId()" (ngModelChange)="responsiblePersonId.set($event)" [options]="responsiblePersonOptions()"></acl-select>
           </div>
-          <button type="button" class="btn secondary" (click)="openResponsiblePersonCreation()">
+          <acl-button variant="secondary" type="button" (click)="openResponsiblePersonCreation()">
             <lucide-icon name="user-plus"></lucide-icon>
             {{ i18n.t('households.responsible.addPerson') }}
-          </button>
+          </acl-button>
         </div>
         <ng-container modal-actions>
-          <button type="button" class="btn secondary" (click)="closeResponsibleModal()">{{ i18n.t('action.cancel') }}</button>
-          <button type="button" class="btn primary" [disabled]="!responsiblePersonId() || saving()" (click)="assignResponsiblePerson()">
+          <acl-button variant="secondary" type="button" (click)="closeResponsibleModal()">{{ i18n.t('action.cancel') }}</acl-button>
+          <acl-button type="button" [disabled]="!responsiblePersonId() || saving()" (click)="assignResponsiblePerson()">
             <lucide-icon [name]="saving() ? 'loader' : 'link'" [class.animate-spin]="saving()"></lucide-icon>
             {{ i18n.t('action.assign') }}
-          </button>
+          </acl-button>
         </ng-container>
       </acl-modal>
       <acl-person-form-modal
@@ -143,11 +143,11 @@
           </div>
         </div>
         <ng-container modal-actions>
-          <button type="button" class="btn secondary" (click)="closeHouseholdModal()">{{ i18n.t('household.cancel') }}</button>
-          <button class="btn primary" type="submit" [disabled]="!canSaveHousehold() || saving()">
+          <acl-button variant="secondary" type="button" (click)="closeHouseholdModal()">{{ i18n.t('household.cancel') }}</acl-button>
+          <acl-button type="submit" [disabled]="!canSaveHousehold() || saving()">
             <lucide-icon [name]="saving() ? 'loader' : (editingHouseholdId() ? 'save' : 'plus')" [class.animate-spin]="saving()"></lucide-icon>
             {{ editingHouseholdId() ? i18n.t('household.save.btn') : i18n.t('household.create.btn') }}
-          </button>
+          </acl-button>
         </ng-container>
       </acl-modal>
     </section>

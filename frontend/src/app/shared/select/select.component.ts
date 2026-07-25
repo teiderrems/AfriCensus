@@ -25,48 +25,75 @@ export interface SelectOption {
   ]
 })
 export class SelectComponent implements ControlValueAccessor {
-  @Input() options: SelectOption[] = [];
+  private readonly _options = signal<SelectOption[]>([]);
+  @Input() set options(val: SelectOption[]) { this._options.set(val); }
+  get options() { return this._options(); }
+
+  private readonly _placeholder = signal('Sélectionner...');
+  @Input() set placeholder(val: string) { this._placeholder.set(val); }
+  get placeholder() { return this._placeholder(); }
+
   @Input() id: string = '';
   @Input() name: string = '';
   @Input() required: boolean = false;
   @Input() ariaLabel: string = '';
-  @Input() multiple: boolean = false;
-  @Input() searchable: boolean = false;
-  @Input() placeholder: string = 'Sélectionner...';
+  
+  private readonly _multiple = signal(false);
+  @Input() set multiple(val: boolean) { this._multiple.set(val); }
+  get multiple() { return this._multiple(); }
 
-  value: any = null;
+  @Input() searchable: boolean = false;
+  @Input() showAllOption: boolean = false;
+  @Input() allOptionLabel: string = 'ui.filter.all';
+
+  readonly value = signal<any>(null);
   disabled: boolean = false;
 
   readonly isOpen = signal(false);
+  readonly openAbove = signal(false);
+  readonly maxDropdownHeight = signal<number>(260);
   readonly searchQuery = signal('');
+  readonly focusedIndex = signal(-1);
 
   readonly filteredOptions = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
-    const opts = this.options.map(opt => ({
+    let baseOpts = this._options().map(opt => ({
       ...opt,
-      label: this.i18n.t(opt.label as TranslationKey)
+      label: this.i18n.t(opt.label as TranslationKey) || opt.label
     }));
-    if (!query) return opts;
-    return opts.filter(opt => opt.label.toLowerCase().includes(query));
+
+    if (this.showAllOption) {
+      baseOpts = [{ label: this.i18n.t(this.allOptionLabel as TranslationKey) || 'All', value: null }, ...baseOpts];
+    }
+
+    if (!query) return baseOpts;
+    return baseOpts.filter(opt => opt.label.toLowerCase().includes(query));
   });
 
-  get translatedPlaceholder(): string {
-    if (this.placeholder === 'Sélectionner...') return this.i18n.t('action.select');
-    return this.i18n.t(this.placeholder as TranslationKey);
-  }
+  readonly translatedPlaceholder = computed(() => {
+    const p = this._placeholder();
+    if (p === 'Sélectionner...') return this.i18n.t('action.select');
+    return this.i18n.t(p as TranslationKey);
+  });
 
   readonly displayValue = computed(() => {
-    const placeholder = this.translatedPlaceholder;
-    if (this.multiple) {
-      if (!Array.isArray(this.value) || this.value.length === 0) return placeholder;
+    const placeholder = this.translatedPlaceholder();
+    const currentVal = this.value();
+    
+    if (this._multiple()) {
+      if (!Array.isArray(currentVal) || currentVal.length === 0) return placeholder;
       return this.options
-        .filter(opt => this.value.includes(opt.value))
+        .filter(opt => currentVal.includes(opt.value))
         .map(opt => this.i18n.t(opt.label as TranslationKey))
         .join(', ');
     } else {
-      if (this.value == null || this.value === '') return placeholder;
-      const selected = this.options.find(opt => opt.value === this.value);
-      return selected ? this.i18n.t(selected.label as TranslationKey) : placeholder;
+      if (currentVal == null) {
+        return this.showAllOption 
+          ? (this.i18n.t(this.allOptionLabel as TranslationKey) || 'All')
+          : placeholder;
+      }
+      const selected = this.options.find(opt => opt.value === currentVal);
+      return selected ? (this.i18n.t(selected.label as TranslationKey) || selected.label) : placeholder;
     }
   });
 
@@ -78,18 +105,73 @@ export class SelectComponent implements ControlValueAccessor {
     public readonly i18n: I18nService
   ) {}
 
+  @HostListener('document:pointerdown', ['$event'])
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event) {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
+    if (this.isOpen() && !this.elementRef.nativeElement.contains(event.target)) {
       this.isOpen.set(false);
+    }
+  }
+
+  @HostListener('keydown', ['$event'])
+  onHostKeydown(event: KeyboardEvent) {
+    if (this.disabled) return;
+
+    if (event.key === 'Escape' && this.isOpen()) {
+      event.preventDefault();
+      this.isOpen.set(false);
+      return;
+    }
+
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !this.isOpen()) {
+      event.preventDefault();
+      this.isOpen.set(true);
+      this.focusedIndex.set(0);
+      return;
+    }
+
+    if (this.isOpen()) {
+      const opts = this.filteredOptions();
+      if (opts.length === 0) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.focusedIndex.update(idx => (idx + 1) % opts.length);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.focusedIndex.update(idx => (idx - 1 + opts.length) % opts.length);
+      } else if ((event.key === 'Enter' || event.key === 'Space') && this.focusedIndex() >= 0 && this.focusedIndex() < opts.length) {
+        event.preventDefault();
+        this.selectOption(opts[this.focusedIndex()], event);
+      }
     }
   }
 
   toggleOpen() {
     if (this.disabled) return;
-    this.isOpen.update(v => !v);
-    if (this.isOpen()) {
+    const nextState = !this.isOpen();
+    this.isOpen.set(nextState);
+    if (nextState) {
       this.searchQuery.set('');
+      this.focusedIndex.set(0);
+
+      const rect = this.elementRef.nativeElement.getBoundingClientRect();
+      const containerEl = this.elementRef.nativeElement.closest('.modal, .modal-dialog, article.modal, form.modal, .detail-drawer, .drawer-body, section.page');
+
+      let distToTop = rect.top;
+      let distToBottom = window.innerHeight - rect.bottom;
+
+      if (containerEl) {
+        const cRect = containerEl.getBoundingClientRect();
+        distToTop = rect.top - cRect.top;
+        distToBottom = cRect.bottom - rect.bottom;
+      }
+
+      const shouldOpenAbove = distToBottom < 220 && distToTop > distToBottom;
+      this.openAbove.set(shouldOpenAbove);
+
+      const availableSpace = shouldOpenAbove ? distToTop - 20 : distToBottom - 20;
+      this.maxDropdownHeight.set(Math.max(120, Math.min(260, availableSpace)));
     }
   }
 
@@ -98,32 +180,34 @@ export class SelectComponent implements ControlValueAccessor {
     if (this.disabled) return;
 
     if (this.multiple) {
-      const currentValues = Array.isArray(this.value) ? [...this.value] : [];
+      const currentVal = this.value();
+      const currentValues = Array.isArray(currentVal) ? [...currentVal] : [];
       const index = currentValues.indexOf(option.value);
       if (index === -1) {
         currentValues.push(option.value);
       } else {
         currentValues.splice(index, 1);
       }
-      this.value = currentValues;
+      this.value.set(currentValues);
     } else {
-      this.value = option.value;
+      this.value.set(option.value);
       this.isOpen.set(false);
     }
 
-    this.onChange(this.value);
+    this.onChange(this.value());
     this.onTouched();
   }
 
   isSelected(optionValue: any): boolean {
+    const currentVal = this.value();
     if (this.multiple) {
-      return Array.isArray(this.value) && this.value.includes(optionValue);
+      return Array.isArray(currentVal) && currentVal.includes(optionValue);
     }
-    return this.value === optionValue;
+    return currentVal === optionValue;
   }
 
   writeValue(val: any): void {
-    this.value = val;
+    this.value.set(val);
   }
 
   registerOnChange(fn: any): void {

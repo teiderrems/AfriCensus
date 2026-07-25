@@ -11,21 +11,23 @@ import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
 import { LocalizedDatePipe } from '@/app/shared/pipes/localized-date.pipe';
 import { ShortIdPipe } from '@/app/shared/pipes/short-id.pipe';
+import { CardComponent } from '@/app/shared/card/card.component'
+import { ButtonComponent } from "@/app/shared/button/button";
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
-  selector: 'acl-audit-page',
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, TablePaginationComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent],
+  imports: [CardComponent, LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, TablePaginationComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './audit.component.html',
   styleUrl: './audit.component.css',
 })
 export class AuditComponent implements OnInit {
   auditEntityOptions = computed(() => [
-    {label: this.i18n.t('audit.entity.all'), value: ''},
-    {label: this.i18n.t('audit.entity.PERSON'), value: 'PERSON'},
-    {label: this.i18n.t('audit.entity.HOUSEHOLD'), value: 'HOUSEHOLD'},
-    {label: this.i18n.t('audit.entity.CAMPAIGN'), value: 'CAMPAIGN'},
-    {label: this.i18n.t('audit.entity.USER'), value: 'USER'},
-    {label: this.i18n.t('audit.entity.SYSTEM'), value: 'SYSTEM'}
+    { label: this.i18n.t('audit.entity.all'), value: '' },
+    { label: this.i18n.t('audit.entity.PERSON'), value: 'PERSON' },
+    { label: this.i18n.t('audit.entity.HOUSEHOLD'), value: 'HOUSEHOLD' },
+    { label: this.i18n.t('audit.entity.CAMPAIGN'), value: 'CAMPAIGN' },
+    { label: this.i18n.t('audit.entity.USER'), value: 'USER' },
+    { label: this.i18n.t('audit.entity.SYSTEM'), value: 'SYSTEM' }
   ]);
 
   readonly logs = signal<AuditLog[]>([]);
@@ -70,10 +72,10 @@ export class AuditComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly shortId: ShortIdPipe,
     private readonly localizedDate: LocalizedDatePipe
-  ) {}
+  ) { }
   ngOnInit(): void {
     this.api.auditLogs().subscribe({
-      next: (logs) => this.logs.set(logs),
+      next: (logs) => this.logs.set(logs.items),
       error: () => this.logs.set([]),
     });
   }

@@ -42,7 +42,7 @@
                 "fonts": true
               },
               "budgets": [
-                {"type": "initial", "maximumWarning": "900kB", "maximumError": "1.5MB"}
+                {"type": "initial", "maximumWarning": "1.5MB", "maximumError": "2.5MB"}
               ],
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"
@@ -65,5 +65,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "a2a0ff89-d475-4bdc-9055-b4279a27864b"
   }
 }

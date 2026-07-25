@@ -2,10 +2,13 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from ...container import store
+from sqlalchemy.orm import Session
+from ...database import get_db
+from ...models import HomeContent
 from ...dependencies import require_roles
 from ...schemas import HomeContentIn, HomeContentOut, Role, now_iso
-from ...services import audit
+from ...services import db_audit
+from ...services import db_audit
 
 
 router = APIRouter(prefix="/home-content", tags=["home-content"])
@@ -21,8 +24,9 @@ def read_home_content(
     request: Request,
     lang: str | None = Query(default=None, description="Langue à résoudre, par exemple `fr` ou `en`."),
     raw: bool = Query(default=False, description="Retourner le document source multilingue sans résolution."),
+    db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    content = _current_home_content()
+    content = _current_home_content(db)
     if not content.get("published", True):
         raise HTTPException(status_code=404, detail="Home content is not published")
     if raw:
@@ -36,22 +40,19 @@ def read_home_content(
     summary="Mettre à jour le contenu de la page d’accueil",
     description="Permet à un administrateur de modifier les textes, métriques, actions, sections et coordonnées affichés sur la home.",
 )
-def update_home_content(payload: HomeContentIn, user: dict[str, Any] = Depends(require_roles(Role.ADMIN))) -> dict[str, Any]:
-    data = store.all()
-    current = _current_home_content(data)
-    updated = {
-        **current,
-        **payload.model_dump(),
-        "id": current["id"],
-        "created_by": current.get("created_by") or user["id"],
-        "created_at": current.get("created_at") or now_iso(),
-        "updated_at": now_iso(),
-        "deleted_at": None,
-    }
-    data["home_content"] = [updated]
-    audit(data, user["id"], "UPDATE_HOME_CONTENT", "home_content", updated["id"])
-    store.save(data)
-    return updated
+def update_home_content(payload: HomeContentIn, user: dict[str, Any] = Depends(require_roles(Role.ADMIN)), db: Session = Depends(get_db)) -> dict[str, Any]:
+    current_model = db.query(HomeContent).filter(HomeContent.deleted_at.is_(None)).first()
+    if not current_model:
+        raise HTTPException(status_code=404, detail="home_content not found")
+        
+    for key, value in payload.model_dump().items():
+        setattr(current_model, key, value)
+        
+    current_model.updated_at = now_iso()
+    db_audit(db, user["id"], "UPDATE_HOME_CONTENT", "home_content", current_model.id)
+    db.commit()
+    db.refresh(current_model)
+    return current_model.to_dict()
 
 
 def resolve_language(lang: str | None, accept_language: str | None) -> str:
@@ -130,9 +131,8 @@ def localized(value: Any, lang: str) -> str:
     return str(value)
 
 
-def _current_home_content(data: dict[str, Any] | None = None) -> dict[str, Any]:
-    source = data or store.all()
-    content = next((item for item in source.get("home_content", []) if not item.get("deleted_at")), None)
+def _current_home_content(db: Session) -> dict[str, Any]:
+    content = db.query(HomeContent).filter(HomeContent.deleted_at.is_(None)).first()
     if not content:
         raise HTTPException(status_code=404, detail="home_content not found")
-    return content
+    return content.to_dict()

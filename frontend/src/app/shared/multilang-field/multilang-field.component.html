@@ -1,7 +1,7 @@
 <div class="multilang-field" [class.is-textarea]="type === 'textarea'">
-      <div class="lang-tabs">
-        <button type="button" [class.active]="activeLang === 'fr'" (click)="activeLang = 'fr'">FR</button>
-        <button type="button" [class.active]="activeLang === 'en'" (click)="activeLang = 'en'">EN</button>
+      <div class="lang-tabs" role="group" aria-label="Sélection de la langue">
+        <button type="button" [class.active]="activeLang === 'fr'" [attr.aria-pressed]="activeLang === 'fr'" (click)="activeLang = 'fr'">FR</button>
+        <button type="button" [class.active]="activeLang === 'en'" [attr.aria-pressed]="activeLang === 'en'" (click)="activeLang = 'en'">EN</button>
       </div>
       @if (type === 'textarea') {
         <textarea

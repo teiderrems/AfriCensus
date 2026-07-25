@@ -1,7 +1,10 @@
 import hashlib
+import os
 import sys
 from pathlib import Path
 from uuid import uuid4
+
+os.environ["DATABASE_URL"] = "sqlite:///./data/africensus_test.db"
 
 from fastapi.testclient import TestClient
 
@@ -15,8 +18,10 @@ client = TestClient(app)
 
 
 def token() -> str:
+    from app.api.routes.auth import _attempts
+    _attempts.clear()
     response = client.post("/api/v1/auth/login", json={"username": "admin", "password": "admin123"})
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Token request failed: {response.status_code} {response.text}"
     return response.json()["access_token"]
 
 
@@ -105,12 +110,12 @@ def test_home_content_public_read_and_admin_update():
 def test_relation_cannot_self_reference():
     access_token = token()
     people = client.get("/api/v1/persons", headers={"Authorization": f"Bearer {access_token}"}).json()
-    person_id = people[0]["id"]
+    person_id = people["items"][0]["id"]
     response = client.post(
         "/api/v1/family-relations",
         headers={"Authorization": f"Bearer {access_token}"},
         json={
-            "campaign_id": people[0]["campaign_id"],
+            "campaign_id": people["items"][0]["campaign_id"],
             "source_person_id": person_id,
             "target_person_id": person_id,
             "relation_type": "CONJOINT_DE",
@@ -122,10 +127,10 @@ def test_relation_cannot_self_reference():
 def test_family_tree_endpoint_returns_nodes_and_links():
     access_token = token()
     people = client.get("/api/v1/persons", headers={"Authorization": f"Bearer {access_token}"}).json()
-    response = client.get(f"/api/v1/persons/{people[0]['id']}/family-tree?depth=2", headers={"Authorization": f"Bearer {access_token}"})
+    response = client.get(f"/api/v1/persons/{people['items'][0]['id']}/family-tree?depth=2", headers={"Authorization": f"Bearer {access_token}"})
     assert response.status_code == 200
     payload = response.json()
-    assert payload["root"]["id"] == people[0]["id"]
+    assert payload["root"]["id"] == people["items"][0]["id"]
     assert payload["depth"] == 2
     assert "nodes" in payload
     assert "links" in payload
@@ -134,19 +139,19 @@ def test_family_tree_endpoint_returns_nodes_and_links():
 def test_family_tree_depth_zero_limits_graph_to_root():
     access_token = token()
     people = client.get("/api/v1/persons", headers={"Authorization": f"Bearer {access_token}"}).json()
-    response = client.get(f"/api/v1/persons/{people[0]['id']}/family-tree?depth=0", headers={"Authorization": f"Bearer {access_token}"})
+    response = client.get(f"/api/v1/persons/{people['items'][0]['id']}/family-tree?depth=0", headers={"Authorization": f"Bearer {access_token}"})
     assert response.status_code == 200
     payload = response.json()
     assert payload["depth"] == 0
     assert len(payload["nodes"]) == 1
-    assert payload["nodes"][0]["id"] == people[0]["id"]
+    assert payload["nodes"][0]["id"] == people["items"][0]["id"]
 
 
 def test_medical_history_create_and_family_summary():
     access_token = token()
     headers = {"Authorization": f"Bearer {access_token}"}
     people = client.get("/api/v1/persons", headers=headers).json()
-    person = people[0]
+    person = people["items"][0]
     created = client.post(
         "/api/v1/medical-histories",
         headers=headers,
@@ -192,7 +197,7 @@ def test_form_definitions_can_be_listed_and_saved():
     headers = {"Authorization": f"Bearer {access_token}"}
     listed = client.get("/api/v1/forms", headers=headers)
     assert listed.status_code == 200
-    assert isinstance(listed.json(), list)
+    assert "items" in listed.json()
 
     created = client.post(
         "/api/v1/forms",
@@ -244,9 +249,9 @@ def test_users_endpoints_create_update_and_deactivate_user():
     user_id = created.json()["id"]
     assert "password_hash" not in created.json()
 
-    listed = client.get("/api/v1/users", headers=headers)
+    listed = client.get("/api/v1/users?page_size=1000", headers=headers)
     assert listed.status_code == 200
-    assert any(item["id"] == user_id for item in listed.json())
+    assert any(item["id"] == user_id for item in listed.json()["items"])
 
     role_change = client.post(f"/api/v1/users/{user_id}/role", headers=headers, json={"role": "AUDITOR"})
     assert role_change.status_code == 200
@@ -255,3 +260,55 @@ def test_users_endpoints_create_update_and_deactivate_user():
     deactivated = client.post(f"/api/v1/users/{user_id}/deactivate", headers=headers)
     assert deactivated.status_code == 200
     assert deactivated.json()["active"] is False
+
+
+def test_roles_list_and_permissions():
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    roles_res = client.get("/api/v1/roles", headers=headers)
+    assert roles_res.status_code == 200
+    roles = roles_res.json()
+    assert len(roles) >= 5
+    assert any(r["name"] == "ADMIN" for r in roles)
+
+    perms_res = client.get("/api/v1/roles/permissions/available", headers=headers)
+    assert perms_res.status_code == 200
+    perms = perms_res.json()
+    assert len(perms) >= 1
+
+
+def test_messaging_endpoints_list_send_and_react():
+    access_token = token()
+    headers = {"Authorization": f"Bearer {access_token}"}
+    
+    # 1. Get conversations
+    convs = client.get("/api/v1/messages/conversations", headers=headers)
+    assert convs.status_code == 200
+    conv_list = convs.json()
+    assert isinstance(conv_list, list)
+
+    # 2. Create group channel
+    group_res = client.post("/api/v1/messages/groups", headers=headers, json={"name": "Canal Test Automatisé"})
+    assert group_res.status_code == 200
+    group_id = group_res.json()["id"]
+
+    # 3. Send message
+    msg_res = client.post("/api/v1/messages", headers=headers, json={
+        "content": "Message de test fonctionnel",
+        "receiver_id": group_id,
+        "is_group": True
+    })
+    assert msg_res.status_code == 200
+    msg_id = msg_res.json()["id"]
+
+    # 4. Toggle reaction
+    react_res = client.post(f"/api/v1/messages/{msg_id}/reactions", headers=headers, json={"emoji": "👍"})
+    assert react_res.status_code == 200
+    assert "👍" in react_res.json()["reactions"]
+
+    # 5. Fetch messages of conversation
+    msgs = client.get(f"/api/v1/messages/{group_id}", headers=headers)
+    assert msgs.status_code == 200
+    assert any(m["id"] == msg_id for m in msgs.json())
+
+

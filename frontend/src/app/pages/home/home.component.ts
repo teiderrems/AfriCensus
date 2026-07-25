@@ -10,10 +10,11 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { LanguageCode } from '@/app/core/i18n/translations';
 import { HomeContent } from '@/app/core/models';
 import { ThemeService } from '@/app/core/theme.service';
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
   selector: 'acl-home-page',
-  imports: [LucideAngularModule, FormsModule, RouterLink, UpperCasePipe],
+  imports: [LucideAngularModule, FormsModule, RouterLink, UpperCasePipe, AclTooltipDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })

@@ -1,0 +1,22 @@
+<button 
+  [type]="type" 
+  [disabled]="disabled" 
+  [attr.title]="tooltip || title || null"
+  [attr.aria-label]="tooltip || title || null" 
+  [ngClass]="{
+    'btn': variant === 'primary' || variant === 'secondary' || variant === 'danger' || variant === 'warning' || variant === 'primary-light',
+    'primary': variant === 'primary',
+    'secondary': variant === 'secondary',
+    'danger': variant === 'danger' || variant === 'icon-action-danger',
+    'primary-light': variant === 'primary-light',
+    'icon-action': variant === 'icon-action' || variant === 'icon-action-danger' || variant === 'icon-action-warning',
+    'warning': variant === 'icon-action-warning' || variant === 'warning',
+    'action-btn': variant === 'action-btn',
+    'nav-btn': variant === 'nav-btn',
+    'drawer-close': variant === 'drawer-close',
+    'date-trigger': variant === 'date-trigger',
+    'sm': size === 'sm',
+    'icon-only': iconOnly
+  }">
+  <ng-content></ng-content>
+</button>

@@ -1,47 +1,128 @@
 .confirm-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
+  background-color: rgba(8, 13, 18, 0.65);
+  display: grid;
+  place-items: center;
   z-index: 9999;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .confirm-dialog {
   background-color: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  width: 90%;
-  max-width: 400px;
+  border-radius: 16px;
+  border: 1.5px solid var(--outline-soft);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
+  width: min(440px, 92vw);
   overflow: hidden;
-  animation: scaleIn 0.2s ease-out;
+  position: relative;
+  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-dialog.dialog-danger {
+  border-color: color-mix(in srgb, var(--error) 40%, transparent);
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.95) translateY(8px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.dialog-accent {
+  height: 4px;
+  width: 100%;
+}
+.dialog-accent.danger {
+  background: linear-gradient(90deg, #dc2626, #f87171);
+}
+.dialog-accent.warning {
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+}
+.dialog-accent.default {
+  background: linear-gradient(90deg, var(--primary), #38bdf8);
 }
 
 .confirm-header {
-  padding: 1.5rem 1.5rem 0.5rem;
+  padding: 20px 24px 8px;
 }
 
-.confirm-header h3 {
+.title-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.icon-badge.danger {
+  background: var(--error-soft);
+  color: var(--error);
+  border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+}
+
+.icon-badge.warning {
+  background: #fff7ed;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.icon-badge.info {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+}
+
+.title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title-text h3 {
   margin: 0;
-  color: var(--text-primary);
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.title-text h3.text-danger {
+  color: var(--error);
+}
+
+.danger-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--error);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .confirm-body {
-  padding: 0.5rem 1.5rem 1.5rem;
-  color: var(--text-secondary);
-  font-size: 1rem;
+  padding: 8px 24px 20px;
+  color: var(--muted);
+  font-size: 14.5px;
   line-height: 1.5;
 }
 
@@ -51,37 +132,20 @@
 
 .confirm-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background-color: var(--background);
-  border-top: 1px solid var(--border);
+  gap: 10px;
+  padding: 16px 24px;
+  background-color: var(--surface-low);
+  border-top: 1.5px solid var(--outline-soft);
 }
 
-.confirm-actions button {
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.confirm-actions button.secondary {
-  background-color: transparent;
-  color: var(--text-secondary);
-}
-
-.confirm-actions button.secondary:hover {
-  background-color: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-.confirm-actions button.primary {
-  background-color: var(--primary);
-  color: white;
-}
-
-.confirm-actions button.primary:hover {
-  background-color: var(--primary-hover);
+@media (max-width: 520px) {
+  .confirm-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .confirm-actions acl-button {
+    width: 100%;
+  }
 }

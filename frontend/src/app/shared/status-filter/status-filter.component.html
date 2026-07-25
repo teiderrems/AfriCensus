@@ -1,4 +1,4 @@
 <div class="field">
       <label [for]="controlId">{{ label }}</label>
-      <acl-select [id]="controlId" [name]="controlId" [ngModel]="value" (ngModelChange)="valueChange.emit($event)" [options]="[{label: i18n.t('status.all'), value: ''}, {label: i18n.t('status.active'), value: 'active'}, {label: i18n.t('status.inactive'), value: 'inactive'}]"></acl-select>
+      <acl-select [id]="controlId" [name]="controlId" [ngModel]="value" (ngModelChange)="valueChange.emit($event)" [options]="translatedOptions"></acl-select>
     </div>

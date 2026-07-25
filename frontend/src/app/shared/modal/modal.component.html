@@ -1,5 +1,5 @@
 @if (open) {
-      <section class="modal-backdrop" role="presentation" (click)="closed.emit()">
+      <section class="modal-backdrop" role="presentation" (click)="onBackdropClick($event)">
         <!-- Mode Formulaire -->
         @if (isForm) {
           <form
@@ -7,8 +7,7 @@
             role="dialog"
             aria-modal="true"
             [attr.aria-labelledby]="titleId"
-            (click)="$event.stopPropagation()"
-            (ngSubmit)="submitted.emit()"
+            (ngSubmit)="$event.preventDefault(); submitted.emit()"
           >
             <ng-container *ngTemplateOutlet="modalInner" />
           </form>
@@ -20,7 +19,6 @@
             role="dialog"
             aria-modal="true"
             [attr.aria-labelledby]="titleId"
-            (click)="$event.stopPropagation()"
           >
             <ng-container *ngTemplateOutlet="modalInner" />
           </article>
@@ -29,21 +27,25 @@
     }
 
     <ng-template #modalInner>
-      <header class="modal-head">
-        <div>
-          <h2 [id]="titleId">{{ title }}</h2>
-          @if (subtitle) {
-            <p>{{ subtitle }}</p>
+      <header class="modal-head" [class.danger]="variant === 'danger'" [class.warning]="variant === 'warning'">
+        <div class="modal-title-wrapper">
+          @if (variant === 'danger') {
+            <lucide-icon name="alert-triangle" class="modal-icon text-error"></lucide-icon>
+          } @else if (variant === 'warning') {
+            <lucide-icon name="alert-circle" class="modal-icon text-warning"></lucide-icon>
           }
+          <div>
+            <h2 [id]="titleId">{{ title }}</h2>
+            @if (subtitle) {
+              <p>{{ subtitle }}</p>
+            }
+          </div>
         </div>
-        <button type="button" class="icon-action" aria-label="Fermer la modale" (click)="closed.emit()">
+        <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('a11y.closeMenu')" (click)="closed.emit()">
           <lucide-icon name="x"></lucide-icon>
-        </button>
+        </acl-button>
       </header>
       <div class="modal-body">
         <ng-content />
       </div>
-      <footer class="modal-actions">
-        <ng-content select="[modal-actions]" />
-      </footer>
     </ng-template>

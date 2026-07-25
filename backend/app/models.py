@@ -198,6 +198,59 @@ class MedicalHistory(Base, DictMixin):
     deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
+class SystemSetting(Base, DictMixin):
+    __tablename__ = "system_settings"
+    dict_fields = ("key", "value_json")
+
+    key: Mapped[str] = mapped_column(String(120), primary_key=True)
+    value_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+
+class AppRole(Base, DictMixin):
+    __tablename__ = "app_roles"
+    dict_fields = ("id", "name", "description", "permissions", "created_at", "updated_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    permissions: Mapped[list[str]] = mapped_column(JSON, default=list)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class Assignment(Base, DictMixin):
+    __tablename__ = "assignments"
+    dict_fields = ("id", "user_id", "zone_id", "assigned_by", "created_at", "updated_at", "deleted_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), index=True)
+    zone_id: Mapped[str] = mapped_column(String(64), index=True)
+    assigned_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class Document(Base, DictMixin):
+    __tablename__ = "documents"
+    dict_fields = (
+        "id", "local_id", "person_id", "document_type", "document_number", 
+        "issue_date", "expiry_date", "created_by", "created_at", "updated_at", "deleted_at"
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    local_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    person_id: Mapped[str] = mapped_column(String(64), index=True)
+    document_type: Mapped[str] = mapped_column(String(80), index=True)
+    document_number: Mapped[str] = mapped_column(String(120), index=True)
+    issue_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    expiry_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
 class FormDefinition(Base, DictMixin):
     __tablename__ = "form_definitions"
     dict_fields = ("id", "title", "description", "fields", "status", "version", "created_by", "created_at", "updated_at", "deleted_at")
@@ -259,3 +312,97 @@ class HomeContent(Base, DictMixin):
     created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class ChatMessage(Base, DictMixin):
+    __tablename__ = "chat_messages"
+    dict_fields = ("id", "content", "sender_id", "receiver_id", "is_group", "timestamp", "read", "reply_to", "reactions")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    content: Mapped[str] = mapped_column(String(1000))
+    sender_id: Mapped[str] = mapped_column(String(64), index=True)
+    receiver_id: Mapped[str] = mapped_column(String(64), index=True)
+    is_group: Mapped[bool] = mapped_column(Boolean, default=False)
+    timestamp: Mapped[str] = mapped_column(String(40), index=True)
+    read: Mapped[bool] = mapped_column(Boolean, default=False)
+    reply_to: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reactions: Mapped[dict[str, list[str]]] = mapped_column(JSON, default=dict)
+
+
+class ChatGroup(Base, DictMixin):
+    __tablename__ = "chat_groups"
+    dict_fields = ("id", "name", "created_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class ChatGroupMember(Base, DictMixin):
+    __tablename__ = "chat_group_members"
+    dict_fields = ("group_id", "user_id")
+
+    group_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+
+
+class SupportTicket(Base, DictMixin):
+    __tablename__ = "support_tickets"
+    dict_fields = ("id", "title", "description", "status", "user_id", "created_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(String(2000))
+    status: Mapped[str] = mapped_column(String(40), default="open", index=True)
+    user_id: Mapped[str] = mapped_column(String(64), index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class FaqItem(Base, DictMixin):
+    __tablename__ = "faq_items"
+    dict_fields = ("id", "question", "answer", "category", "order", "is_active", "created_at", "updated_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+    category: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+def _clean_payload(model: type, payload: dict) -> dict:
+    from typing import Any
+    fields = set(model.dict_fields)
+    cleaned = {key: _scalar(value) for key, value in payload.items() if key in fields}
+    if model.__name__ == 'HomeContent' and isinstance(cleaned.get('brand'), dict):
+        cleaned['brand'] = _localized_scalar(cleaned['brand'])
+    return cleaned
+
+def _scalar(value: Any) -> Any:
+    from typing import Any
+    if hasattr(value, 'value'):
+        return value.value
+    return value
+
+def _localized_scalar(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: _scalar(v) for k, v in value.items()}
+    return _scalar(value)
+
+MODEL_BY_COLLECTION = {
+    'users': User,
+    'audit_logs': AuditLog,
+    'zones': Zone,
+    'campaigns': Campaign,
+    'households': Household,
+    'persons': Person,
+    'family_relations': FamilyRelation,
+    'medical_histories': MedicalHistory,
+    'form_definitions': FormDefinition,
+    'assignments': Assignment,
+    'documents': Document,
+    'home_content': HomeContent,
+    'system_settings': SystemSetting,
+}

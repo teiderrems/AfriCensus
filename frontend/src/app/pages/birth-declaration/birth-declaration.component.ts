@@ -20,10 +20,12 @@ type ParticipantState = {
 
 import { ConfirmService } from '@/app/core/confirm';
 import { DatePickerComponent } from '@/app/shared/date-picker/date-picker.component';
+import { ButtonComponent } from '@/app/shared/button/button';
+import { CardComponent } from "@/app/shared/card/card.component";
 
 @Component({
   selector: 'acl-birth-declaration-page',
-  imports: [LucideAngularModule, FormsModule, NgTemplateOutlet, SelectComponent, DatePickerComponent],
+  imports: [LucideAngularModule, FormsModule, NgTemplateOutlet, SelectComponent, DatePickerComponent, ButtonComponent, CardComponent],
   templateUrl: './birth-declaration.component.html',
   styleUrl: './birth-declaration.component.css',
 })
@@ -44,13 +46,13 @@ export class BirthDeclarationComponent implements OnInit {
     return `${parentCount} lien(s) de filiation seront créés après enregistrement des fiches manquantes.`;
   });
 
-  constructor(private readonly api: ApiService, readonly i18n: I18nService, private readonly confirmService: ConfirmService) {}
+  constructor(private readonly api: ApiService, readonly i18n: I18nService, private readonly confirmService: ConfirmService) { }
 
   ngOnInit(): void {
     this.api.households().subscribe({
       next: (households) => {
-        this.households.set(households);
-        if (households[0]) this.selectHousehold(households[0].id);
+        this.households.set(households.items);
+        if (households.items.length > 0) this.selectHousehold(households.items[0].id);
       },
       error: () => this.households.set([]),
     });
@@ -69,17 +71,17 @@ export class BirthDeclarationComponent implements OnInit {
     this.updateParticipant(participant, (state) => ({ ...state, draft: { ...state.draft, [key]: value } }));
   }
 
-  householdOptions = computed(() => this.households().map(h => ({label: h.household_code + ' · ' + h.address_text, value: h.id})));
-  
+  householdOptions = computed(() => this.households().map(h => ({ label: h.household_code + ' · ' + h.address_text, value: h.id })));
+
   personOptions = computed(() => [
-    {label: this.i18n.t('birthDeclaration.notSpecified'), value: ''},
-    ...this.persons().map(p => ({label: p.first_name + ' ' + p.last_name + ' · ' + (p.birth_date || p.gender), value: p.id}))
+    { label: this.i18n.t('birthDeclaration.notSpecified'), value: '' },
+    ...this.persons().map(p => ({ label: p.first_name + ' ' + p.last_name + ' · ' + (p.birth_date || p.gender), value: p.id }))
   ]);
 
   genderOptions = computed(() => [
-    {label: this.i18n.t('person.gender.F'), value: 'F'},
-    {label: this.i18n.t('person.gender.M'), value: 'M'},
-    {label: this.i18n.t('person.gender.OTHER'), value: 'OTHER'}
+    { label: this.i18n.t('person.gender.F'), value: 'F' },
+    { label: this.i18n.t('person.gender.M'), value: 'M' },
+    { label: this.i18n.t('person.gender.OTHER'), value: 'OTHER' }
   ]);
 
   selectHousehold(householdId: string): void {
@@ -145,7 +147,7 @@ export class BirthDeclarationComponent implements OnInit {
 
   private loadPersons(): void {
     this.api.persons().subscribe({
-      next: (persons) => this.persons.set(persons),
+      next: (persons) => this.persons.set(persons.items),
       error: () => this.persons.set([]),
     });
   }

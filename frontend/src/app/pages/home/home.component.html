@@ -1,13 +1,13 @@
 <main id="main-content" class="home-page">
       @if (content(); as data) {
         <header class="home-nav" aria-label="Navigation publique">
-          <a class="brand" routerLink="/" [attr.aria-label]="data.brand + ' accueil'">
+          <a class="brand" routerLink="/" [aclTooltip]="data.brand">
             <lucide-icon name="chart-column"></lucide-icon>
             <strong>{{ data.brand }}</strong>
           </a>
           <nav [attr.aria-label]="i18n.t('home.aria.nav')">
             @for (link of data.nav_links; track link.href + link.label) {
-              <a [href]="link.href">{{ link.label }}</a>
+              <a [href]="link.href" [aclTooltip]="link.label">{{ link.label }}</a>
             }
           </nav>
           <div class="actions">
@@ -15,10 +15,10 @@
               <a class="btn" [class.primary]="action.style === 'primary'" [class.secondary]="action.style !== 'primary'" [href]="action.href">{{ action.label }}</a>
             }
             <div class="public-controls" [attr.aria-label]="i18n.t('home.aria.displayPrefs')">
-              <button type="button" class="language-toggle" [attr.aria-label]="i18n.t('a11y.language')" (click)="toggleLanguage()">
+              <button type="button" class="language-toggle" [aclTooltip]="i18n.t('a11y.language')" (click)="toggleLanguage()">
                 {{ i18n.language() | uppercase }}
               </button>
-              <button type="button" class="theme-toggle" [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
+              <button type="button" class="theme-toggle" [aclTooltip]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
                 <lucide-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'"></lucide-icon>
               </button>
             </div>
@@ -116,7 +116,7 @@
                     <lucide-icon name="cloud-check"></lucide-icon>
                     <span>{{ i18n.t('home.phone.syncReady') }}</span>
                   </div>
-                  <button type="button" routerLink="/login">{{ data.actions[0]?.label || i18n.t('home.phone.open') }}</button>
+                  <button type="button" routerLink="/login" [aclTooltip]="data.actions[0]?.label || i18n.t('home.phone.open')">{{ data.actions[0]?.label || i18n.t('home.phone.open') }}</button>
                 </div>
               </article>
             } @else {
@@ -132,7 +132,7 @@
         <footer id="support" class="home-footer">
           <div class="footer-inner">
             <section class="footer-brand" [attr.aria-label]="i18n.t('home.aria.presentation')">
-              <a class="footer-logo" routerLink="/" [attr.aria-label]="data.brand + ' accueil'">
+              <a class="footer-logo" routerLink="/" [aclTooltip]="data.brand">
                 <lucide-icon name="chart-column"></lucide-icon>
                 <strong>{{ data.brand }}</strong>
               </a>

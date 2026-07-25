@@ -5,7 +5,7 @@
       </header>
       <div class="queue">
         @for (item of items(); track item.id) {
-          <article class="card queue-card">
+          <acl-card class="card queue-card">
             <div>
               <span class="chip {{ item.validation_status }}">{{ item.validation_status }}</span>
               <h2>{{ item.household_code || (item.first_name + ' ' + item.last_name) }}</h2>
@@ -13,17 +13,17 @@
             </div>
             <div class="actions">
               @if (item.entity_type === 'persons') {
-                <button class="btn primary" type="button" (click)="validate(item.id)">
+                <acl-button type="button" (click)="validate(item.id)">
                   <lucide-icon name="circle-check"></lucide-icon>
                   {{ i18n.t('validation.validate') }}
-                </button>
-                <button class="btn secondary" type="button" (click)="correction(item.id)">
+                </acl-button>
+                <acl-button variant="secondary" type="button" (click)="correction(item.id)">
                   <lucide-icon name="file-pen"></lucide-icon>
                   {{ i18n.t('validation.requestCorrection') }}
-                </button>
+                </acl-button>
               }
             </div>
-          </article>
+          </acl-card>
         }
       </div>
     </section>

@@ -4,10 +4,12 @@ import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
+
 @Component({
   selector: 'acl-date-picker',
   standalone: true,
-  imports: [LucideAngularModule, CommonModule, FormsModule],
+  imports: [LucideAngularModule, CommonModule, FormsModule, AclTooltipDirective],
   templateUrl: './date-picker.component.html',
   styleUrl: './date-picker.component.css',
   providers: [
@@ -27,6 +29,7 @@ export class DatePickerComponent implements ControlValueAccessor {
   value: string | null = null; // YYYY-MM-DD
 
   readonly isOpen = signal(false);
+  readonly openAbove = signal(false);
   readonly currentMonth = signal<Date>(new Date());
 
   readonly daysOfWeek = computed(() => {
@@ -109,14 +112,32 @@ export class DatePickerComponent implements ControlValueAccessor {
 
   toggleOpen() {
     if (this.disabled) return;
-    this.isOpen.update(v => !v);
-    if (this.isOpen() && this.value) {
-      const [y, m, d] = this.value.split('-').map(Number);
-      this.currentMonth.set(new Date(y, m - 1, 1));
-    } else if (this.isOpen()) {
-      const now = new Date();
-      now.setDate(1);
-      this.currentMonth.set(now);
+    const nextState = !this.isOpen();
+    this.isOpen.set(nextState);
+    if (nextState) {
+      const rect = this.elementRef.nativeElement.getBoundingClientRect();
+      const modalEl = this.elementRef.nativeElement.closest('.modal, .modal-dialog, article.modal, form.modal');
+      
+      let distToTop = rect.top;
+      let distToBottom = window.innerHeight - rect.bottom;
+      
+      if (modalEl) {
+        const mRect = modalEl.getBoundingClientRect();
+        distToTop = rect.top - mRect.top;
+        distToBottom = mRect.bottom - rect.bottom;
+      }
+      
+      // Open above only if space below is less than 220px AND top space is greater than bottom space
+      this.openAbove.set(distToBottom < 220 && distToTop > distToBottom);
+
+      if (this.value) {
+        const [y, m, d] = this.value.split('-').map(Number);
+        this.currentMonth.set(new Date(y, m - 1, 1));
+      } else {
+        const now = new Date();
+        now.setDate(1);
+        this.currentMonth.set(now);
+      }
     }
   }
 

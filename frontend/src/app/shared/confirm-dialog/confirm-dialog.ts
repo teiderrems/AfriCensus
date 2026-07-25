@@ -1,13 +1,15 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ConfirmService, ConfirmState } from '../../core/confirm';
+import { ButtonComponent } from '../button/button';
+import { LucideAngularModule } from 'lucide-angular';
 import { Subscription } from 'rxjs';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { ConfirmService, ConfirmState } from '@/app/core/confirm';
 
 @Component({
   selector: 'app-confirm-dialog',
+  imports: [CommonModule, LucideAngularModule, ButtonComponent],
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './confirm-dialog.html',
   styleUrl: './confirm-dialog.css'
 })
@@ -16,8 +18,8 @@ export class ConfirmDialogComponent implements OnDestroy {
     show: false,
     title: '',
     message: '',
-    onConfirm: () => {},
-    onCancel: () => {}
+    onConfirm: () => { },
+    onCancel: () => { }
   };
   private sub: Subscription;
 

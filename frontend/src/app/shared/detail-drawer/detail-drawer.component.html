@@ -8,13 +8,13 @@
               <span>{{ subtitle }}</span>
             }
           </div>
-          <button type="button" class="drawer-close" aria-label="Fermer les détails" (click)="closed.emit()">
+          <acl-button variant="drawer-close" type="button" [aclTooltip]="i18n.t('a11y.closeMenu')" (click)="closed.emit()">
             <lucide-icon name="x"></lucide-icon>
-          </button>
+          </acl-button>
         </header>
 
         <dl>
-          @for (item of items; track item.label) {
+          @for (item of items; track item.label + '-' + $index) {
             <div>
               <dt>{{ item.label }}</dt>
               <dd>{{ display(item.value) }}</dd>

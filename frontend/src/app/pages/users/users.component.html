@@ -1,0 +1,429 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">{{ i18n.t('admin.users.eyebrow') }}</span>
+      <h1>{{ i18n.t('admin.users.title') }}</h1>
+      <p class="subtitle">{{ i18n.t('admin.users.subtitle') }}</p>
+    </div>
+    <div class="header-actions">
+      @if (activeTab() === 'users') {
+        <acl-button type="button" (click)="openCreateUserModal()">
+          <lucide-icon name="user-plus"></lucide-icon>
+          {{ i18n.t('admin.users.createUser') }}
+        </acl-button>
+      } @else {
+        <acl-button type="button" (click)="openCreateRoleModal()">
+          <lucide-icon name="shield-plus"></lucide-icon>
+          {{ i18n.t('admin.roles.createRole') }}
+        </acl-button>
+      }
+    </div>
+  </header>
+
+  <nav class="users-tabs">
+    <button type="button" [class.active]="activeTab() === 'users'" (click)="setTab('users')">
+      <lucide-icon name="users"></lucide-icon>
+      {{ i18n.t('admin.users.tabUsers') }} ({{ totalItems() }})
+    </button>
+    <button type="button" [class.active]="activeTab() === 'roles'" (click)="setTab('roles')">
+      <lucide-icon name="shield-check"></lucide-icon>
+      {{ i18n.t('admin.roles.tabRoles') }} ({{ roles().length }})
+    </button>
+  </nav>
+
+  <!-- TAB 1: USERS MANAGEMENT -->
+  @if (activeTab() === 'users') {
+    <section class="filters-bar">
+      <div class="search-input">
+        <lucide-icon name="search"></lucide-icon>
+        <input
+          type="text"
+          [ngModel]="search()"
+          (ngModelChange)="onSearchChange($event)"
+          [placeholder]="i18n.t('admin.users.searchPlaceholder')"
+        />
+      </div>
+      <div class="filter-controls">
+        <acl-select
+          [options]="roleOptions()"
+          [ngModel]="roleFilter()"
+          (ngModelChange)="onRoleFilterChange($event)"
+        ></acl-select>
+        <acl-select
+          [options]="statusOptions()"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusFilterChange($event)"
+        ></acl-select>
+        <acl-page-size-select
+          controlId="usersPageSize"
+          [value]="pageSize()"
+          [options]="pageSizes"
+          (valueChange)="onPageSizeChange($event)"
+        />
+      </div>
+    </section>
+
+    <article class="panel users-panel">
+      <div class="table-wrap">
+        <table class="responsive-table" aria-label="Liste des utilisateurs">
+          <thead>
+            <tr>
+              <th scope="col" class="cursor-pointer" (click)="toggleSort('full_name')">
+                <div class="th-sort-content">
+                  {{ i18n.t('admin.users.table.user') }}
+                  @if (sortBy() === 'full_name') {
+                    <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                  } @else {
+                    <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                  }
+                </div>
+              </th>
+              <th scope="col" class="cursor-pointer" (click)="toggleSort('role')">
+                <div class="th-sort-content">
+                  {{ i18n.t('admin.users.table.role') }}
+                  @if (sortBy() === 'role') {
+                    <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                  } @else {
+                    <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                  }
+                </div>
+              </th>
+              <th>{{ i18n.t('admin.users.table.zones') }}</th>
+              <th scope="col" class="cursor-pointer" (click)="toggleSort('active')">
+                <div class="th-sort-content">
+                  {{ i18n.t('admin.users.table.status') }}
+                  @if (sortBy() === 'active') {
+                    <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                  } @else {
+                    <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                  }
+                </div>
+              </th>
+              <th>{{ i18n.t('admin.users.table.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td [attr.data-label]="i18n.t('admin.users.table.user')">
+                  <div class="identity">
+                    <span class="avatar" aria-hidden="true">{{ initials(user.full_name) }}</span>
+                    <div>
+                      <strong>{{ user.full_name }}</strong>
+                      <small class="username">&#x40;{{ user.username }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td [attr.data-label]="i18n.t('admin.users.table.role')">
+                  <span class="role-badge {{ user.role | lowercase }}">{{ user.role }}</span>
+                </td>
+                <td [attr.data-label]="i18n.t('admin.users.table.zones')">
+                  <span class="zone-badge">
+                    {{ user.zone_ids && user.zone_ids.length ? (user.zone_ids.length + ' zone(s)') : i18n.t('admin.users.zoneNational') }}
+                  </span>
+                </td>
+                <td [attr.data-label]="i18n.t('admin.users.table.status')">
+                  <span class="status-chip" [class.inactive]="user.active === false">
+                    <i class="dot" aria-hidden="true"></i>
+                    {{ user.active !== false ? i18n.t('admin.users.statusActive') : i18n.t('admin.users.statusInactive') }}
+                  </span>
+                </td>
+                <td class="row-actions" [attr.data-label]="i18n.t('admin.users.table.actions')">
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.view')" (click)="selectedUser.set(user)">
+                    <lucide-icon name="eye"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.edit')" (click)="editUser(user)">
+                    <lucide-icon name="pencil"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.resetPassword')" (click)="openPasswordModal(user)">
+                    <lucide-icon name="key"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="user.active !== false ? i18n.t('admin.users.action.deactivate') : i18n.t('admin.users.action.activate')" (click)="toggleActive(user)">
+                    <lucide-icon [name]="user.active !== false ? 'toggle-right' : 'toggle-left'"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('admin.users.action.delete')" (click)="deleteUser(user)">
+                    <lucide-icon name="trash-2"></lucide-icon>
+                  </acl-button>
+                </td>
+              </tr>
+            }
+            @if (users().length === 0 && !loading()) {
+              <tr>
+                <td colspan="5" class="empty-cell">
+                  {{ i18n.t('admin.users.emptyList') }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <acl-table-pagination
+        [ariaLabel]="i18n.t('admin.users.paginationLabel')"
+        [totalItems]="totalItems()"
+        [page]="page()"
+        [totalPages]="totalPages()"
+        (previous)="previousPage()"
+        (next)="nextPage()"
+      />
+    </article>
+  }
+
+  <!-- TAB 2: ROLES & PERMISSIONS MANAGEMENT -->
+  @if (activeTab() === 'roles') {
+    <section class="roles-grid">
+      @for (role of roles(); track role.id) {
+        <article class="role-card">
+          <header class="role-head">
+            <div>
+              <div class="role-title">
+                <h3>{{ role.name }}</h3>
+                <span class="role-tag" [class.system]="role.is_system">
+                  {{ role.is_system ? i18n.t('admin.roles.system') : i18n.t('admin.roles.custom') }}
+                </span>
+              </div>
+              <p>{{ role.description || i18n.t('admin.roles.noDescription') }}</p>
+            </div>
+            <div class="role-meta">
+              <span class="meta-item">
+                <lucide-icon name="users"></lucide-icon>
+                <strong>{{ role.user_count || 0 }}</strong> {{ i18n.t('admin.roles.usersCount') }}
+              </span>
+              <span class="meta-item">
+                <lucide-icon name="key-round"></lucide-icon>
+                <strong>{{ role.permissions.length || 0 }}</strong> {{ i18n.t('admin.roles.permissionsCount') }}
+              </span>
+            </div>
+          </header>
+
+          <div class="role-permissions-preview">
+            @for (perm of role.permissions.slice(0, 8); track perm) {
+              <span class="perm-chip">{{ perm }}</span>
+            }
+            @if (role.permissions.length > 8) {
+              <span class="perm-chip more">+{{ role.permissions.length - 8 }} {{ i18n.t('admin.roles.moreCount') }}</span>
+            }
+          </div>
+
+          <footer class="role-actions">
+            <acl-button variant="secondary" size="sm" type="button" (click)="editRole(role)">
+              <lucide-icon name="pencil"></lucide-icon>
+              {{ i18n.t('admin.roles.managePermissions') }}
+            </acl-button>
+            @if (!role.is_system) {
+              <acl-button variant="icon-action-danger" size="sm" [iconOnly]="true" type="button" [aclTooltip]="i18n.t('admin.roles.deleteRole')" (click)="deleteRole(role)">
+                <lucide-icon name="trash-2"></lucide-icon>
+              </acl-button>
+            }
+          </footer>
+        </article>
+      }
+    </section>
+  }
+</section>
+
+<!-- CREATE / EDIT USER MODAL -->
+<acl-modal
+  [open]="userModalOpen()"
+  [title]="editingUserId() ? i18n.t('admin.users.modalEditTitle') : i18n.t('admin.users.modalCreateTitle')"
+  [subtitle]="i18n.t('admin.users.modalSubtitle')"
+  [isForm]="true"
+  (submitted)="saveUser()"
+  (closed)="userModalOpen.set(false)"
+>
+  <div class="form-grid">
+    <div class="field">
+      <label for="username">{{ i18n.t('admin.users.fieldUsername') }} *</label>
+      <input
+        type="text"
+        id="username"
+        name="username"
+        required
+        [(ngModel)]="userDraft().username"
+        placeholder="ex: j.dupont"
+      />
+    </div>
+    <div class="field">
+      <label for="fullName">{{ i18n.t('admin.users.fieldFullName') }} *</label>
+      <input
+        type="text"
+        id="fullName"
+        name="fullName"
+        required
+        [(ngModel)]="userDraft().full_name"
+        placeholder="ex: Jean Dupont"
+      />
+    </div>
+    <div class="field">
+      <label for="userRole">{{ i18n.t('admin.users.fieldRole') }} *</label>
+      <acl-select
+        id="userRole"
+        [options]="userFormRoleOptions()"
+        [(ngModel)]="userDraft().role"
+      ></acl-select>
+    </div>
+    @if (!editingUserId()) {
+      <div class="field">
+        <label for="password">{{ i18n.t('admin.users.fieldPassword') }} *</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          [(ngModel)]="userDraft().password"
+          placeholder="••••••••••••"
+        />
+      </div>
+    }
+    <div class="field full-width">
+      <label>{{ i18n.t('admin.users.fieldZones') }}</label>
+      <div class="zones-selector">
+        @for (z of availableZones(); track z.id) {
+          <label class="zone-checkbox" [class.selected]="userDraft().zone_ids.includes(z.id)">
+            <input
+              type="checkbox"
+              [checked]="userDraft().zone_ids.includes(z.id)"
+              (change)="toggleZoneSelection(z.id)"
+            />
+            <span>{{ z.name }} ({{ z.code }})</span>
+          </label>
+        }
+      </div>
+      <small class="help-text">{{ i18n.t('admin.users.fieldZonesHelp') }}</small>
+    </div>
+    <label class="check-field full-width">
+      <input type="checkbox" [(ngModel)]="userDraft().active" name="active" />
+      <span>{{ i18n.t('admin.users.fieldActive') }}</span>
+    </label>
+  </div>
+
+  <ng-container modal-actions>
+    <acl-button variant="secondary" type="button" (click)="userModalOpen.set(false)">
+      {{ i18n.t('action.cancel') }}
+    </acl-button>
+    <acl-button type="submit" [disabled]="saving()">
+      <lucide-icon [name]="saving() ? 'loader' : 'save'"></lucide-icon>
+      {{ editingUserId() ? i18n.t('action.edit') : i18n.t('admin.users.createUser') }}
+    </acl-button>
+  </ng-container>
+</acl-modal>
+
+<!-- RESET PASSWORD MODAL -->
+<acl-modal
+  [open]="passwordModalOpen()"
+  [title]="i18n.t('admin.users.passwordResetTitle')"
+  [subtitle]="i18n.t('admin.users.passwordResetSubtitle').replace('{name}', passwordResetUser()?.full_name || '')"
+  [isForm]="true"
+  (submitted)="savePasswordReset()"
+  (closed)="passwordModalOpen.set(false)"
+>
+  <div class="field">
+    <label for="newPassword">{{ i18n.t('admin.users.newPassword') }} *</label>
+    <input
+      type="password"
+      id="newPassword"
+      name="newPassword"
+      required
+      [(ngModel)]="newPassword"
+      [placeholder]="i18n.t('admin.users.newPasswordPlaceholder')"
+    />
+  </div>
+
+  <ng-container modal-actions>
+    <acl-button variant="secondary" type="button" (click)="passwordModalOpen.set(false)">
+      {{ i18n.t('action.cancel') }}
+    </acl-button>
+    <acl-button type="submit" [disabled]="saving() || !newPassword()">
+      <lucide-icon [name]="saving() ? 'loader' : 'key'"></lucide-icon>
+      {{ i18n.t('admin.users.passwordBtn') }}
+    </acl-button>
+  </ng-container>
+</acl-modal>
+
+<!-- CREATE / EDIT ROLE MODAL WITH PERMISSION MATRIX -->
+<acl-modal
+  [open]="roleModalOpen()"
+  [title]="editingRoleId() ? i18n.t('admin.roles.modalEditTitle') : i18n.t('admin.roles.modalCreateTitle')"
+  [subtitle]="i18n.t('admin.roles.modalSubtitle')"
+  [isForm]="true"
+  (submitted)="saveRole()"
+  (closed)="roleModalOpen.set(false)"
+>
+  <div class="role-form">
+    <div class="field">
+      <label for="roleName">{{ i18n.t('admin.roles.fieldName') }} *</label>
+      <input
+        type="text"
+        id="roleName"
+        name="roleName"
+        required
+        [(ngModel)]="roleDraft().name"
+        placeholder="ex: RESPONSABLE_ZONE"
+      />
+    </div>
+    <div class="field">
+      <label for="roleDesc">{{ i18n.t('admin.roles.fieldDesc') }}</label>
+      <input
+        type="text"
+        id="roleDesc"
+        name="roleDesc"
+        [(ngModel)]="roleDraft().description"
+        [placeholder]="i18n.t('admin.roles.fieldDescPlaceholder')"
+      />
+    </div>
+
+    <div class="permission-matrix">
+      <h4>{{ i18n.t('admin.roles.matrixTitle') }}</h4>
+      @for (mod of permissionModules(); track mod.module) {
+        <div class="permission-group">
+          <header class="group-head">
+            <div>
+              <strong>{{ i18n.language() === 'en' ? mod.label_en : mod.label_fr }}</strong>
+              <small>({{ mod.permissions.length }} {{ i18n.t('admin.roles.privilegesCount') }})</small>
+            </div>
+            <button
+              type="button"
+              class="link-button"
+              (click)="toggleModulePermissions(mod)"
+            >
+              {{ isModuleAllSelected(mod) ? i18n.t('admin.roles.unselectAll') : i18n.t('admin.roles.selectAll') }}
+            </button>
+          </header>
+          <div class="group-grid">
+            @for (perm of mod.permissions; track perm.key) {
+              <label class="perm-card" [class.active]="isPermissionSelected(perm.key)">
+                <input
+                  type="checkbox"
+                  [checked]="isPermissionSelected(perm.key)"
+                  (change)="togglePermission(perm.key)"
+                />
+                <div class="perm-text">
+                  <strong>{{ i18n.language() === 'en' ? perm.label_en : perm.label_fr }}</strong>
+                  <span class="perm-key">{{ perm.key }}</span>
+                  <p>{{ i18n.language() === 'en' ? perm.desc_en : perm.desc_fr }}</p>
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <ng-container modal-actions>
+    <acl-button variant="secondary" type="button" (click)="roleModalOpen.set(false)">
+      {{ i18n.t('action.cancel') }}
+    </acl-button>
+    <acl-button type="submit" [disabled]="saving() || !roleDraft().name">
+      <lucide-icon [name]="saving() ? 'loader' : 'save'"></lucide-icon>
+      {{ i18n.t('admin.roles.saveBtn') }}
+    </acl-button>
+  </ng-container>
+</acl-modal>
+
+<!-- DETAIL DRAWER -->
+<acl-detail-drawer
+  [open]="selectedUser() != null"
+  [title]="i18n.t('admin.users.drawerTitle')"
+  [items]="selectedUserDetails()"
+  (closed)="selectedUser.set(null)"
+/>

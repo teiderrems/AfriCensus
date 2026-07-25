@@ -1,0 +1,144 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">{{ 'campaigns.eyebrow' | translate }}</span>
+      <h1>{{ 'campaigns.title' | translate }}</h1>
+      <p class="subtitle">{{ 'campaigns.subtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <acl-button type="button" (click)="openCreate()">
+        <lucide-icon name="plus"></lucide-icon>
+        {{ 'campaigns.create' | translate }}
+      </acl-button>
+    </div>
+  </header>
+
+  <section class="filters-bar">
+    <div class="search-input">
+      <lucide-icon name="search"></lucide-icon>
+      <input
+        id="search"
+        type="search"
+        [ngModel]="search()"
+        (ngModelChange)="setSearch($event)"
+        [placeholder]="'campaigns.searchPlaceholder' | translate"
+      />
+    </div>
+    <div class="filter-controls">
+      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+    </div>
+  </section>
+
+  <acl-card>
+    <div class="table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th scope="col" class="cursor-pointer" (click)="toggleSort('name')" [aclTooltip]="'validation.sort.name' | translate">
+              <div class="th-sort-content">
+                {{ 'campaigns.name' | translate }}
+                @if (sortBy() === 'name') {
+                  <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                } @else {
+                  <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                }
+              </div>
+            </th>
+            <th scope="col" class="cursor-pointer" (click)="toggleSort('status')" [aclTooltip]="'validation.sort.status' | translate">
+              <div class="th-sort-content">
+                {{ 'campaigns.status' | translate }}
+                @if (sortBy() === 'status') {
+                  <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                } @else {
+                  <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                }
+              </div>
+            </th>
+            <th scope="col" class="cursor-pointer" (click)="toggleSort('start_date')" [aclTooltip]="'validation.sort.updatedAt' | translate">
+              <div class="th-sort-content">
+                {{ 'campaigns.startDate' | translate }}
+                @if (sortBy() === 'start_date') {
+                  <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                } @else {
+                  <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                }
+              </div>
+            </th>
+            <th scope="col" class="cursor-pointer" (click)="toggleSort('end_date')" [aclTooltip]="'validation.sort.updatedAt' | translate">
+              <div class="th-sort-content">
+                {{ 'campaigns.endDate' | translate }}
+                @if (sortBy() === 'end_date') {
+                  <lucide-icon [name]="sortOrder() === 'asc' ? 'chevron-up' : 'chevron-down'" [size]="16"></lucide-icon>
+                } @else {
+                  <lucide-icon name="chevrons-up-down" [size]="14" class="opacity-40"></lucide-icon>
+                }
+              </div>
+            </th>
+            <th>{{ 'table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of campaigns(); track row.id) {
+            <tr>
+              <td [attr.data-label]="('campaigns.name' | translate)"><strong>{{ row.name }}</strong></td>
+              <td [attr.data-label]="('campaigns.status' | translate)"><span class="chip {{ row.status }}">{{ row.status }}</span></td>
+              <td [attr.data-label]="('campaigns.startDate' | translate)">{{ row.start_date | aclLocalizedDate }}</td>
+              <td [attr.data-label]="('campaigns.endDate' | translate)">{{ row.end_date | aclLocalizedDate }}</td>
+              <td class="row-actions">
+                <acl-button variant="icon-action" type="button" [aclTooltip]="('action.viewDetails' | translate)" (click)="openDetails(row)"><lucide-icon name="eye"></lucide-icon></acl-button>
+                <acl-button variant="icon-action" type="button" [aclTooltip]="('action.edit' | translate)" (click)="editCampaign(row)"><lucide-icon name="pencil"></lucide-icon></acl-button>
+                <acl-button variant="icon-action-danger" type="button" [aclTooltip]="('action.delete' | translate)" (click)="deleteCampaign(row)"><lucide-icon name="trash-2"></lucide-icon></acl-button>
+              </td>
+            </tr>
+          }
+          @if (!campaigns().length) {
+            <tr><td colspan="5" class="empty-cell">{{ 'campaigns.empty' | translate }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <acl-table-pagination
+      [totalItems]="totalCampaigns()"
+      [page]="page()"
+      [totalPages]="totalPages()"
+      (previous)="previousPage()"
+      (next)="nextPage()"
+    />
+  </acl-card>
+  <acl-detail-drawer
+    [open]="drawerOpen()"
+    [title]="selectedCampaignTitle()"
+    [subtitle]="('campaigns.drawer.subtitle' | translate)"
+    [items]="selectedCampaignDetails()"
+    (closed)="drawerOpen.set(false)"
+  />
+  <acl-modal [open]="modalOpen()" [title]="editingCampaignId() ? ('campaigns.edit' | translate) : ('campaigns.create' | translate)" (closed)="modalOpen.set(false)">
+    <form class="modal-form" (ngSubmit)="saveCampaign()">
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ 'campaigns.name' | translate }}</label>
+          <input type="text" [(ngModel)]="draft().name" name="name" required />
+        </div>
+        <div class="field">
+          <label for="status">{{ 'campaigns.status' | translate }}</label>
+          <acl-select [options]="statusOptions()" id="status" name="status" [(ngModel)]="draft().status"></acl-select>
+        </div>
+        <div class="field">
+          <label>{{ 'campaigns.startDate' | translate }}</label>
+          <acl-date-picker [(ngModel)]="draft().start_date" name="startDate"></acl-date-picker>
+        </div>
+        <div class="field">
+          <label>{{ 'campaigns.endDate' | translate }}</label>
+          <acl-date-picker [(ngModel)]="draft().end_date" name="endDate"></acl-date-picker>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <acl-button variant="secondary" type="button" (click)="modalOpen.set(false)">{{ 'action.cancel' | translate }}</acl-button>
+        <acl-button type="submit" [disabled]="saving()">
+          <lucide-icon [name]="saving() ? 'loader' : 'save'"></lucide-icon>
+          {{ 'action.confirm' | translate }}
+        </acl-button>
+      </footer>
+    </form>
+  </acl-modal>
+</section>

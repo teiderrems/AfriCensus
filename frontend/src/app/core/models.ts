@@ -7,6 +7,23 @@ export interface User {
   active?: boolean;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface FormDefinition {
+  id: string;
+  title: Record<string, string>;
+  description: Record<string, string>;
+  fields: any[];
+  status: string;
+  version: number;
+}
+
 export type UserRole = User['role'];
 
 export interface UserCreateInput {
@@ -56,6 +73,16 @@ export interface DashboardSummary {
   activeAgents: number;
   zoneProgress: Array<{ id: string; name: string; progress: number; status: string }>;
   recentSubmissions: CensusRecord[];
+}
+export interface DuplicateCandidate {
+  id: string;
+  person_a_id: string;
+  person_b_id: string;
+  score: number;
+  status: string;
+  created_at: string;
+  person_a?: PersonRecord;
+  person_b?: PersonRecord;
 }
 
 export interface HomeLink {
@@ -202,11 +229,48 @@ export interface AuditLog {
   created_at: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  content: string;
+  sender_id: string;
+  receiver_id: string;
+  is_group: boolean;
+  timestamp: string;
+  read: boolean;
+  reply_to?: string | null;
+  reactions?: Record<string, string[]>;
+  sender_name?: string;
+}
+
+export interface ConversationSummary {
+  id: string;
+  name: string;
+  is_group: boolean;
+  avatar?: string | null;
+  role?: string | null;
+  last_message?: string | null;
+  last_timestamp?: string | null;
+  unread_count: number;
+}
+
+export interface ChatGroup {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
 export interface PopulationSummary {
   totalPersons: number;
   totalHouseholds: number;
   personsByGender: Record<string, number>;
+  personsByAgeGroup?: Record<string, number>;
+  personsByValidationStatus?: Record<string, number>;
+  personsByZone?: Record<string, number>;
+  withoutDocumentCount?: number;
+  vulnerablePersonsCount?: number;
   averageMembersPerHousehold: number;
+  householdsByHousingType?: Record<string, number>;
+  householdsByOccupancyStatus?: Record<string, number>;
 }
 
 export type MedicalSeverity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
@@ -371,4 +435,30 @@ export interface LoginResponse {
   refresh_token: string;
   user: User;
   zones: Zone[];
+}
+
+export interface AppRole {
+  id: string;
+  name: string;
+  description?: string | null;
+  permissions: string[];
+  user_count?: number;
+  is_system?: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface PermissionDefinition {
+  key: string;
+  label_fr: string;
+  label_en: string;
+  desc_fr: string;
+  desc_en: string;
+}
+
+export interface PermissionModule {
+  module: string;
+  label_fr: string;
+  label_en: string;
+  permissions: PermissionDefinition[];
 }

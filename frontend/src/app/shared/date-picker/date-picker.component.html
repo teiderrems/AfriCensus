@@ -1,17 +1,17 @@
 <div class="date-picker-wrapper">
-  <button class="date-trigger" type="button" [disabled]="disabled" (click)="toggleOpen()">
+  <button type="button" class="date-trigger" [disabled]="disabled" (click)="toggleOpen()">
     <span [class.has-value]="!!value">{{ displayValue() }}</span>
     <lucide-icon name="calendar"></lucide-icon>
   </button>
 
   @if (isOpen()) {
-    <div class="popover">
+    <div class="popover" [class.open-above]="openAbove()">
       <div class="calendar-header">
-        <button type="button" class="nav-btn" (click)="prevMonth($event)">
+        <button type="button" class="nav-btn" [aclTooltip]="i18n.t('action.previous')" (click)="prevMonth($event)">
           <lucide-icon name="chevron-left"></lucide-icon>
         </button>
         <div class="month-year">{{ monthYearDisplay() }}</div>
-        <button type="button" class="nav-btn" (click)="nextMonth($event)">
+        <button type="button" class="nav-btn" [aclTooltip]="i18n.t('action.next')" (click)="nextMonth($event)">
           <lucide-icon name="chevron-right"></lucide-icon>
         </button>
       </div>

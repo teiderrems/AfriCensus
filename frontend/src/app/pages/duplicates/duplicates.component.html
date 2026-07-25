@@ -1,0 +1,63 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">{{ 'duplicates.eyebrow' | translate }}</span>
+      <h1>{{ 'duplicates.title' | translate }}</h1>
+      <p class="subtitle">{{ 'duplicates.subtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <acl-button type="button" (click)="scan()" [disabled]="scanning()">
+        <lucide-icon [name]="scanning() ? 'loader' : 'search'"></lucide-icon>
+        {{ 'duplicates.scan' | translate }}
+      </acl-button>
+    </div>
+  </header>
+
+  <section class="filters-bar">
+    <div class="filter-controls">
+      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+    </div>
+  </section>
+
+  <acl-card>
+    <div class="table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>{{ 'duplicates.score' | translate }}</th>
+            <th>{{ 'duplicates.personA' | translate }}</th>
+            <th>{{ 'duplicates.personB' | translate }}</th>
+            <th>{{ 'table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of duplicates(); track row.id) {
+            <tr>
+              <td><strong>{{ row.score | number:'1.2-2' }}</strong></td>
+              <td>{{ row.person_a?.first_name }} {{ row.person_a?.last_name }}</td>
+              <td>{{ row.person_b?.first_name }} {{ row.person_b?.last_name }}</td>
+              <td class="row-actions">
+                <acl-button variant="icon-action-danger" type="button" [aclTooltip]="'duplicates.notDuplicate' | translate" (click)="resolve(row.id, 'NOT_DUPLICATE')">
+                  <lucide-icon name="x-circle"></lucide-icon>
+                </acl-button>
+                <acl-button variant="icon-action" type="button" [aclTooltip]="'duplicates.merge' | translate" (click)="resolve(row.id, 'MERGE')">
+                  <lucide-icon name="git-merge"></lucide-icon>
+                </acl-button>
+              </td>
+            </tr>
+          }
+          @if (!duplicates().length) {
+            <tr><td colspan="4" class="empty-cell">{{ 'duplicates.empty' | translate }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <acl-table-pagination
+      [totalItems]="totalDuplicates()"
+      [page]="page()"
+      [totalPages]="totalPages()"
+      (previous)="previousPage()"
+      (next)="nextPage()"
+    />
+  </acl-card>
+</section>

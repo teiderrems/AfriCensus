@@ -4,46 +4,46 @@
           <h1>{{ i18n.t('dashboard.title') }}</h1>
           <p>{{ i18n.t('dashboard.subtitle') }}</p>
         </div>
-        <button class="btn secondary" type="button" [disabled]="loading()" (click)="load()">
+        <acl-button variant="secondary" type="button" [disabled]="loading()" (click)="load()">
           <lucide-icon name="refresh-cw"></lucide-icon>
           {{ loading() ? i18n.t('dashboard.refreshing') : i18n.t('dashboard.refresh') }}
-        </button>
+        </acl-button>
       </header>
 
       @if (summary(); as data) {
         <div class="stats">
-          <article class="card stat">
+          <acl-card class="card stat">
             <div class="stat-header">
               <p>{{ i18n.t('dashboard.enumeratedHouseholds') }}</p>
               <div class="icon-wrapper primary"><lucide-icon name="house"></lucide-icon></div>
             </div>
             <strong>{{ data.totalHouseholds }}</strong>
-          </article>
-          <article class="card stat">
+          </acl-card>
+          <acl-card class="card stat">
             <div class="stat-header">
               <p>{{ i18n.t('dashboard.individuals') }}</p>
               <div class="icon-wrapper green"><lucide-icon name="users"></lucide-icon></div>
             </div>
             <strong>{{ data.totalPersons }}</strong>
-          </article>
-          <article class="card stat urgent">
+          </acl-card>
+          <acl-card class="card stat urgent">
             <div class="stat-header">
               <p>{{ i18n.t('dashboard.toValidate') }}</p>
               <div class="icon-wrapper danger"><lucide-icon name="triangle-alert"></lucide-icon></div>
             </div>
             <strong>{{ data.submitted }}</strong>
-          </article>
-          <article class="card stat">
+          </acl-card>
+          <acl-card class="card stat">
             <div class="stat-header">
               <p>{{ i18n.t('dashboard.activeAgents') }}</p>
               <div class="icon-wrapper earth"><lucide-icon name="id-card"></lucide-icon></div>
             </div>
             <strong>{{ data.activeAgents }}</strong>
-          </article>
+          </acl-card>
         </div>
 
         <div class="content-grid">
-          <article class="card">
+          <acl-card class="card">
             <h2>{{ i18n.t('dashboard.regionalProgress') }}</h2>
             <div class="map">
               <lucide-icon name="map-pin"></lucide-icon>
@@ -57,9 +57,9 @@
                 <progress [value]="zone.progress" max="100"></progress>
               </div>
             }
-          </article>
+          </acl-card>
 
-          <article class="card submissions">
+          <acl-card class="card submissions">
             <h2>{{ i18n.t('dashboard.recentSubmissions') }}</h2>
             <div class="table-controls" aria-label="Filtres des soumissions récentes">
               <div class="field">
@@ -95,7 +95,7 @@
               (previous)="previousSubmissionPage()"
               (next)="nextSubmissionPage()"
             />
-          </article>
+          </acl-card>
         </div>
       }
     </section>

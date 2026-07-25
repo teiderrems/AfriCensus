@@ -6,10 +6,11 @@ import { Router } from '@angular/router';
 import { AuthService } from '@/app/core/auth.service';
 import { AppError } from '@/app/core/error.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
+import { ButtonComponent } from '@/app/shared/button/button';
 
 @Component({
   selector: 'acl-login-page',
-  imports: [LucideAngularModule, FormsModule],
+  imports: [LucideAngularModule, FormsModule, ButtonComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })

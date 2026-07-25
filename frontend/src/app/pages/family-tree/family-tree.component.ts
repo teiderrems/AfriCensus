@@ -1,6 +1,6 @@
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '@/app/core/api.service';
@@ -8,24 +8,26 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { CensusRecord, FamilyTree, FamilyTreeLink, FamilyTreeNode } from '@/app/core/models';
 import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
-
+import { CardComponent } from '@/app/shared/card/card.component';
+import { ButtonComponent } from '@/app/shared/button/button';
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 type PositionedNode = FamilyTreeNode & { x: number; y: number };
 type NodePositions = Record<string, { x: number; y: number }>;
-type LinkOffsets = Record<string, { dx: number; dy: number }>;
+type LinkOffsets = Record<string, { dx: number; dy: number; tx?: number }>;
 
 @Component({
   selector: 'acl-family-tree-page',
-  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, TablePaginationComponent, SelectComponent],
-  templateUrl: './family-tree.component.html',
+  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   styleUrl: './family-tree.component.css',
+  templateUrl: "./family-tree.component.html"
 })
 export class FamilyTreeComponent implements OnInit {
-  personOptions = computed(() => this.persons().map(p => ({label: p.first_name + ' ' + p.last_name + ' (' + p.household_code + ')', value: p.id})));
+  personOptions = computed(() => this.persons().map(p => ({ label: p.first_name + ' ' + p.last_name + ' (' + p.household_code + ')', value: p.id })));
   relationCategoryOptions = computed(() => [
-    {label: this.i18n.t('family.category.all'), value: ''},
-    {label: this.i18n.t('family.category.immediate'), value: 'immediate'},
-    {label: this.i18n.t('family.category.extended'), value: 'extended'},
-    {label: this.i18n.t('family.category.in_law'), value: 'in_law'}
+    { label: this.i18n.t('family.category.all'), value: '' },
+    { label: this.i18n.t('family.category.immediate'), value: 'immediate' },
+    { label: this.i18n.t('family.category.extended'), value: 'extended' },
+    { label: this.i18n.t('family.category.in_law'), value: 'in_law' }
   ]);
 
   readonly persons = signal<CensusRecord[]>([]);
@@ -40,8 +42,11 @@ export class FamilyTreeComponent implements OnInit {
   readonly draggedNodeId = signal<string | null>(null);
   readonly draggedLinkId = signal<string | null>(null);
   readonly depth = signal(2);
-  readonly depthOptions = [0, 1, 2, 3, 4, 5, 6].map(v => ({label: v.toString(), value: v}));
+  readonly depthOptions = [0, 1, 2, 3, 4, 5, 6].map(v => ({ label: v.toString(), value: v }));
   readonly pageSizes = [5, 10, 20, 50];
+  readonly showTable = signal(true);
+  readonly showDetails = signal(true);
+  readonly showExportMenu = signal(false);
   readonly relationSearch = signal('');
   readonly relationCategoryFilter = signal('');
   readonly relationPage = signal(1);
@@ -63,15 +68,16 @@ export class FamilyTreeComponent implements OnInit {
   private panStart: { x: number; y: number; tx: number; ty: number } | null = null;
   private nodeDragStart: { id: string; offsetX: number; offsetY: number } | null = null;
   private linkDragStart: { id: string; offsetX: number; offsetY: number } | null = null;
+  private targetDragStart: { id: string; offsetX: number } | null = null;
 
-  constructor(private readonly api: ApiService, readonly i18n: I18nService) {}
+  constructor(private readonly api: ApiService, readonly i18n: I18nService) { }
 
   ngOnInit(): void {
     this.api.persons().subscribe({
       next: (persons) => {
-        this.persons.set(persons);
-        if (persons.length) {
-          this.selectPerson(persons[0].id);
+        this.persons.set(persons.items);
+        if (persons.items.length) {
+          this.selectPerson(persons.items[0].id);
         }
       },
       error: () => this.persons.set([]),
@@ -166,10 +172,38 @@ export class FamilyTreeComponent implements OnInit {
     return this.layoutNodes().find((node) => node.id === id);
   }
 
+  toggleDetails(): void {
+    this.showDetails.set(!this.showDetails());
+  }
+
+  toggleExportMenu(event?: Event): void {
+    event?.stopPropagation();
+    this.showExportMenu.set(!this.showExportMenu());
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.showExportMenu()) {
+      this.showExportMenu.set(false);
+    }
+  }
+
+  triggerExport(type: 'svg' | 'png' | 'pdf' | 'csv' | 'json'): void {
+    this.showExportMenu.set(false);
+    if (type === 'svg') this.exportSvg();
+    else if (type === 'png') this.exportPng();
+    else if (type === 'pdf') this.exportPdf();
+    else if (type === 'csv') this.exportCsv();
+    else if (type === 'json') this.exportJson();
+  }
+
   selectNode(node: PositionedNode, event: PointerEvent): void {
     event.stopPropagation();
     event.preventDefault();
     this.selectedNode.set(node);
+    if (!this.showDetails()) {
+      this.showDetails.set(true);
+    }
     this.startNodeDrag(node, event);
   }
 
@@ -217,12 +251,84 @@ export class FamilyTreeComponent implements OnInit {
     document.body.removeChild(dl);
   }
 
+  private prepareSvgForExport(): { clone: SVGSVGElement; width: number; height: number } | null {
+    const svg = document.querySelector('.family-graph') as SVGSVGElement;
+    const nodes = this.layoutNodes();
+    if (!svg || nodes.length === 0) return null;
+    
+    // Compute bounding box encompassing all nodes with generous margins
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const node of nodes) {
+      minX = Math.min(minX, node.x - 140);
+      maxX = Math.max(maxX, node.x + 140);
+      minY = Math.min(minY, node.y - 80);
+      maxY = Math.max(maxY, node.y + 80);
+    }
+    
+    const padding = 60;
+    minX = Math.floor(minX - padding);
+    minY = Math.floor(minY - padding);
+    maxX = Math.ceil(maxX + padding);
+    maxY = Math.ceil(maxY + padding);
+    
+    const width = Math.max(900, maxX - minX);
+    const height = Math.max(600, maxY - minY);
+
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.style.overflow = 'visible';
+    
+    // Reset transform on all top-level group elements in SVG so pan/zoom offset doesn't shift export
+    Array.from(clone.children).forEach(child => {
+      if (child.tagName.toLowerCase() === 'g') {
+        child.setAttribute('transform', 'translate(0, 0) scale(1)');
+      }
+    });
+
+    // Update viewBox and dimensions to fit entire graph content perfectly
+    clone.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
+    clone.setAttribute('width', width.toString());
+    clone.setAttribute('height', height.toString());
+
+    // Inject solid background rect
+    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bgRect.setAttribute('x', minX.toString());
+    bgRect.setAttribute('y', minY.toString());
+    bgRect.setAttribute('width', width.toString());
+    bgRect.setAttribute('height', height.toString());
+    bgRect.setAttribute('fill', '#fcfbf9');
+    clone.insertBefore(bgRect, clone.firstChild);
+    
+    const styles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    const computed = getComputedStyle(document.body);
+    const vars = [
+      '--surface', '--outline-soft', '--primary', '--terracotta', '--growth', 
+      '--surface-container', '--sand-bg', '--outline', '--ink', '--primary-soft', 
+      '--muted', '--terracotta-soft'
+    ];
+    const rootVars = vars.map(v => `${v}: ${computed.getPropertyValue(v).trim()};`).join(' ');
+    
+    const fontOverrideCss = `
+      svg { overflow: visible !important; }
+      svg, text, tspan {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+      }
+      .node-title { font-weight: 700 !important; font-size: 14px !important; }
+      .node-meta, .node-group { font-size: 12px !important; }
+      .edge-label { font-weight: 700 !important; font-size: 13px !important; }
+    `;
+    
+    const styleNode = document.createElement('style');
+    styleNode.textContent = `svg { ${rootVars} }\n${styles}\n${fontOverrideCss}`;
+    clone.insertBefore(styleNode, clone.firstChild);
+    
+    return { clone, width, height };
+  }
+
   exportSvg(): void {
-    const svg = document.querySelector('.family-graph');
-    if (!svg) return;
+    const prepared = this.prepareSvgForExport();
+    if (!prepared) return;
     const serializer = new XMLSerializer();
-    let source = serializer.serializeToString(svg);
-    // add name spaces if not present
+    let source = serializer.serializeToString(prepared.clone);
     if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
       source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
     }
@@ -230,6 +336,73 @@ export class FamilyTreeComponent implements OnInit {
     const dl = document.createElement('a');
     dl.setAttribute('href', dataStr);
     dl.setAttribute('download', `family-tree-${this.selectedPersonId()}.svg`);
+    document.body.appendChild(dl);
+    dl.click();
+    document.body.removeChild(dl);
+  }
+
+  exportPng(): void {
+    const prepared = this.prepareSvgForExport();
+    if (!prepared) return;
+    const { clone, width, height } = prepared;
+    
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(clone);
+    if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    
+    const img = new Image();
+    const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    img.onload = () => {
+      const scale = 2; // High-DPI export
+      const canvas = document.createElement('canvas');
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#fcfbf9';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        const pngData = canvas.toDataURL('image/png');
+        const dl = document.createElement('a');
+        dl.setAttribute('href', pngData);
+        dl.setAttribute('download', `family-tree-${this.selectedPersonId()}.png`);
+        document.body.appendChild(dl);
+        dl.click();
+        document.body.removeChild(dl);
+      }
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  exportPdf(): void {
+    window.print();
+  }
+
+  exportCsv(): void {
+    const tree = this.tree();
+    if (!tree) return;
+    const header = ['Source', 'Relation', 'Category', 'Target', 'Status'].join(',');
+    const rows = tree.links.map(link => {
+      const source = tree.nodes.find(n => n.id === link.source)?.label || link.source;
+      const target = tree.nodes.find(n => n.id === link.target)?.label || link.target;
+      return [
+        `"${source}"`,
+        `"${link.type}"`,
+        `"${link.category}"`,
+        `"${target}"`,
+        `"${link.status}"`
+      ].join(',');
+    });
+    const csvContent = [header, ...rows].join('\n');
+    const dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+    const dl = document.createElement('a');
+    dl.setAttribute('href', dataStr);
+    dl.setAttribute('download', `family-tree-${this.selectedPersonId()}.csv`);
     document.body.appendChild(dl);
     dl.click();
     document.body.removeChild(dl);
@@ -249,7 +422,7 @@ export class FamilyTreeComponent implements OnInit {
   }
 
   startPan(event: PointerEvent): void {
-    if (this.nodeDragStart || this.linkDragStart) {
+    if (this.nodeDragStart || this.linkDragStart || this.targetDragStart) {
       return;
     }
     this.panStart = { x: event.clientX, y: event.clientY, tx: this.translateX(), ty: this.translateY() };
@@ -262,6 +435,10 @@ export class FamilyTreeComponent implements OnInit {
     }
     if (this.linkDragStart) {
       this.moveLink(event);
+      return;
+    }
+    if (this.targetDragStart) {
+      this.moveTarget(event);
       return;
     }
     if (!this.panStart) {
@@ -279,6 +456,7 @@ export class FamilyTreeComponent implements OnInit {
     this.releasePointer(event);
     this.nodeDragStart = null;
     this.linkDragStart = null;
+    this.targetDragStart = null;
     this.draggedNodeId.set(null);
     this.draggedLinkId.set(null);
     this.endPan();
@@ -290,7 +468,8 @@ export class FamilyTreeComponent implements OnInit {
 
   edgePath(link: FamilyTreeLink, source: PositionedNode, target: PositionedNode): string {
     const control = this.edgeControlPoint(link, source, target);
-    return `M ${source.x} ${source.y + 42} C ${source.x + control.dx} ${control.y}, ${target.x + control.dx} ${control.y}, ${target.x} ${target.y - 42}`;
+    const tx = this.manualLinkOffsets()[link.id]?.tx || 0;
+    return `M ${source.x} ${source.y + 42} C ${source.x + control.dx} ${control.y}, ${target.x + control.dx} ${control.y}, ${target.x + tx} ${target.y - 42}`;
   }
 
   edgeLabelTransform(link: FamilyTreeLink, source: PositionedNode, target: PositionedNode): string {
@@ -453,14 +632,62 @@ export class FamilyTreeComponent implements OnInit {
       x: point.x - this.linkDragStart.offsetX,
       y: point.y - this.linkDragStart.offsetY,
     };
-    this.manualLinkOffsets.update((offsets) => ({
-      ...offsets,
-      [link.id]: {
-        dx: nextControl.x - base.x,
-        dy: nextControl.y - base.y,
-      },
-    }));
-  }
+      this.manualLinkOffsets.update((offsets) => ({
+        ...offsets,
+        [link.id]: {
+          dx: nextControl.x - base.x,
+          dy: nextControl.y - base.y,
+          tx: offsets[link.id]?.tx || 0
+        },
+      }));
+    }
+
+    startTargetDrag(link: FamilyTreeLink, event: PointerEvent): void {
+      event.stopPropagation();
+      event.preventDefault();
+      const point = this.graphPointFromEvent(event);
+      const target = this.nodeById(link.target);
+      if (!target || !point) {
+        return;
+      }
+      this.capturePointer(event);
+      this.panStart = null;
+      const currentTx = this.manualLinkOffsets()[link.id]?.tx || 0;
+      this.targetDragStart = {
+        id: link.id,
+        offsetX: point.x - (target.x + currentTx),
+      };
+      this.draggedLinkId.set(link.id);
+    }
+
+    private moveTarget(event: PointerEvent): void {
+      if (!this.targetDragStart) {
+        return;
+      }
+      event.preventDefault();
+      const link = this.visibleLinks().find((item) => item.id === this.targetDragStart?.id);
+      const point = this.graphPointFromEvent(event);
+      if (!link || !point) {
+        return;
+      }
+      const target = this.nodeById(link.target);
+      if (!target) {
+        return;
+      }
+      
+      let newTx = point.x - this.targetDragStart.offsetX - target.x;
+      // Constraint to avoid going past the edges of the box
+      newTx = Math.max(-76, Math.min(76, newTx));
+
+      this.manualLinkOffsets.update((offsets) => ({
+        ...offsets,
+        [link.id]: {
+          dx: offsets[link.id]?.dx || 0,
+          dy: offsets[link.id]?.dy || 0,
+          tx: newTx
+        },
+      }));
+    }
 
   private graphPointFromEvent(event: PointerEvent): { x: number; y: number } | null {
     const svg = this.svgFromEvent(event);

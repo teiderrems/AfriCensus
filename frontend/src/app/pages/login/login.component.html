@@ -19,10 +19,10 @@
           @if (error()) {
             <p class="error">{{ error() }}</p>
           }
-          <button class="btn primary" type="submit">
+          <acl-button type="submit">
             <lucide-icon name="log-in"></lucide-icon>
             {{ i18n.t('login.submit') }}
-          </button>
+          </acl-button>
         </form>
         <p class="hint">{{ i18n.t('login.hint') }}</p>
       </div>

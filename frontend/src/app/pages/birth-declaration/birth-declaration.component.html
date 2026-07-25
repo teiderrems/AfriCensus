@@ -16,28 +16,28 @@
   }
 
   <section class="steps">
-    <article class="card participant">
+    <acl-card class="card participant">
       <span class="step">1</span>
       <h2>{{ i18n.t('birthDeclaration.child') }}</h2>
       <p>{{ i18n.t('birthDeclaration.child.desc') }}</p>
       <ng-container *ngTemplateOutlet="participantEditor; context: { key: 'child', state: child(), required: true }" />
-    </article>
+    </acl-card>
 
-    <article class="card participant">
+    <acl-card class="card participant">
       <span class="step">2</span>
       <h2>{{ i18n.t('birthDeclaration.mother') }}</h2>
       <p>{{ i18n.t('birthDeclaration.mother.desc') }}</p>
       <ng-container
         *ngTemplateOutlet="participantEditor; context: { key: 'mother', state: mother(), required: false }" />
-    </article>
+    </acl-card>
 
-    <article class="card participant">
+    <acl-card class="card participant">
       <span class="step">3</span>
       <h2>{{ i18n.t('birthDeclaration.father') }}</h2>
       <p>{{ i18n.t('birthDeclaration.father.desc') }}</p>
       <ng-container
         *ngTemplateOutlet="participantEditor; context: { key: 'father', state: father(), required: false }" />
-    </article>
+    </acl-card>
   </section>
 
   <ng-template #participantEditor let-key="key" let-state="state" let-required="required">
@@ -89,14 +89,14 @@
     }
   </ng-template>
 
-  <article class="card summary">
+  <acl-card class="card summary">
     <div>
       <h2>{{ i18n.t('birthDeclaration.summary') }}</h2>
       <p>{{ summaryText() }}</p>
     </div>
-    <button class="btn primary" type="button" [disabled]="!canSubmit() || saving()" (click)="submitDeclaration()">
+    <acl-button type="button" [disabled]="!canSubmit() || saving()" (click)="submitDeclaration()">
       <lucide-icon name="network"></lucide-icon>
       {{ saving() ? i18n.t('birthDeclaration.creating') : i18n.t('birthDeclaration.create') }}
-    </button>
-  </article>
+    </acl-button>
+  </acl-card>
 </section>

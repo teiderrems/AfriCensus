@@ -23,8 +23,8 @@ def reset():
     import os
     import glob
     from sqlalchemy import text
-    from app.database import Base, engine
-    from app.store import OrmStore
+    from app.database import Base, engine, SessionLocal
+    from app.init_db import init_db
 
     print("Cleaning migration files...")
     versions_dir = os.path.join("alembic", "versions")
@@ -43,11 +43,8 @@ def reset():
         except Exception:
             pass
 
-    print("Creating all tables...")
-    Base.metadata.create_all(bind=engine)
-    
-    print("Seeding database...")
-    # OrmStore.__init__ runs _ensure_seed automatically
-    OrmStore()
+    print("Creating all tables and seeding database...")
+    with SessionLocal() as db:
+        init_db(db)
     
     print("Database has been fully reset and seeded!")

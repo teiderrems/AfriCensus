@@ -26,7 +26,7 @@
         </section>
 
         <section class="portal-grid">
-          <article class="card actions-panel">
+          <acl-card class="card actions-panel">
             <h2>{{ i18n.t('portal.quickActions') }}</h2>
             <div class="action-list">
               @for (action of portal.actions; track action.path + action.label) {
@@ -39,9 +39,9 @@
                 </a>
               }
             </div>
-          </article>
+          </acl-card>
 
-          <article class="card scope-panel">
+          <acl-card class="card scope-panel">
             <h2>{{ i18n.t('portal.scope') }}</h2>
             <dl>
               <div>
@@ -61,7 +61,7 @@
                 <dd>{{ i18n.t('portal.connected') }}</dd>
               </div>
             </dl>
-          </article>
+          </acl-card>
         </section>
       }
     </section>

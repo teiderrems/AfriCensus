@@ -8,10 +8,12 @@ import { DashboardSummary } from '@/app/core/models';
 import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
 import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
+import { CardComponent } from '@/app/shared/card/card.component';
+import { ButtonComponent } from '@/app/shared/button/button';
 
 @Component({
   selector: 'acl-dashboard-page',
-  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, StatusFilterComponent, TablePaginationComponent],
+  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })

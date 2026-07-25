@@ -15,6 +15,7 @@ import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pa
 import { LocalizedDatePipe } from '@/app/shared/pipes/localized-date.pipe';
 import { ShortIdPipe } from '@/app/shared/pipes/short-id.pipe';
 import { CommonModule } from '@angular/common';
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 type HealthCard = {
   label: string;
@@ -29,39 +30,40 @@ type HealthCard = {
 type AdminTab = 'infra' | 'users' | 'security' | 'config';
 
 import { ConfirmService } from '@/app/core/confirm';
+import { ButtonComponent } from '@/app/shared/button/button';
 
 @Component({
   selector: 'acl-admin-portal-page',
-  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent],
+  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './admin-portal.component.html',
   styleUrl: './admin-portal.component.css',
 })
 export class AdminPortalComponent implements OnInit {
   adminRoleFilterOptions = computed(() => [
-    {label: 'Tous', value: ''},
-    {label: 'Admin', value: 'ADMIN'},
-    {label: 'Superviseur', value: 'SUPERVISOR'},
-    {label: 'Agent', value: 'AGENT'},
-    {label: 'Auditeur', value: 'AUDITOR'},
-    {label: 'Analyste', value: 'ANALYST'}
+    { label: this.i18n.t('status.all'), value: '' },
+    { label: this.roleLabel('ADMIN'), value: 'ADMIN' },
+    { label: this.roleLabel('SUPERVISOR'), value: 'SUPERVISOR' },
+    { label: this.roleLabel('AGENT'), value: 'AGENT' },
+    { label: this.roleLabel('AUDITOR'), value: 'AUDITOR' },
+    { label: this.roleLabel('STATISTICIAN'), value: 'STATISTICIAN' }
   ]);
   adminStatusFilterOptions = computed(() => [
-    {label: 'Tous', value: ''},
-    {label: 'Actifs', value: 'active'},
-    {label: 'Inactifs', value: 'inactive'}
+    { label: this.i18n.t('status.all'), value: '' },
+    { label: this.i18n.t('status.active'), value: 'active' },
+    { label: this.i18n.t('status.inactive'), value: 'inactive' }
   ]);
   auditSeverityOptions = computed(() => [
-    {label: this.i18n.t('admin.security.allSeverities'), value: ''},
-    {label: this.i18n.t('admin.security.sev.critical'), value: 'critical'},
-    {label: this.i18n.t('admin.security.sev.warning'), value: 'warning'},
-    {label: this.i18n.t('admin.security.sev.info'), value: 'info'}
+    { label: this.i18n.t('admin.security.allSeverities'), value: '' },
+    { label: this.i18n.t('admin.security.sev.critical'), value: 'critical' },
+    { label: this.i18n.t('admin.security.sev.warning'), value: 'warning' },
+    { label: this.i18n.t('admin.security.sev.info'), value: 'info' }
   ]);
   defaultLocaleOptions = computed(() => [
-    {label: 'French (Senegal)', value: 'fr-SN'},
-    {label: 'English (Nigeria)', value: 'en-NG'},
-    {label: 'Swahili (Kenya)', value: 'sw-KE'}
+    { label: 'French (Senegal)', value: 'fr-SN' },
+    { label: 'English (Nigeria)', value: 'en-NG' },
+    { label: 'Swahili (Kenya)', value: 'sw-KE' }
   ]);
-  userRoleOptions = computed(() => this.roles.map(r => ({label: this.roleLabel(r), value: r})));
+  userRoleOptions = computed(() => this.roles.map(r => ({ label: this.roleLabel(r), value: r })));
 
   readonly roles: UserRole[] = ['ADMIN', 'SUPERVISOR', 'AGENT', 'STATISTICIAN', 'AUDITOR'];
   readonly tabs = computed<{ id: AdminTab; label: string; icon: string }[]>(() => {
@@ -76,7 +78,7 @@ export class AdminPortalComponent implements OnInit {
   readonly activeTab = signal<AdminTab>('infra');
   readonly users = signal<User[]>([]);
   readonly zones = signal<any[]>([]);
-  
+
   readonly zoneOptions = computed(() => this.zones().map(z => ({
     label: z.name,
     value: z.id
@@ -235,11 +237,11 @@ export class AdminPortalComponent implements OnInit {
       zones: this.api.zones(),
     }).subscribe({
       next: ({ users, summary, logs, home, zones }) => {
-        this.users.set(users);
+        this.users.set(users.items);
         this.summary.set(summary);
-        this.auditLogs.set(logs);
+        this.auditLogs.set(logs.items);
         this.setHomeContent(home);
-        this.zones.set(zones);
+        this.zones.set(zones.items);
       },
       error: () => {
         this.users.set([]);
@@ -263,10 +265,10 @@ export class AdminPortalComponent implements OnInit {
       zones: this.api.zones(),
     }).subscribe({
       next: ({ users, summary, logs, zones }) => {
-        this.users.set(users);
+        this.users.set(users.items);
         this.summary.set(summary);
-        this.auditLogs.set(logs);
-        this.zones.set(zones);
+        this.auditLogs.set(logs.items);
+        this.zones.set(zones.items);
       },
       error: () => undefined,
     });
@@ -384,7 +386,8 @@ export class AdminPortalComponent implements OnInit {
   async deleteUser(user: User): Promise<void> {
     const confirmed = await this.confirmService.ask(
       this.i18n.t('action.confirm'),
-      this.i18n.t('admin.confirmDeleteUser')
+      this.i18n.t('admin.confirmDeleteUser'),
+      'danger'
     );
     if (!confirmed) return;
 

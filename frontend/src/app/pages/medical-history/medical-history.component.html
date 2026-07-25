@@ -41,7 +41,7 @@
         </section>
 
         <section class="workspace">
-          <article class="card">
+          <acl-card class="card">
             <h2>{{ i18n.t('medicalHistory.createHistory') }}</h2>
             <form class="medical-form" (ngSubmit)="createHistory()">
               <div class="field">
@@ -80,14 +80,14 @@
                 <label for="notes">{{ i18n.t('medicalHistory.notes') }}</label>
                 <textarea id="notes" name="notes" rows="4" [ngModel]="draft().notes" (ngModelChange)="updateDraft('notes', $event)"></textarea>
               </div>
-              <button class="btn primary" type="submit" [disabled]="!canSubmit()">
+              <acl-button type="submit" [disabled]="!canSubmit()">
                 <lucide-icon name="plus"></lucide-icon>
                 {{ i18n.t('medicalHistory.add') }}
-              </button>
+              </acl-button>
             </form>
-          </article>
+          </acl-card>
 
-          <article class="card">
+          <acl-card class="card">
             <h2>{{ i18n.t('medicalHistory.recurrentConditions') }}</h2>
             <div class="condition-list">
               @for (condition of data.conditions; track condition.condition_name + condition.category) {
@@ -106,10 +106,10 @@
                 <p class="empty">{{ i18n.t('medicalHistory.emptySummary') }}</p>
               }
             </div>
-          </article>
+          </acl-card>
         </section>
 
-        <article class="card">
+        <acl-card class="card">
           <div class="section-head">
             <h2>{{ i18n.t('medicalHistory.historyInFamily') }}</h2>
             <span class="muted">{{ i18n.t('medicalHistory.depth') }} {{ data.depth }}</span>
@@ -156,9 +156,9 @@
                     <td [attr.data-label]="i18n.t('medicalHistory.status')">{{ statusLabel(record.status) }}</td>
                     <td [attr.data-label]="i18n.t('medicalHistory.hereditaryRisk')">{{ record.hereditary_risk ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
                     <td [attr.data-label]="i18n.t('medicalHistory.details')">
-                      <button type="button" class="icon-action" aria-label="Voir les détails de l'antécédent" (click)="openMedicalRecord(record)">
+                      <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.viewDetails')" (click)="openMedicalRecord(record)">
                         <lucide-icon name="eye"></lucide-icon>
-                      </button>
+                      </acl-button>
                     </td>
                   </tr>
                 }
@@ -176,7 +176,7 @@
             (previous)="previousMedicalPage()"
             (next)="nextMedicalPage()"
           />
-        </article>
+        </acl-card>
         <acl-detail-drawer
           [open]="medicalDrawerOpen()"
           [title]="selectedMedicalTitle()"

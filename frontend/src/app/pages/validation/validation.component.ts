@@ -6,10 +6,12 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ConfirmService } from '@/app/core/confirm';
 import { CensusRecord } from '@/app/core/models';
 import { LocalizedDatePipe } from '@/app/shared/pipes/localized-date.pipe';
+import { CardComponent } from '@/app/shared/card/card.component';
+import { ButtonComponent } from '@/app/shared/button/button';
 
 @Component({
   selector: 'acl-validation-page',
-  imports: [LucideAngularModule, LocalizedDatePipe],
+  imports: [LucideAngularModule, LocalizedDatePipe, CardComponent, ButtonComponent],
   templateUrl: './validation.component.html',
   styleUrl: './validation.component.css',
 })
@@ -47,7 +49,7 @@ export class ValidationComponent implements OnInit {
 
   private load(): void {
     this.api.validationQueue().subscribe({
-      next: (items) => this.items.set(items),
+      next: (items) => this.items.set(items.items),
       error: () => this.items.set([]),
     });
   }

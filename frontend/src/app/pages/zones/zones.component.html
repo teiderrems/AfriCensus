@@ -1,0 +1,106 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">{{ 'zones.eyebrow' | translate }}</span>
+      <h1>{{ 'zones.title' | translate }}</h1>
+      <p class="subtitle">{{ 'zones.subtitle' | translate }}</p>
+    </div>
+    <div class="header-actions">
+      <acl-button type="button" (click)="openCreate()">
+        <lucide-icon name="plus"></lucide-icon>
+        {{ 'zones.create' | translate }}
+      </acl-button>
+    </div>
+  </header>
+
+  <section class="filters-bar">
+    <div class="search-input">
+      <lucide-icon name="search"></lucide-icon>
+      <input
+        id="search"
+        type="search"
+        [ngModel]="search()"
+        (ngModelChange)="setSearch($event)"
+        [placeholder]="'zones.searchPlaceholder' | translate"
+      />
+    </div>
+    <div class="filter-controls">
+      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+    </div>
+  </section>
+
+  <acl-card>
+    <div class="table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>{{ 'zones.name' | translate }}</th>
+            <th>{{ 'zones.code' | translate }}</th>
+            <th>{{ 'zones.type' | translate }}</th>
+            <th>{{ 'table.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of zones(); track row.id) {
+            <tr>
+              <td><strong>{{ row.name }}</strong></td>
+              <td>{{ row.code }}</td>
+              <td>{{ row.type }}</td>
+              <td class="row-actions">
+                <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')" (click)="openDetails(row)"><lucide-icon name="eye"></lucide-icon></acl-button>
+                <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')" (click)="editZone(row)"><lucide-icon name="pencil"></lucide-icon></acl-button>
+                <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deleteZone(row)"><lucide-icon name="trash-2"></lucide-icon></acl-button>
+              </td>
+            </tr>
+          }
+          @if (!zones().length) {
+            <tr><td colspan="4" class="empty-cell">{{ 'zones.empty' | translate }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <acl-table-pagination
+      [totalItems]="totalZones()"
+      [page]="page()"
+      [totalPages]="totalPages()"
+      (previous)="previousPage()"
+      (next)="nextPage()"
+    />
+  </acl-card>
+  <acl-detail-drawer
+    [open]="drawerOpen()"
+    [title]="selectedZoneTitle()"
+    [subtitle]="('zones.drawer.subtitle' | translate)"
+    [items]="selectedZoneDetails()"
+    (closed)="drawerOpen.set(false)"
+  />
+  <acl-modal [open]="modalOpen()" [title]="editingZoneId() ? ('zones.edit' | translate) : ('zones.create' | translate)" (closed)="modalOpen.set(false)">
+    <form class="modal-form" (ngSubmit)="saveZone()">
+      <div class="form-grid">
+        <div class="field">
+          <label>{{ 'zones.name' | translate }}</label>
+          <input type="text" [(ngModel)]="draft().name" name="name" required />
+        </div>
+        <div class="field">
+          <label>{{ 'zones.code' | translate }}</label>
+          <input type="text" [(ngModel)]="draft().code" name="code" required />
+        </div>
+        <div class="field">
+          <label for="type">{{ 'zones.type' | translate }}</label>
+          <acl-select [options]="typeOptions()" id="type" name="type" [(ngModel)]="draft().type"></acl-select>
+        </div>
+        <div class="field">
+          <label for="parent">{{ 'zones.parent' | translate }}</label>
+          <acl-select [options]="parentOptions()" id="parent" name="parent" [(ngModel)]="draft().parent_id"></acl-select>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <acl-button variant="secondary" type="button" (click)="modalOpen.set(false)">{{ 'action.cancel' | translate }}</acl-button>
+        <acl-button type="submit" [disabled]="saving()">
+          <lucide-icon [name]="saving() ? 'loader' : 'save'"></lucide-icon>
+          {{ 'action.confirm' | translate }}
+        </acl-button>
+      </footer>
+    </form>
+  </acl-modal>
+</section>

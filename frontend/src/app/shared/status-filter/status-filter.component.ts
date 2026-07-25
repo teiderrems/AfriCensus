@@ -4,6 +4,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { I18nService } from '@/app/core/i18n/i18n.service';
+import { TranslatePipe } from '@/app/shared/pipes/translate.pipe';
 
 type StatusOption = { value: string; label: string };
 
@@ -27,4 +28,14 @@ export class StatusFilterComponent {
     { value: 'REJECTED', label: 'Rejeté' },
   ];
   @Output() valueChange = new EventEmitter<string>();
+
+  get translatedOptions(): StatusOption[] {
+    return [
+      { label: this.i18n.t('status.all'), value: '' },
+      ...this.options.map(opt => ({
+        value: opt.value,
+        label: this.i18n.t(`status.${opt.value}` as any)
+      }))
+    ];
+  }
 }

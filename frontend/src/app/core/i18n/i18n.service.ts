@@ -22,10 +22,10 @@ export class I18nService {
     this.applyDocumentLanguage(language);
   }
 
-  t(key: TranslationKey, params: Record<string, string | number> = {}): string {
+  t(key: TranslationKey | string, params: Record<string, string | number> = {}): string {
     const catalog = translations[this.language()];
-    const fallback = translations.fr[key] || key;
-    return this.interpolate(catalog[key] || fallback, params);
+    const fallback = translations.fr[key as TranslationKey] || key;
+    return this.interpolate(catalog[key as TranslationKey] || fallback, params);
   }
 
   isLanguage(value: string): value is LanguageCode {

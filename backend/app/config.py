@@ -24,7 +24,7 @@ class Settings(BaseSettings):
         alias="CORS_ORIGINS",
     )
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore", populate_by_name=True)
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -6,14 +6,15 @@ import { FormsModule } from '@angular/forms';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { MultiLangString } from '@/app/core/i18n/translations';
 import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
+import { ButtonComponent } from '@/app/shared/button/button';
+import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 type Field = { label: MultiLangString; type: string; required: boolean; branchingRule?: string };
 
 @Component({
   selector: 'acl-form-builder-page',
-  imports: [LucideAngularModule, FormsModule, MultilangFieldComponent, SelectComponent],
   templateUrl: './form-builder.component.html',
-  styleUrl: './form-builder.component.css',
+  imports: [LucideAngularModule, FormsModule, MultilangFieldComponent, SelectComponent, ButtonComponent, AclTooltipDirective]
 })
 export class FormBuilderComponent {
   title: MultiLangString = { fr: 'Démographie du ménage 2026', en: 'Household Demographics 2026' };
@@ -35,7 +36,10 @@ export class FormBuilderComponent {
     { type: 'image', label: 'Image Capture', icon: 'camera' },
   ];
 
-  fieldTypeOptions = computed(() => this.fieldTypes.map(t => ({ label: t.label, value: t.type })));
+  fieldTypeOptions = computed(() => {
+    this.i18n.language();
+    return this.fieldTypes.map(t => ({ label: this.i18n.t(('formBuilder.fieldType.' + t.type) as any), value: t.type }));
+  });
 
   constructor(readonly i18n: I18nService) {
   }

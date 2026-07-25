@@ -1,4 +1,5 @@
 import { SelectComponent } from '@/app/shared/select/select.component';
+import { DatePickerComponent } from '@/app/shared/date-picker/date-picker.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -7,17 +8,18 @@ import { PersonWriteDto } from '@/app/core/dtos';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Campaign, HouseholdRecord, Zone } from '@/app/core/models';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
+import { ButtonComponent } from '@/app/shared/button/button';
 
 @Component({
   selector: 'acl-person-form-modal',
-  imports: [LucideAngularModule, FormsModule, ModalComponent, SelectComponent],
+  imports: [LucideAngularModule, FormsModule, ModalComponent, SelectComponent, DatePickerComponent, ButtonComponent],
   templateUrl: './person-form-modal.component.html',
   styleUrl: './person-form-modal.component.css',
 })
 export class PersonFormModalComponent {
   @Input({ required: true }) open = false;
   @Input({ required: true }) title = '';
-  @Input() subtitle = 'Les champs campagne, zone et ménage sont requis par le backend.';
+  @Input() subtitle = '';
   @Input({ required: true }) draft!: PersonWriteDto;
   @Input() households: HouseholdRecord[] = [];
   @Input() campaigns: Campaign[] = [];
