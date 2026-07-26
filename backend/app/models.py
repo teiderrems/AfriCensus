@@ -31,7 +31,7 @@ class Zone(Base, DictMixin):
     dict_fields = ("id", "name", "code", "type", "parent_id", "status", "progress", "created_by", "created_at", "updated_at", "deleted_at")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    name: Mapped[str] = mapped_column(String(200), index=True)
+    name: Mapped[Any] = mapped_column(JSON)
     code: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     type: Mapped[str] = mapped_column(String(60), index=True)
     parent_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
@@ -48,7 +48,7 @@ class Campaign(Base, DictMixin):
     dict_fields = ("id", "name", "status", "start_date", "end_date", "zone_ids", "created_by", "created_at", "updated_at", "deleted_at")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    name: Mapped[str] = mapped_column(String(200), index=True)
+    name: Mapped[Any] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(40), index=True)
     start_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
     end_date: Mapped[str | None] = mapped_column(String(40), nullable=True)

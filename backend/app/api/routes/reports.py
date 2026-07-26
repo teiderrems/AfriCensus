@@ -28,9 +28,26 @@ def _calculate_age(birth_date_str: str | None) -> int | None:
         return None
 
 
+def _loc_name(val: Any, lang: str = "fr") -> str:
+    if isinstance(val, dict):
+        return val.get(lang) or val.get("fr") or val.get("en") or (next(iter(val.values())) if val else "")
+    if isinstance(val, str):
+        val_str = val.strip()
+        if val_str.startswith("{"):
+            try:
+                import json
+                parsed = json.loads(val_str.replace("'", '"'))
+                if isinstance(parsed, dict):
+                    return parsed.get(lang) or parsed.get("fr") or parsed.get("en") or (next(iter(parsed.values())) if parsed else "")
+            except Exception:
+                pass
+    return str(val or "")
+
+
 @router.get("/reports/population-summary", response_model=PopulationSummaryOut)
 def population_summary(
     zone_id: str | None = None,
+    lang: str = Query(default="fr", description="Language code"),
     user: dict[str, Any] = Depends(current_user),
     db: Session = Depends(get_db)
 ) -> PopulationSummaryOut:
@@ -57,7 +74,7 @@ def population_summary(
 
     # Map zone names
     zones = db.scalars(select(Zone)).all()
-    zone_names = {z.id: f"{z.name} ({z.code})" for z in zones}
+    zone_names = {z.id: f"{_loc_name(z.name, lang)} ({z.code})" for z in zones}
 
     for p in persons:
         g = p.gender or 'UNKNOWN'

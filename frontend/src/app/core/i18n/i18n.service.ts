@@ -23,9 +23,11 @@ export class I18nService {
   }
 
   t(key: TranslationKey | string, params: Record<string, string | number> = {}): string {
+    if (!key) return '';
     const catalog = translations[this.language()];
-    const fallback = translations.fr[key as TranslationKey] || key;
-    return this.interpolate(catalog[key as TranslationKey] || fallback, params);
+    const fallback = translations.fr[key as TranslationKey] || String(key);
+    const val = catalog[key as TranslationKey] || fallback;
+    return this.interpolate(val ?? '', params);
   }
 
   isLanguage(value: string): value is LanguageCode {
@@ -33,7 +35,8 @@ export class I18nService {
   }
 
   private interpolate(value: string, params: Record<string, string | number>): string {
-    return Object.entries(params).reduce((text, [key, replacement]) => text.replaceAll(`{${key}}`, String(replacement)), value);
+    if (!value) return '';
+    return Object.entries(params).reduce((text, [key, replacement]) => text.replaceAll(`{${key}}`, String(replacement)), String(value));
   }
 
   private initialLanguage(): LanguageCode {

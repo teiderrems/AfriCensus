@@ -18,10 +18,12 @@ import { LocalizedDatePipe } from '@/app/shared/pipes/localized-date.pipe';
 import { CardComponent } from '@/app/shared/card/card.component';
 import { ButtonComponent } from '@/app/shared/button/button';
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
+import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
+import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
 @Component({
   selector: 'acl-campaigns',
-  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, PageSizeSelectComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, DatePickerComponent, LocalizedDatePipe, CardComponent, ButtonComponent, AclTooltipDirective],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, PageSizeSelectComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, DatePickerComponent, LocalizedDatePipe, CardComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AclLocalizedTextPipe],
   templateUrl: './campaigns.component.html',
   styleUrl: './campaigns.component.css'
 })
@@ -43,8 +45,15 @@ export class CampaignsComponent implements OnInit {
   readonly draft = signal<CampaignWriteDto>({ name: '', status: 'PLANNED', zone_ids: [] });
   readonly saving = signal(false);
 
+  formatLocalized(val: string | Record<string, string> | null | undefined): string {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    const lang = this.i18n.language();
+    return val[lang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+  }
+
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCampaigns() / this.pageSize())));
-  readonly selectedCampaignTitle = computed(() => this.selectedCampaign()?.name || '');
+  readonly selectedCampaignTitle = computed(() => this.formatLocalized(this.selectedCampaign()?.name));
   readonly selectedCampaignDetails = computed<DetailDrawerItem[]>(() => {
     const c = this.selectedCampaign();
     if (!c) return [];
@@ -104,13 +113,41 @@ export class CampaignsComponent implements OnInit {
   }
 
   async deleteCampaign(c: Campaign) {
+    const name = this.resolveLocalizedText(c.name);
     if (await this.confirm.ask(
       this.i18n.t('campaigns.deleteTitle' as any) || 'Supprimer la campagne',
-      this.i18n.t('campaigns.confirmDelete' as any) || `Voulez-vous vraiment supprimer la campagne "${c.name}" ?`,
+      this.i18n.t('campaigns.confirmDelete' as any) || `Voulez-vous vraiment supprimer la campagne "${name}" ?`,
       'danger'
     )) {
       this.api.deleteCampaign(c.id).subscribe(() => this.load());
     }
+  }
+
+  private resolveLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object' && val !== null) {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {}
+        }
+      }
+    }
+    return String(val);
   }
 
   saveCampaign() {

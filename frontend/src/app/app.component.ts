@@ -14,10 +14,11 @@ import { ToastService } from './core/toast.service';
 import { UpperCasePipe } from '@angular/common';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog';
 import { AclTooltipDirective } from './shared/tooltip/tooltip';
+import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'acl-root',
-  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, UpperCasePipe, ConfirmDialogComponent, AclTooltipDirective],
+  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, UpperCasePipe, ConfirmDialogComponent, AclTooltipDirective, BreadcrumbComponent],
   template: `
     <a class="skip-link" href="#main-content">{{ i18n.t('a11y.skipToContent') }}</a>
     
@@ -87,7 +88,7 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
               <button type="button" class="mobile-menu-btn show-mobile" [aclTooltip]="i18n.t('a11y.toggleMenu')" (click)="toggleMobileDrawer()">
                 <lucide-icon name="menu"></lucide-icon>
               </button>
-              <div>
+              <div class="user-badge hide-mobile">
                 <strong>AfriCensus Link</strong>
                 <span>{{ user()?.full_name }}</span>
               </div>
@@ -112,6 +113,9 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
               </button>
             </div>
           </header>
+          <div class="sub-header-breadcrumb">
+            <acl-breadcrumb />
+          </div>
           @if (notificationsOpen()) {
             <aside class="notification-panel" role="status" aria-live="polite">
               <strong>{{ i18n.t('notifications.title') }}</strong>
@@ -150,34 +154,40 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
     }
     <app-confirm-dialog />
   `,
-  styles: `
-    .skip-link {
+  styles: `    .skip-link {
       position: fixed; left: 16px; top: 12px; transform: translateY(-140%); z-index: 1000;
-      background: var(--primary); color: var(--on-primary); padding: 10px 14px; border-radius: 6px; font-weight: 800;
+      background: var(--primary); color: var(--on-primary); padding: 10px 14px; border-radius: 8px; font-weight: 800;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .skip-link:focus { transform: translateY(0); outline: 3px solid var(--terracotta); outline-offset: 2px; }
     .toast-container {
-      position: fixed; top: 16px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 12px;
+      position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 12px;
     }
     .toast {
-      width: 320px; padding: 16px; border-radius: 8px; background: var(--surface);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-left: 4px solid var(--primary);
+      width: 320px; padding: 16px; border-radius: 12px; background: color-mix(in srgb, var(--surface) 95%, transparent);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--card-hover-shadow); border-left: 4px solid var(--primary);
       display: flex; justify-content: space-between; align-items: start; gap: 12px;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
     .toast.error { border-left-color: var(--error); }
-    .toast.success { border-left-color: var(--success); }
-    .toast strong { display: block; margin-bottom: 4px; }
-    .toast p { margin: 0; font-size: 14px; color: var(--muted); }
-    .toast button { background: none; border: none; cursor: pointer; color: var(--muted); }
-    .shell { min-height: 100vh; display: flex; }
+    .toast.success { border-left-color: var(--growth); }
+    .toast strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .toast p { margin: 0; font-size: 13px; color: var(--muted); }
+    .toast button { background: none; border: none; cursor: pointer; color: var(--muted); transition: color 0.15s ease; }
+    .toast button:hover { color: var(--ink); }
+
+    .shell { min-height: 100vh; display: flex; background: var(--sand-bg); }
     .sidebar {
-      width: 288px; background: var(--surface-low); border-right: 2px solid var(--outline-soft);
-      padding: 20px 14px; display: flex; flex-direction: column; gap: 16px; position: fixed; inset: 0 auto 0 0;
-      z-index: 100; box-shadow: 4px 0 20px rgba(0, 0, 0, 0.03); height: 100vh; max-height: 100vh; overflow: hidden;
-      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 288px; background: color-mix(in srgb, var(--surface-low) 92%, transparent);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-right: 1px solid color-mix(in srgb, var(--outline-soft) 50%, transparent);
+      padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; position: fixed; inset: 0 auto 0 0;
+      z-index: 100; box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03); height: 100vh; max-height: 100vh; overflow: hidden;
+      transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), padding 0.3s ease;
     }
     .sidebar.collapsed {
-      width: 76px; padding: 20px 10px; align-items: center;
+      width: 76px; padding: 24px 10px; align-items: center;
     }
     .sidebar.collapsed .brand {
       padding: 0; justify-content: center; width: 100%; flex-direction: column; gap: 8px;
@@ -186,114 +196,134 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
       width: 100%; align-items: center; padding-right: 0;
     }
     .sidebar.collapsed nav a, .sidebar.collapsed .logout {
-      justify-content: center; padding: 0; width: 48px; height: 44px; min-height: 44px; border-radius: 10px; gap: 0;
+      justify-content: center; padding: 0; width: 48px; height: 44px; min-height: 44px; border-radius: 12px; gap: 0;
     }
     .sidebar.collapsed .logout {
       border-top: 0; padding-top: 0; width: 48px;
     }
     .sidebar-toggle-btn {
-      margin-left: auto; width: 32px; height: 32px; min-width: 32px; border: 1.5px solid var(--outline-soft);
-      border-radius: 8px; background: var(--surface); color: var(--primary);
+      margin-left: auto; width: 34px; height: 34px; min-width: 34px; border: 1.5px solid var(--outline-soft);
+      border-radius: 10px; background: var(--surface); color: var(--primary);
       display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
-      transition: background 0.15s, border-color 0.15s;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, border-color 0.15s;
     }
     .sidebar-toggle-btn:hover {
-      background: var(--primary-soft); border-color: var(--primary);
+      background: var(--primary-soft); border-color: var(--primary); transform: scale(1.08);
     }
     .sidebar.collapsed .sidebar-toggle-btn {
-      margin-left: 0; width: 36px; height: 32px;
+      margin-left: 0; width: 36px; height: 34px;
     }
-    .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px; flex-shrink: 0; }
-    .brand strong { display: block; color: var(--primary); font-size: 22px; line-height: 28px; }
-    .brand span { color: var(--muted); font-size: 12px; }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 0 4px; flex-shrink: 0; }
+    .brand strong { display: block; color: var(--ink); font-size: 20px; font-weight: 900; line-height: 24px; letter-spacing: -0.02em; }
+    .brand span { color: var(--muted); font-size: 12px; font-weight: 600; }
     .mark {
-      width: 42px; height: 42px; border-radius: 8px; background: var(--primary); color: var(--on-primary);
-      display: grid; place-items: center; font-weight: 800; flex-shrink: 0;
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #6366f1) 100%);
+      color: var(--on-primary); display: grid; place-items: center; font-weight: 900; font-size: 16px;
+      flex-shrink: 0; box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .mark:hover { transform: scale(1.06) rotate(-3deg); }
     .sidebar nav {
-      display: flex; flex-direction: column; gap: 4px; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px;
+      display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px;
     }
-    .sidebar nav::-webkit-scrollbar { width: 5px; }
+    .sidebar nav::-webkit-scrollbar { width: 4px; }
     .sidebar nav::-webkit-scrollbar-track { background: transparent; }
     .sidebar nav::-webkit-scrollbar-thumb { background: var(--outline-soft); border-radius: 4px; }
     .sidebar nav a, .logout {
-      min-height: 42px; border-radius: 8px; padding: 0 12px; display: flex; align-items: center;
+      min-height: 44px; border-radius: 12px; padding: 0 14px; display: flex; align-items: center;
       gap: 12px; text-decoration: none; color: var(--muted); font-weight: 700; border: 0; background: transparent;
-      font-size: 14px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
+      font-size: 14px; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, color 0.2s ease; cursor: pointer;
     }
     .sidebar nav a:hover {
-      background: var(--surface-high); color: var(--primary); transform: translateX(3px);
+      background: var(--surface-container); color: var(--primary); transform: translateX(4px);
     }
     .sidebar nav a.active {
-      background: var(--primary); color: var(--on-primary); font-weight: 700;
-      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+      background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 80%, black) 100%);
+      color: var(--on-primary); font-weight: 800;
+      box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 35%, transparent);
     }
+    .sidebar nav a.active lucide-icon { transform: scale(1.1); }
     .logout {
       margin-top: auto; border-top: 1px solid var(--outline-soft); border-radius: 0; width: 100%;
-      flex-shrink: 0; padding-top: 12px; min-height: 46px;
+      flex-shrink: 0; padding-top: 14px; min-height: 48px;
     }
     .logout:hover {
-      color: var(--error); background: var(--error-soft); border-radius: 8px;
+      color: var(--error); background: var(--error-soft); border-radius: 12px; transform: scale(1.02);
     }
-    .main { flex: 1; margin-left: 288px; min-width: 0; transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .main { flex: 1; margin-left: 288px; min-width: 0; transition: margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
     .main.sidebar-collapsed { margin-left: 76px; }
     .topbar {
-      height: 64px; background: var(--surface); border-bottom: 2px solid var(--outline-soft);
-      display: flex; align-items: center; justify-content: space-between; padding: 0 32px; position: sticky; top: 0; z-index: 10;
-      gap: 12px;
+      height: 68px; background: color-mix(in srgb, var(--surface) 85%, transparent);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid color-mix(in srgb, var(--outline-soft) 50%, transparent);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 36px; position: sticky; top: 0; z-index: 10;
+      gap: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
     }
-    .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; }
+    .topbar-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1 1 auto; }
     .topbar-left div { min-width: 0; overflow: hidden; }
-    .topbar strong { display: block; color: var(--primary); font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .topbar span { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .top-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+    .sub-header-breadcrumb { padding: 10px 24px 2px 12px; display: flex; align-items: center; }
+    .topbar strong { display: block; color: var(--ink); font-size: 16px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .topbar span { color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-actions { display: flex; gap: 10px; flex-shrink: 0; align-items: center; }
     .top-actions button {
-      width: 42px; height: 42px; display: grid; place-items: center; border: 2px solid var(--outline-soft);
-      border-radius: 999px; background: var(--surface); color: var(--primary); cursor: pointer; flex-shrink: 0;
-      transition: background 0.15s, border-color 0.15s;
+      width: 42px; height: 42px; display: grid; place-items: center; border: 1.5px solid var(--outline-soft);
+      border-radius: 12px; background: var(--surface); color: var(--muted); cursor: pointer; flex-shrink: 0;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, border-color 0.2s, color 0.2s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     }
     .top-actions button:hover {
-      background: var(--surface-low); border-color: var(--primary);
+      background: var(--surface-low); border-color: var(--primary); color: var(--primary);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 15%, transparent);
     }
     .language-toggle {
-      font-weight: 800; font-size: 13px;
+      font-weight: 900; font-size: 13px; letter-spacing: 0.04em;
     }
     .sr-only {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
       clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
     }
     .notification-panel {
-      position: fixed; top: 76px; right: 24px; z-index: 20; width: min(360px, calc(100vw - 32px));
-      display: grid; gap: 10px; padding: 16px; border: 2px solid var(--outline-soft); border-radius: 8px;
-      background: var(--surface); box-shadow: 0 16px 32px rgba(0,0,0,.14);
+      position: fixed; top: 80px; right: 28px; z-index: 20; width: min(360px, calc(100vw - 32px));
+      display: grid; gap: 12px; padding: 20px; border: 1px solid color-mix(in srgb, var(--outline-soft) 60%, transparent); border-radius: 16px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: var(--card-hover-shadow); animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .sync-status {
-      min-height: 40px; display: inline-flex; align-items: center; gap: 8px; border: 2px solid var(--outline-soft);
-      border-radius: 999px; padding: 0 12px; background: var(--surface); color: var(--primary); font-weight: 900;
-      flex-shrink: 0; cursor: pointer; transition: background 0.15s;
+      min-height: 42px; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--outline-soft);
+      border-radius: 999px; padding: 0 14px; background: var(--surface); color: var(--primary); font-weight: 800;
+      flex-shrink: 0; cursor: pointer; transition: transform 0.2s ease, background 0.2s, border-color 0.2s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     }
-    .sync-status.offline { color: var(--error); border-color: var(--error); background: var(--error-soft); }
+    .sync-status:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+    .sync-status.offline { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); background: var(--error-soft); }
     .sync-status.pending em {
       min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px;
-      background: var(--terracotta); color: white; font-style: normal; font-size: 11px;
+      background: var(--terracotta); color: white; font-style: normal; font-size: 11px; font-weight: 900;
     }
     .sync-status lucide-icon { font-size: 18px; }
     .sync-panel {
-      position: fixed; top: 76px; left: 312px; z-index: 20; width: min(390px, calc(100vw - 32px));
-      display: grid; gap: 10px; padding: 16px; border: 2px solid var(--outline-soft); border-radius: 8px;
-      background: var(--surface); box-shadow: 0 16px 32px rgba(0,0,0,.14);
+      position: fixed; top: 80px; left: 320px; z-index: 20; width: min(390px, calc(100vw - 32px));
+      display: grid; gap: 12px; padding: 20px; border: 1px solid color-mix(in srgb, var(--outline-soft) 60%, transparent); border-radius: 16px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: var(--card-hover-shadow); animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .sync-panel strong { color: var(--primary); }
-    .sync-panel p { margin: 0; color: var(--muted); }
-    .notification-panel strong { color: var(--primary); }
-    .notification-panel p { color: var(--muted); margin: 0; }
+    .sync-panel strong { color: var(--primary); font-size: 15px; }
+    .sync-panel p { margin: 0; color: var(--muted); font-size: 13.5px; }
+    .notification-panel strong { color: var(--primary); font-size: 15px; }
+    .notification-panel p { color: var(--muted); margin: 0; font-size: 13.5px; }
     .mobile-nav {
-      display: none; gap: 8px; overflow-x: auto; padding: 8px 16px; background: var(--surface);
-      border-bottom: 2px solid var(--outline-soft); scrollbar-width: thin;
+      display: none; gap: 8px; overflow-x: auto; padding: 10px 16px; background: var(--surface);
+      border-bottom: 1px solid var(--outline-soft); scrollbar-width: thin;
     }
     .mobile-nav a {
       min-width: max-content; min-height: 44px; display: inline-flex; align-items: center; gap: 8px;
-      padding: 0 12px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 800;
+      padding: 0 14px; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 800;
+      transition: background 0.2s ease, color 0.2s ease;
     }
     .mobile-nav a.active { background: var(--primary); color: var(--on-primary); }
 
@@ -302,22 +332,22 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
 
     @media (max-width: 860px) {
       .main { margin-left: 0; }
-      .topbar { padding: 0 16px; height: 56px; }
+      .topbar { padding: 0 16px; height: 60px; }
       .topbar-left { display: flex; align-items: center; gap: 10px; }
 
       .show-mobile { display: inline-flex !important; }
       .hide-mobile { display: none !important; }
 
       .mobile-menu-btn {
-        width: 38px; height: 38px; min-width: 38px; border-radius: 8px;
-        border: 2px solid var(--outline-soft); background: var(--surface);
+        width: 40px; height: 40px; min-width: 40px; border-radius: 10px;
+        border: 1.5px solid var(--outline-soft); background: var(--surface);
         color: var(--primary); align-items: center; justify-content: center;
         cursor: pointer; transition: background 0.15s; flex-shrink: 0;
       }
       .mobile-menu-btn:hover { background: var(--surface-low); }
 
       .mobile-close-btn {
-        margin-left: auto; width: 36px; height: 36px; min-width: 36px; border-radius: 8px;
+        margin-left: auto; width: 36px; height: 36px; min-width: 36px; border-radius: 10px;
         border: 1.5px solid var(--outline-soft); background: var(--surface);
         color: var(--muted); align-items: center; justify-content: center;
         cursor: pointer; transition: background 0.15s, color 0.15s;
@@ -337,7 +367,7 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
         position: fixed !important; top: 0 !important; bottom: 0 !important; left: 0 !important;
         width: 290px !important; max-width: 85vw !important; height: 100vh !important;
         z-index: 1100 !important; transform: translateX(-100%) !important;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
         box-shadow: 8px 0 24px rgba(0, 0, 0, 0.18) !important;
         background: var(--surface-low) !important; padding: 20px 14px !important;
       }
@@ -356,14 +386,14 @@ import { AclTooltipDirective } from './shared/tooltip/tooltip';
       }
     }
     @media (max-width: 768px) {
-      .topbar-left span { display: none; } /* Hide user role subtitle on mobile */
+      .topbar-left span { display: none; }
     }
     @media (max-width: 520px) {
       .topbar {
         height: 56px; padding: 0 10px; gap: 6px;
       }
       .topbar strong { font-size: 13.5px; max-width: 110px; }
-      .sync-status strong { display: none; } /* Show icon-only pill for sync status */
+      .sync-status strong { display: none; }
       .sync-status { min-height: 36px; padding: 0 8px; gap: 4px; }
       .sync-status lucide-icon { font-size: 16px; }
       .top-actions { gap: 4px; }

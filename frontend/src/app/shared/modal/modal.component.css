@@ -187,14 +187,20 @@ p {
 .modal-actions,
 .modal-footer {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
   justify-content: flex-end !important;
   gap: 12px !important;
   padding-top: 18px !important;
-  margin-top: 16px !important;
+  margin-top: 8px !important;
   border-top: 1.5px solid var(--outline-soft) !important;
   width: 100% !important;
   box-sizing: border-box !important;
+}
+
+.modal-actions:empty,
+.modal-footer:empty {
+  display: none !important;
 }
 
 :host ::ng-deep .modal-actions acl-button,

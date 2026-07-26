@@ -1,6 +1,6 @@
 import math
 from typing import Any
-from sqlalchemy import Select, func, select, String, or_
+from sqlalchemy import Select, func, select, String, or_, cast
 from sqlalchemy.orm import Session
 
 def paginate_query(db: Session, query: Select, page: int, page_size: int, sort_by: str | None = None, sort_order: str = "asc") -> dict[str, Any]:
@@ -18,6 +18,8 @@ def paginate_query(db: Session, query: Select, page: int, page_size: int, sort_b
         sort_col = None
         if sort_by and hasattr(model, sort_by):
             sort_col = getattr(model, sort_by)
+            if hasattr(sort_col, 'type') and sort_col.type.__class__.__name__ in ('JSON', 'JSONB'):
+                sort_col = cast(sort_col, String)
         else:
             sort_col = getattr(model, 'updated_at', None)
             if not sort_col:

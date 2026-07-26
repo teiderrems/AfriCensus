@@ -103,7 +103,7 @@ export interface FormDefinitionWriteDto {
 }
 
 export interface ZoneWriteDto {
-  name: string;
+  name: string | Record<string, string>;
   code: string;
   type: string;
   parent_id?: string | null;
@@ -111,7 +111,7 @@ export interface ZoneWriteDto {
 }
 
 export interface CampaignWriteDto {
-  name: string;
+  name: string | Record<string, string>;
   status: string;
   start_date?: string | null;
   end_date?: string | null;
@@ -119,7 +119,7 @@ export interface CampaignWriteDto {
 }
 
 export interface AppRoleWriteDto {
-  name: string;
-  description?: string | null;
+  name: string | Record<string, string>;
+  description?: string | Record<string, string> | null;
   permissions: string[];
 }

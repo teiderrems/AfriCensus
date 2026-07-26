@@ -3,7 +3,7 @@ import { Component, ElementRef, EventEmitter, HostListener, Inject, Input, OnCha
 
 export interface DetailDrawerItem {
   label: string;
-  value: string | number | boolean | null | undefined;
+  value: string | number | boolean | Record<string, string> | null | undefined;
 }
 
 import { LucideAngularModule } from 'lucide-angular';
@@ -95,6 +95,10 @@ export class DetailDrawerComponent implements OnChanges, OnDestroy {
   display(value: DetailDrawerItem['value']): string {
     if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
     if (value === null || value === undefined || value === '') return 'Non renseigné';
+    if (typeof value === 'object') {
+      const currentLang = this.i18n.language();
+      return value[currentLang] || value['fr'] || value['en'] || Object.values(value)[0] || '';
+    }
     return String(value);
   }
 

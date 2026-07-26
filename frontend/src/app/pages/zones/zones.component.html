@@ -43,7 +43,7 @@
         <tbody>
           @for (row of zones(); track row.id) {
             <tr>
-              <td><strong>{{ row.name }}</strong></td>
+              <td><strong>{{ row.name | aclLocalizedText }}</strong></td>
               <td>{{ row.code }}</td>
               <td>{{ row.type }}</td>
               <td class="row-actions">
@@ -79,7 +79,7 @@
       <div class="form-grid">
         <div class="field">
           <label>{{ 'zones.name' | translate }}</label>
-          <input type="text" [(ngModel)]="draft().name" name="name" required />
+          <acl-multilang-field [(ngModel)]="draft().name" name="name"></acl-multilang-field>
         </div>
         <div class="field">
           <label>{{ 'zones.code' | translate }}</label>

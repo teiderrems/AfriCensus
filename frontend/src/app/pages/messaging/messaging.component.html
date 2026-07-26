@@ -3,25 +3,17 @@
   <div class="whatsapp-container" [class.mobile-chat-open]="mobileShowChat()">
 
     <!-- LEFT SIDEBAR: Conversations List -->
-    <aside class="wa-sidebar">
+    <aside class="wa-sidebar" [class.collapsed]="sidebarCollapsed()">
       <!-- Sidebar Header -->
       <header class="wa-sidebar-header">
-        <div class="user-profile">
-          <div class="avatar user-avatar">
-            <span>{{ getInitials(currentUser()?.full_name || currentUser()?.username || 'AL') }}</span>
-          </div>
-          <div class="user-info">
-            <strong>{{ currentUser()?.full_name || currentUser()?.username }}</strong>
-            <span class="status-indicator">
-              <span class="realtime-status-dot" [class.active]="messaging.isRealtimeActive()"
-                [attr.title]="messaging.isRealtimeActive() ? i18n.t('messaging.status.realtime') : i18n.t('messaging.status.http')"></span>
-              {{ messaging.isRealtimeActive() ? i18n.t('messaging.status.online') : i18n.t('messaging.status.syncHttp') }}
-            </span>
-          </div>
-        </div>
         <div class="header-actions">
           <acl-button variant="action-btn" type="button"
-            [aclTooltip]="i18n.t('messaging.newGroup')" (click)="openGroupModal()">
+            [aclTooltip]="sidebarCollapsed() ? i18n.t('messaging.expandSidebar') : i18n.t('messaging.collapseSidebar')"
+            (click)="toggleSidebar()">
+            <lucide-icon [name]="sidebarCollapsed() ? 'panel-left-open' : 'panel-left-close'"></lucide-icon>
+          </acl-button>
+          <acl-button variant="action-btn" type="button" [aclTooltip]="i18n.t('messaging.newGroup')"
+            (click)="openGroupModal()">
             <lucide-icon name="plus"></lucide-icon>
           </acl-button>
         </div>
@@ -29,34 +21,42 @@
 
       <!-- Search & Filters -->
       <div class="wa-search-container">
-        <div class="search-box">
+        <div class="search-box" (click)="onSearchClick()"
+          [aclTooltip]="sidebarCollapsed() ? i18n.t('messaging.searchPlaceholder') : ''">
           <lucide-icon name="search"></lucide-icon>
-          <input type="text" [placeholder]="i18n.t('messaging.searchPlaceholder')" [ngModel]="searchQuery()"
-            (ngModelChange)="searchQuery.set($event)" />
+          <input #searchInput type="text" [placeholder]="i18n.t('messaging.searchPlaceholder')"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (focus)="onSearchClick()" />
         </div>
         <div class="filter-chips">
-          <button type="button" class="chip" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">
-            {{ i18n.t('messaging.filterAll') }}
+          <button type="button" class="chip" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')"
+            [aclTooltip]="i18n.t('messaging.filterAll')">
+            <span class="chip-label">{{ i18n.t('messaging.filterAll') }}</span>
           </button>
-          <button type="button" class="chip" [class.active]="activeFilter() === 'DIRECT'" (click)="setFilter('DIRECT')">
-            {{ i18n.t('messaging.filterDirect') }}
+          <button type="button" class="chip" [class.active]="activeFilter() === 'DIRECT'" (click)="setFilter('DIRECT')"
+            [aclTooltip]="i18n.t('messaging.filterDirect')">
+            <span class="chip-label">{{ i18n.t('messaging.filterDirect') }}</span>
           </button>
-          <button type="button" class="chip" [class.active]="activeFilter() === 'GROUPS'" (click)="setFilter('GROUPS')">
-            {{ i18n.t('messaging.filterGroups') }}
+          <button type="button" class="chip" [class.active]="activeFilter() === 'GROUPS'" (click)="setFilter('GROUPS')"
+            [aclTooltip]="i18n.t('messaging.filterGroups')">
+            <span class="chip-label">{{ i18n.t('messaging.filterGroups') }}</span>
           </button>
         </div>
       </div>
 
       <!-- Conversations List -->
-      <div class="conversations-list" role="list" aria-label="Liste des conversations">
+      <div class="conversations-list" role="list" [attr.aria-label]="i18n.t('messaging.conversationsListAria')">
         @for (conv of filteredConversations(); track conv.id) {
         <div class="conversation-item" role="listitem" [class.active]="conv.id === activeConv()?.id"
-          [class.has-unread]="conv.unread_count > 0" (click)="selectConversation(conv)">
+          [class.has-unread]="conv.unread_count > 0" (click)="selectConversation(conv)"
+          [aclTooltip]="sidebarCollapsed() ? conv.name : ''">
           <div class="avatar" [class.is-group]="conv.is_group">
             @if (conv.is_group) {
             <lucide-icon name="hash"></lucide-icon>
             } @else {
             <span>{{ getInitials(conv.name) }}</span>
+            }
+            @if (sidebarCollapsed() && conv.unread_count > 0) {
+            <span class="collapsed-unread-badge">{{ conv.unread_count }}</span>
             }
           </div>
           <div class="conv-details">
@@ -73,7 +73,7 @@
           </div>
         </div>
         } @empty {
-        <div class="empty-state">
+        <div class="empty-state" [aclTooltip]="sidebarCollapsed() ? i18n.t('messaging.emptyConversations') : ''">
           <lucide-icon name="message-square-off"></lucide-icon>
           <p>{{ i18n.t('messaging.emptyConversations') }}</p>
         </div>
@@ -100,7 +100,8 @@
           </div>
           <div>
             <h3>{{ activeConv()?.name }}</h3>
-            <span class="role-tag">{{ activeConv()?.role || (activeConv()?.is_group ? i18n.t('messaging.role.institutional') : i18n.t('messaging.role.agent'))
+            <span class="role-tag">{{ activeConv()?.role || (activeConv()?.is_group ?
+              i18n.t('messaging.role.institutional') : i18n.t('messaging.role.agent'))
               }}</span>
           </div>
         </div>
@@ -123,24 +124,32 @@
           @if (msg.content !== i18n.t('messaging.messageDeleted')) {
           <div class="bubble-actions">
             <!-- Reply -->
-            <button type="button" class="action-icon-btn" [aclTooltip]="i18n.t('messaging.action.reply')" (click)="setReplyTo(msg)">
+            <button type="button" class="action-icon-btn" [aclTooltip]="i18n.t('messaging.action.reply')"
+              (click)="setReplyTo(msg)">
               <lucide-icon name="reply"></lucide-icon>
             </button>
             <!-- Divider -->
             <span class="actions-divider"></span>
             <!-- Reactions -->
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.like')" (click)="addReaction(msg, '👍')">👍</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.heart')" (click)="addReaction(msg, '❤️')">❤️</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.laugh')" (click)="addReaction(msg, '😂')">😂</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.like')"
+              (click)="addReaction(msg, '👍')">👍</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.heart')"
+              (click)="addReaction(msg, '❤️')">❤️</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.laugh')"
+              (click)="addReaction(msg, '😂')">😂</button>
             <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.surprised')"
               (click)="addReaction(msg, '😮')">😮</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.thanks')" (click)="addReaction(msg, '🙏')">🙏</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.fire')" (click)="addReaction(msg, '🔥')">🔥</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.party')" (click)="addReaction(msg, '🎉')">🎉</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.thanks')"
+              (click)="addReaction(msg, '🙏')">🙏</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.fire')"
+              (click)="addReaction(msg, '🔥')">🔥</button>
+            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.party')"
+              (click)="addReaction(msg, '🎉')">🎉</button>
             <!-- Divider -->
             <span class="actions-divider"></span>
             <!-- Copy -->
-            <button type="button" class="action-icon-btn" [aclTooltip]="i18n.t('messaging.action.copy')" (click)="copyMessage(msg.content)">
+            <button type="button" class="action-icon-btn" [aclTooltip]="i18n.t('messaging.action.copy')"
+              (click)="copyMessage(msg.content)">
               <lucide-icon name="copy"></lucide-icon>
             </button>
             <!-- Delete (own messages only) -->
@@ -208,7 +217,7 @@
       </div>
 
       <!-- Typing Indicator -->
-      @if (typingUsersArray().length > 0) {
+      @if (typingUsersArray().length > 0 && !typingUsersArray().includes(currentUser()?.id || '')) {
       <div class="typing-indicator" aria-live="polite" aria-atomic="true">
         <span class="typing-dots"><span></span><span></span><span></span></span>
         <span class="typing-label">
@@ -228,7 +237,8 @@
           <div class="reply-info">
             <lucide-icon name="reply"></lucide-icon>
             <div class="reply-preview-content">
-              <span class="reply-preview-author">{{ getReplyAuthor(replyingTo()?.id) || i18n.t('messaging.you') }}</span>
+              <span class="reply-preview-author">{{ getReplyAuthor(replyingTo()?.id) || i18n.t('messaging.you')
+                }}</span>
               <span>{{ replyingTo()?.content }}</span>
             </div>
           </div>
@@ -291,7 +301,7 @@
         <div class="prompt-icon-wrapper">
           <lucide-icon name="messages-square"></lucide-icon>
         </div>
-        <h3>AfriCensus Link Messaging</h3>
+        <h3>{{ i18n.t('messaging.title') }}</h3>
         <p>{{ i18n.t('messaging.selectPrompt') }}</p>
       </div>
       }
@@ -313,8 +323,8 @@
 
       <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
         <acl-button variant="secondary" type="button"
-          style="height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 700;"
-          (click)="closeGroupModal()">{{ i18n.t('action.cancel') }}</acl-button>
+          style="height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 700;" (click)="closeGroupModal()">{{
+          i18n.t('action.cancel') }}</acl-button>
         <acl-button type="submit" style="height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 700;"
           [disabled]="!newGroupName().trim()">{{ i18n.t('messaging.action.createChannel') }}</acl-button>
       </div>

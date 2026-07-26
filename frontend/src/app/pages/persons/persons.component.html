@@ -1,83 +1,83 @@
-<section class="page">
-      <header class="page-head">
-        <div>
-          <h1>{{ i18n.t('persons.title') }}</h1>
-        </div>
-        <acl-button type="button" (click)="openCreatePerson()">
-          <lucide-icon name="plus"></lucide-icon>
-          {{ i18n.t('persons.create') }}
-        </acl-button>
-      </header>
-      <acl-card class="card">
-        <div class="table-controls" aria-label="Filtres des personnes">
-          <div class="field">
-            <label for="personSearch">{{ i18n.t('persons.search') }}</label>
-            <input id="personSearch" name="personSearch" type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" [placeholder]="i18n.t('persons.search.placeholder')" />
-          </div>
-          <acl-status-filter controlId="personStatus" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
-          <acl-page-size-select controlId="personPageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>{{ i18n.t('persons.table.name') }}</th><th>{{ i18n.t('persons.table.gender') }}</th><th>{{ i18n.t('persons.table.withoutDocument') }}</th><th>{{ i18n.t('persons.table.status') }}</th><th>{{ i18n.t('persons.table.actions') }}</th></tr></thead>
-            <tbody>
-              @for (row of pagedPersons(); track row.id) {
-                <tr>
-                  <td><strong>{{ row.first_name }} {{ row.last_name }}</strong></td>
-                  <td>{{ i18n.t($any('person.gender.' + row.gender)) }}</td>
-                  <td>{{ row.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
-                  <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></td>
-                  <td class="row-actions">
-                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')" (click)="openPerson(row)">
-                      <lucide-icon name="eye"></lucide-icon>
-                    </acl-button>
-                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')" (click)="editPerson(row)">
-                      <lucide-icon name="pencil"></lucide-icon>
-                    </acl-button>
-                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.submit')" (click)="submitPerson(row)">
-                      <lucide-icon name="upload"></lucide-icon>
-                    </acl-button>
-                    <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deletePerson(row)">
-                      <lucide-icon name="trash-2"></lucide-icon>
-                    </acl-button>
-                  </td>
-                </tr>
-              }
-              @if (!pagedPersons().length) {
-                <tr><td colspan="5" class="empty-cell">{{ i18n.t('persons.empty') }}</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        <acl-table-pagination
-          ariaLabel="Pagination des personnes"
-          [totalItems]="filteredPersons().length"
-          [page]="page()"
-          [totalPages]="totalPages()"
-          (previous)="previousPage()"
-          (next)="nextPage()"
-        />
-      </acl-card>
-      <acl-detail-drawer
-        [open]="personDrawerOpen()"
-        [title]="selectedPersonTitle()"
-        [subtitle]="i18n.t('persons.drawer.subtitle')"
-        [items]="selectedPersonDetails()"
-        (closed)="selectedPerson.set(null)"
-      />
-      <acl-person-form-modal
-        [open]="personModalOpen()"
-        [title]="editingPersonId() ? i18n.t('persons.edit') : i18n.t('persons.create')"
-        [draft]="draft()"
-        [households]="households()"
-        [campaigns]="campaigns()"
-        [zones]="zones()"
-        [disabled]="!canSavePerson() || saving()"
-        [submitIcon]="saving() ? 'loader' : (editingPersonId() ? 'save' : 'plus')"
-        [submitLabel]="editingPersonId() ? i18n.t('person.save.btn') : i18n.t('person.create.btn')"
-        (closed)="closePersonModal()"
-        (draftChange)="draft.set($event)"
-        (householdSelected)="selectHousehold($event)"
-        (saved)="savePerson()"
-      />
-    </section>
+<section class="page animate-fade-in-up">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">{{ i18n.t('persons.eyebrow') }}</span>
+      <h1>{{ i18n.t('persons.title') }}</h1>
+    </div>
+    <acl-button type="button" (click)="openCreatePerson()">
+      <lucide-icon name="plus"></lucide-icon>
+      {{ i18n.t('persons.create') }}
+    </acl-button>
+  </header>
+  <acl-card class="card animate-fade-in-up stagger-1">
+    <div class="table-controls" [attr.aria-label]="i18n.t('persons.filtersAriaLabel')">
+      <div class="field">
+        <label for="personSearch">{{ i18n.t('persons.search') }}</label>
+        <input id="personSearch" name="personSearch" type="search" [ngModel]="search()"
+          (ngModelChange)="setSearch($event)" [placeholder]="i18n.t('persons.search.placeholder')" />
+      </div>
+      <acl-status-filter controlId="personStatus" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
+      <acl-page-size-select controlId="personPageSize" [value]="pageSize()" [options]="pageSizes"
+        (valueChange)="setPageSize($event)" />
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ i18n.t('persons.table.name') }}</th>
+            <th>{{ i18n.t('persons.table.gender') }}</th>
+            <th>{{ i18n.t('persons.table.withoutDocument') }}</th>
+            <th>{{ i18n.t('persons.table.status') }}</th>
+            <th>{{ i18n.t('persons.table.actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of pagedPersons(); track row.id) {
+          <tr>
+            <td><strong>{{ row.first_name }} {{ row.last_name }}</strong></td>
+            <td>{{ i18n.t($any('person.gender.' + row.gender)) }}</td>
+            <td>{{ row.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
+            <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status))
+                }}</span></td>
+            <td class="row-actions">
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')"
+                (click)="openPerson(row)">
+                <lucide-icon name="eye"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')"
+                (click)="editPerson(row)">
+                <lucide-icon name="pencil"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.submit')"
+                (click)="submitPerson(row)">
+                <lucide-icon name="upload"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')"
+                (click)="deletePerson(row)">
+                <lucide-icon name="trash-2"></lucide-icon>
+              </acl-button>
+            </td>
+          </tr>
+          }
+          @if (!pagedPersons().length) {
+          <tr>
+            <td colspan="5" class="empty-cell">{{ i18n.t('persons.empty') }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <acl-table-pagination [ariaLabel]="i18n.t('persons.paginationAriaLabel')" [totalItems]="filteredPersons().length" [page]="page()"
+      [totalPages]="totalPages()" (previous)="previousPage()" (next)="nextPage()" />
+  </acl-card>
+  <acl-detail-drawer [open]="personDrawerOpen()" [title]="selectedPersonTitle()"
+    [subtitle]="i18n.t('persons.drawer.subtitle')" [items]="selectedPersonDetails()"
+    (closed)="selectedPerson.set(null)" />
+  <acl-person-form-modal [open]="personModalOpen()"
+    [title]="editingPersonId() ? i18n.t('persons.edit') : i18n.t('persons.create')" [draft]="draft()"
+    [households]="households()" [campaigns]="campaigns()" [zones]="zones()" [disabled]="!canSavePerson() || saving()"
+    [submitIcon]="saving() ? 'loader' : (editingPersonId() ? 'save' : 'plus')"
+    [submitLabel]="editingPersonId() ? i18n.t('person.save.btn') : i18n.t('person.create.btn')"
+    (closed)="closePersonModal()" (draftChange)="draft.set($event)" (householdSelected)="selectHousehold($event)"
+    (saved)="savePerson()" />
+</section>

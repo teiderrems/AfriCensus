@@ -16,10 +16,12 @@ import { SelectComponent } from '@/app/shared/select/select.component';
 import { ButtonComponent } from "@/app/shared/button/button";
 import { CardComponent } from '@/app/shared/card/card.component';
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
+import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
+import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
 @Component({
   selector: 'acl-zones',
-  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, PageSizeSelectComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, PageSizeSelectComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AclLocalizedTextPipe],
   templateUrl: './zones.component.html',
   styleUrl: './zones.component.css'
 })
@@ -42,8 +44,15 @@ export class ZonesComponent implements OnInit {
   readonly draft = signal<ZoneWriteDto>({ name: '', code: '', type: 'REGIONAL', status: 'ACTIVE' });
   readonly saving = signal(false);
 
+  formatLocalized(val: string | Record<string, string> | null | undefined): string {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    const lang = this.i18n.language();
+    return val[lang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+  }
+
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalZones() / this.pageSize())));
-  readonly selectedZoneTitle = computed(() => this.selectedZone()?.name || '');
+  readonly selectedZoneTitle = computed(() => this.formatLocalized(this.selectedZone()?.name));
   readonly selectedZoneDetails = computed<DetailDrawerItem[]>(() => {
     const z = this.selectedZone();
     if (!z) return [];
@@ -57,7 +66,8 @@ export class ZonesComponent implements OnInit {
   });
 
   readonly parentOptions = computed(() => {
-    return this.zones().filter(z => z.id !== this.editingZoneId()).map(z => ({ label: z.name, value: z.id }));
+    this.i18n.language();
+    return this.zones().filter(z => z.id !== this.editingZoneId()).map(z => ({ label: `${this.formatLocalized(z.name)} (${z.code})`, value: z.id }));
   });
 
   readonly typeOptions = computed(() => [

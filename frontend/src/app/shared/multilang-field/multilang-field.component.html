@@ -1,25 +1,60 @@
 <div class="multilang-field" [class.is-textarea]="type === 'textarea'">
-      <div class="lang-tabs" role="group" aria-label="Sélection de la langue">
-        <button type="button" [class.active]="activeLang === 'fr'" [attr.aria-pressed]="activeLang === 'fr'" (click)="activeLang = 'fr'">FR</button>
-        <button type="button" [class.active]="activeLang === 'en'" [attr.aria-pressed]="activeLang === 'en'" (click)="activeLang = 'en'">EN</button>
-      </div>
-      @if (type === 'textarea') {
-        <textarea
-          [(ngModel)]="value[activeLang]"
-          (ngModelChange)="onInput()"
-          [placeholder]="placeholder"
-          [attr.aria-label]="ariaLabel"
-          [disabled]="disabled"
-          rows="3"
-        ></textarea>
-      } @else {
-        <input
-          type="text"
-          [(ngModel)]="value[activeLang]"
-          (ngModelChange)="onInput()"
-          [placeholder]="placeholder"
-          [attr.aria-label]="ariaLabel"
-          [disabled]="disabled"
-        />
+  <div class="lang-tabs-bar">
+    <div class="lang-tabs" role="group" [attr.aria-label]="i18n.t('multilang.selectLanguageAria')">
+      @for (lang of activeTabLangs; track lang) {
+        <button
+          type="button"
+          class="lang-tab-btn"
+          [class.active]="activeLang === lang"
+          [class.has-content]="hasContent(lang)"
+          [attr.aria-pressed]="activeLang === lang"
+          (click)="selectLang(lang)"
+        >
+          <span class="lang-code">{{ lang.toUpperCase() }}</span>
+          <span class="content-indicator" [class.filled]="hasContent(lang)"></span>
+          @if (activeTabLangs.length > 2) {
+            <span class="remove-btn" (click)="removeLang(lang, $event)" [title]="i18n.t('multilang.removeLanguage')">×</span>
+          }
+        </button>
+      }
+      @if (unaddedLangs.length > 0) {
+        <div class="add-lang-container">
+          <button type="button" class="add-lang-btn" (click)="showAddMenu = !showAddMenu" [title]="i18n.t('multilang.addLanguage')">
+            +
+          </button>
+          @if (showAddMenu) {
+            <div class="add-lang-dropdown">
+              @for (lang of unaddedLangs; track lang) {
+                <button type="button" class="add-lang-item" (click)="addLang(lang)">
+                  + {{ lang.toUpperCase() }}
+                </button>
+              }
+            </div>
+          }
+        </div>
       }
     </div>
+  </div>
+
+  <div class="field-input-wrap">
+    @if (type === 'textarea') {
+      <textarea
+        [(ngModel)]="value[activeLang]"
+        (ngModelChange)="onInput()"
+        [placeholder]="placeholder + ' (' + activeLang.toUpperCase() + ')'"
+        [attr.aria-label]="ariaLabel"
+        [disabled]="disabled"
+        rows="3"
+      ></textarea>
+    } @else {
+      <input
+        type="text"
+        [(ngModel)]="value[activeLang]"
+        (ngModelChange)="onInput()"
+        [placeholder]="placeholder + ' (' + activeLang.toUpperCase() + ')'"
+        [attr.aria-label]="ariaLabel"
+        [disabled]="disabled"
+      />
+    }
+  </div>
+</div>

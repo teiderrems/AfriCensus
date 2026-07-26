@@ -57,6 +57,11 @@ class ConnectionManager:
         for user_id in list(self.active_connections.keys()):
             await self.send_to_user(user_id, message_data)
 
+    async def broadcast_to_all_except(self, message_data: dict, exclude_user_id: str):
+        for user_id in list(self.active_connections.keys()):
+            if user_id != exclude_user_id:
+                await self.send_to_user(user_id, message_data)
+
     async def broadcast_message(self, message_data: dict, sender_id: str, receiver_id: str, is_group: bool):
         """Broadcast a message to all relevant recipients."""
         if is_group:
@@ -160,7 +165,7 @@ async def websocket_endpoint(
                         "is_typing": True
                     }
                     if is_group:
-                        await manager.broadcast_to_all(typing_event)
+                        await manager.broadcast_to_all_except(typing_event, exclude_user_id=user_id)
                     else:
                         await manager.send_to_user(target_id, typing_event)
 
@@ -176,7 +181,7 @@ async def websocket_endpoint(
                         "is_typing": False
                     }
                     if is_group:
-                        await manager.broadcast_to_all(stop_event)
+                        await manager.broadcast_to_all_except(stop_event, exclude_user_id=user_id)
                     else:
                         await manager.send_to_user(target_id, stop_event)
 
