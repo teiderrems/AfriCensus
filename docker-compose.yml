@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,6 +23,7 @@ services:
       AFRICENSUS_SECRET_KEY: "${AFRICENSUS_SECRET_KEY:-dev-secret-change-me}"
       AFRICENSUS_ACCESS_TOKEN_TTL: "${AFRICENSUS_ACCESS_TOKEN_TTL:-3600}"
       AFRICENSUS_REFRESH_TOKEN_TTL: "${AFRICENSUS_REFRESH_TOKEN_TTL:-604800}"
+      PORT: "8080"
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-africensus}:${POSTGRES_PASSWORD:-africensus}@postgres:5432/${POSTGRES_DB:-africensus}"
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200,http://localhost:8000,http://127.0.0.1:8000}"
       FRONTEND_DIST: "${FRONTEND_DIST:-frontend/dist/africensus-link/browser}"
@@ -39,7 +40,7 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health').read()"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health').read()" ]
       interval: 15s
       timeout: 5s
       retries: 5
