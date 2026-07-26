@@ -1,5 +1,5 @@
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, effect } from '@angular/core';
 
 import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
@@ -24,68 +24,122 @@ export class ReportsComponent implements OnInit {
 
   // Chart datasets
   readonly genderChartData = computed(() => {
+    this.i18n.language();
     const data = this.summary()?.personsByGender ?? {};
     return {
-      labels: Object.keys(data).map(k => this.i18n.t(`enum.gender.${k}` as any) || k),
+      labels: Object.keys(data).map(k => this.i18n.t(`person.gender.${k}` as any) || k),
       datasets: [{
         data: Object.values(data),
-        backgroundColor: ['#3b82f6', '#ec4899', '#64748b'] // blue, pink, slate
+        backgroundColor: ['#0284c7', '#ec4899', '#94a3b8']
       }]
     };
   });
 
   readonly ageGroupChartData = computed(() => {
+    this.i18n.language();
     const data = this.summary()?.personsByAgeGroup ?? {};
     return {
       labels: Object.keys(data).map(k => this.i18n.t(`ageGroup.${k}` as any) || k),
       datasets: [{
         label: this.i18n.t('reports.residents' as any) || 'Personnes',
         data: Object.values(data),
-        backgroundColor: '#0ea5e9'
+        backgroundColor: '#6366f1',
+        borderRadius: 8
       }]
     };
   });
 
   readonly validationChartData = computed(() => {
+    this.i18n.language();
     const data = this.summary()?.personsByValidationStatus ?? {};
     return {
-      labels: Object.keys(data).map(k => this.i18n.t(`validation.status.${k}` as any) || k),
+      labels: Object.keys(data).map(k => this.i18n.t(`status.${k}` as any) || k),
       datasets: [{
         data: Object.values(data),
-        backgroundColor: ['#22c55e', '#eab308', '#94a3b8', '#f97316', '#ef4444'] 
+        backgroundColor: ['#10b981', '#f59e0b', '#94a3b8', '#f97316', '#ef4444'] 
       }]
     };
   });
 
   readonly zoneChartData = computed(() => {
+    this.i18n.language();
     const data = this.summary()?.personsByZone ?? {};
     return {
-      labels: Object.keys(data),
+      labels: Object.keys(data).map(k => this.resolveLocalizedText(k)),
       datasets: [{
         label: this.i18n.t('reports.residents' as any) || 'Personnes',
         data: Object.values(data),
-        backgroundColor: '#8b5cf6'
+        backgroundColor: '#8b5cf6',
+        borderRadius: 8
       }]
     };
   });
 
   readonly housingTypeChartData = computed(() => {
+    this.i18n.language();
     const data = this.summary()?.householdsByHousingType ?? {};
     return {
       labels: Object.keys(data).map(k => this.i18n.t(`housingType.${k}` as any) || k),
       datasets: [{
         data: Object.values(data),
-        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#64748b']
+        backgroundColor: ['#10b981', '#0284c7', '#f59e0b', '#f97316', '#64748b']
       }]
     };
   });
 
-  constructor(private readonly api: ApiService, readonly i18n: I18nService) {}
-  
-  ngOnInit(): void {
-    this.api.populationSummary().subscribe({
-      next: (summary) => this.summary.set(summary),
-      error: () => this.summary.set(null),
+  constructor(private readonly api: ApiService, readonly i18n: I18nService) {
+    effect(() => {
+      const currentLang = this.i18n.language();
+      this.api.populationSummary(currentLang).subscribe({
+        next: (summary) => this.summary.set(summary),
+        error: () => this.summary.set(null),
+      });
     });
+  }
+  
+  ngOnInit(): void {}
+
+  private resolveLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    const strVal = String(val);
+    const trimmed = strVal.trim();
+    if (trimmed.startsWith('{')) {
+      const closeBraceIdx = trimmed.indexOf('}');
+      if (closeBraceIdx !== -1) {
+        const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+        const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+        try {
+          const normalized = jsonPart.replace(/'/g, '"');
+          const parsed = JSON.parse(normalized);
+          if (typeof parsed === 'object' && parsed !== null) {
+            const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+            return String(text) + codeSuffix;
+          }
+        } catch {
+          // fallback
+        }
+      }
+    }
+
+    let res = val;
+    if (currentLang === 'en') {
+      res = res
+        .replace(/Région Capitale/g, 'Capital Region')
+        .replace(/Province du Nord/g, 'North Province')
+        .replace(/District du Sud/g, 'South District')
+        .replace(/Zone Urbaine Est/g, 'East Urban Zone')
+        .replace(/Zone Rurale Ouest/g, 'West Rural Zone')
+        .replace(/Région Côtière Centrale/g, 'Central Coastal Region');
+    } else {
+      res = res
+        .replace(/Capital Region/g, 'Région Capitale')
+        .replace(/North Province/g, 'Province du Nord')
+        .replace(/South District/g, 'District du Sud')
+        .replace(/East Urban Zone/g, 'Zone Urbaine Est')
+        .replace(/West Rural Zone/g, 'Zone Rurale Ouest')
+        .replace(/Central Coastal Region/g, 'Région Côtière Centrale');
+    }
+    return res;
   }
 }

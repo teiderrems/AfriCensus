@@ -6,7 +6,7 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { TranslationKey } from '@/app/core/i18n/translations';
 
 export interface SelectOption {
-  label: string;
+  label: string | Record<string, string>;
   value: any;
 }
 
@@ -26,7 +26,7 @@ export interface SelectOption {
 })
 export class SelectComponent implements ControlValueAccessor {
   private readonly _options = signal<SelectOption[]>([]);
-  @Input() set options(val: SelectOption[]) { this._options.set(val); }
+  @Input() set options(val: SelectOption[]) { this._options.set(val || []); }
   get options() { return this._options(); }
 
   private readonly _placeholder = signal('Sélectionner...');
@@ -51,15 +51,50 @@ export class SelectComponent implements ControlValueAccessor {
 
   readonly isOpen = signal(false);
   readonly openAbove = signal(false);
+  readonly openRightAligned = signal(false);
   readonly maxDropdownHeight = signal<number>(260);
   readonly searchQuery = signal('');
   readonly focusedIndex = signal(-1);
+
+  resolveLabel(label: string | Record<string, string>): string {
+    if (!label) return '';
+    const currentLang = this.i18n.language();
+
+    if (typeof label === 'object') {
+      return label[currentLang] || label['fr'] || label['en'] || Object.values(label)[0] || '';
+    }
+
+    const translated = this.i18n.t(label as TranslationKey);
+    const val = translated || label;
+
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {
+            // fallback
+          }
+        }
+      }
+    }
+    return val;
+  }
 
   readonly filteredOptions = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     let baseOpts = this._options().map(opt => ({
       ...opt,
-      label: this.i18n.t(opt.label as TranslationKey) || opt.label
+      label: this.resolveLabel(opt.label)
     }));
 
     if (this.showAllOption) {
@@ -84,7 +119,7 @@ export class SelectComponent implements ControlValueAccessor {
       if (!Array.isArray(currentVal) || currentVal.length === 0) return placeholder;
       return this.options
         .filter(opt => currentVal.includes(opt.value))
-        .map(opt => this.i18n.t(opt.label as TranslationKey))
+        .map(opt => this.resolveLabel(opt.label))
         .join(', ');
     } else {
       if (currentVal == null) {
@@ -93,7 +128,7 @@ export class SelectComponent implements ControlValueAccessor {
           : placeholder;
       }
       const selected = this.options.find(opt => opt.value === currentVal);
-      return selected ? (this.i18n.t(selected.label as TranslationKey) || selected.label) : placeholder;
+      return selected ? this.resolveLabel(selected.label) : placeholder;
     }
   });
 
@@ -169,6 +204,7 @@ export class SelectComponent implements ControlValueAccessor {
 
       const shouldOpenAbove = distToBottom < 220 && distToTop > distToBottom;
       this.openAbove.set(shouldOpenAbove);
+      this.openRightAligned.set(rect.left + 220 > window.innerWidth);
 
       const availableSpace = shouldOpenAbove ? distToTop - 20 : distToBottom - 20;
       this.maxDropdownHeight.set(Math.max(120, Math.min(260, availableSpace)));

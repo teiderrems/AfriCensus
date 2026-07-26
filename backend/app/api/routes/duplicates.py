@@ -16,6 +16,7 @@ router = APIRouter(prefix="/duplicates", tags=["duplicates"])
 
 
 @router.get("", response_model=PaginatedResponse[dict[str, Any]])
+@router.get("/", response_model=PaginatedResponse[dict[str, Any]], include_in_schema=False)
 def list_duplicates(
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=10, ge=1, le=100, description="Items per page"),

@@ -80,7 +80,7 @@
         <tbody>
           @for (row of campaigns(); track row.id) {
             <tr>
-              <td [attr.data-label]="('campaigns.name' | translate)"><strong>{{ row.name }}</strong></td>
+              <td [attr.data-label]="('campaigns.name' | translate)"><strong>{{ row.name | aclLocalizedText }}</strong></td>
               <td [attr.data-label]="('campaigns.status' | translate)"><span class="chip {{ row.status }}">{{ row.status }}</span></td>
               <td [attr.data-label]="('campaigns.startDate' | translate)">{{ row.start_date | aclLocalizedDate }}</td>
               <td [attr.data-label]="('campaigns.endDate' | translate)">{{ row.end_date | aclLocalizedDate }}</td>
@@ -117,7 +117,7 @@
       <div class="form-grid">
         <div class="field">
           <label>{{ 'campaigns.name' | translate }}</label>
-          <input type="text" [(ngModel)]="draft().name" name="name" required />
+          <acl-multilang-field [(ngModel)]="draft().name" name="name"></acl-multilang-field>
         </div>
         <div class="field">
           <label for="status">{{ 'campaigns.status' | translate }}</label>

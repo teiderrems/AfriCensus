@@ -39,24 +39,24 @@
             <div class="export-menu" (click)="$event.stopPropagation()">
               <button type="button" class="export-item" (click)="triggerExport('png')">
                 <lucide-icon name="image"></lucide-icon>
-                <span>Image PNG</span>
+                <span>{{ i18n.t('familyTree.exportPng') }}</span>
               </button>
               <button type="button" class="export-item" (click)="triggerExport('svg')">
                 <lucide-icon name="file-code"></lucide-icon>
-                <span>Vecteur SVG</span>
+                <span>{{ i18n.t('familyTree.exportSvg') }}</span>
               </button>
               <button type="button" class="export-item" (click)="triggerExport('pdf')">
                 <lucide-icon name="file-text"></lucide-icon>
-                <span>Document PDF</span>
+                <span>{{ i18n.t('familyTree.exportPdf') }}</span>
               </button>
               <div class="export-menu-divider"></div>
               <button type="button" class="export-item" (click)="triggerExport('csv')">
                 <lucide-icon name="table"></lucide-icon>
-                <span>Données CSV</span>
+                <span>{{ i18n.t('familyTree.exportCsv') }}</span>
               </button>
               <button type="button" class="export-item" (click)="triggerExport('json')">
                 <lucide-icon name="file-braces"></lucide-icon>
-                <span>Fichier JSON</span>
+                <span>{{ i18n.t('familyTree.exportJson') }}</span>
               </button>
             </div>
             }
@@ -80,7 +80,7 @@
       </div>
 
       <svg class="family-graph" viewBox="0 0 1100 620" role="img"
-        aria-label="Graphe interactif des relations familiales" (wheel)="onWheel($event)"
+        [attr.aria-label]="i18n.t('familyTree.graphAriaLabel')" (wheel)="onWheel($event)"
         (pointerdown)="startPan($event)" (pointermove)="movePan($event)" (pointerup)="endInteraction($event)"
         (pointercancel)="endInteraction($event)" (pointerleave)="endPan()">
         <defs>
@@ -172,7 +172,7 @@
   @if (showTable()) {
   <acl-card class="card">
     <h2>{{ i18n.t('familyTree.familyLinks') }}</h2>
-    <div class="table-controls" aria-label="Filtres des liens familiaux">
+    <div class="table-controls" [attr.aria-label]="i18n.t('familyTree.filtersAriaLabel')">
       <div class="field">
         <label for="relationSearch">{{ i18n.t('familyTree.search') }}</label>
         <input id="relationSearch" name="relationSearch" type="search" [ngModel]="relationSearch()"
@@ -201,7 +201,7 @@
           @for (link of pagedRelationLinks(); track link.id) {
           <tr [class.selected-row]="isSelectedLink(link)">
             <td>{{ labelFor(link.source) }}</td>
-            <td><strong>{{ link.type }}</strong></td>
+            <td><strong>{{ shortRelation(link.type) }}</strong></td>
             <td><span class="relation-chip {{ link.category }}">{{ labelCategory(link.category) }}</span></td>
             <td>{{ labelFor(link.target) }}</td>
             <td><span class="chip {{ link.status }}">{{ link.status }}</span></td>
@@ -215,7 +215,7 @@
         </tbody>
       </table>
     </div>
-    <acl-table-pagination ariaLabel="Pagination des liens familiaux" [totalItems]="filteredRelationLinks().length"
+    <acl-table-pagination [ariaLabel]="i18n.t('familyTree.paginationAriaLabel')" [totalItems]="filteredRelationLinks().length"
       [page]="relationPage()" [totalPages]="relationTotalPages()" (previous)="previousRelationPage()"
       (next)="nextRelationPage()" />
   </acl-card>

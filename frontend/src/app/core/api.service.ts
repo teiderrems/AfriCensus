@@ -147,7 +147,7 @@ export class ApiService {
     if (sortBy) params = params.set('sort_by', sortBy);
     if (sortOrder) params = params.set('sort_order', sortOrder);
     if (status) params = params.set('status', status);
-    return this.http.get<PaginatedResponse<DuplicateCandidate>>('/api/v1/duplicates/', { params });
+    return this.http.get<PaginatedResponse<DuplicateCandidate>>('/api/v1/duplicates', { params });
   }
 
   scanDuplicates() {
@@ -285,8 +285,10 @@ export class ApiService {
     return this.http.post(`/api/v1/households/${id}/request-correction`, { comment });
   }
 
-  populationSummary() {
-    return this.http.get<PopulationSummary>('/api/v1/reports/population-summary');
+  populationSummary(lang?: string) {
+    let params = new HttpParams();
+    if (lang) params = params.set('lang', lang);
+    return this.http.get<PopulationSummary>('/api/v1/reports/population-summary', { params });
   }
 
   medicalHistories(personId?: string, sortBy = '', sortOrder = '') {

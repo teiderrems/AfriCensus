@@ -11,9 +11,11 @@ import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pa
 import { CardComponent } from '@/app/shared/card/card.component';
 import { ButtonComponent } from '@/app/shared/button/button';
 
+import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
+
 @Component({
   selector: 'acl-dashboard-page',
-  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent],
+  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclLocalizedTextPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
@@ -83,6 +85,35 @@ export class DashboardComponent implements OnInit {
 
   zoneLabel(zoneId: string): string {
     const zone = this.summary()?.zoneProgress.find((item) => item.id === zoneId);
-    return zone ? zone.name : zoneId;
+    return zone ? this.resolveLocalizedText(zone.name) : zoneId;
+  }
+
+  private resolveLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object') {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {
+            // fallback
+          }
+        }
+      }
+    }
+    return String(val);
   }
 }

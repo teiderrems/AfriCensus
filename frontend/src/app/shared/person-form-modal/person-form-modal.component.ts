@@ -41,8 +41,8 @@ export class PersonFormModalComponent {
   }
 
   get householdOptions() { return this.households.map(h => ({label: h.household_code + ' \u00b7 ' + h.address_text, value: h.id})); }
-  get campaignOptions() { return this.campaigns.map(c => ({label: c.name, value: c.id})); }
-  get zoneOptions() { return this.zones.map(z => ({label: z.name, value: z.id})); }
+  get campaignOptions() { return this.campaigns.map(c => ({label: this.resolveLocalizedText(c.name), value: c.id})); }
+  get zoneOptions() { return this.zones.map(z => ({label: `${this.resolveLocalizedText(z.name)} (${z.code})`, value: z.id})); }
 
   constructor(readonly i18n: I18nService) {}
 
@@ -52,11 +52,38 @@ export class PersonFormModalComponent {
 
   campaignLabel(campaignId: string): string {
     const campaign = this.campaigns.find((item) => item.id === campaignId);
-    return campaign ? `${campaign.name} · ${campaign.status}` : '';
+    return campaign ? `${this.resolveLocalizedText(campaign.name)} · ${campaign.status}` : '';
   }
 
   zoneLabel(zoneId: string): string {
     const zone = this.zones.find((item) => item.id === zoneId);
-    return zone ? `${zone.name} · ${zone.code}` : '';
+    return zone ? `${this.resolveLocalizedText(zone.name)} · ${zone.code}` : '';
+  }
+
+  private resolveLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object' && val !== null) {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {}
+        }
+      }
+    }
+    return String(val);
   }
 }

@@ -16,6 +16,9 @@ import { ConfirmService } from '@/app/core/confirm';
 import { ButtonComponent } from "@/app/shared/button/button";
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
+import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
+import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
+
 @Component({
   imports: [
     CommonModule,
@@ -27,7 +30,9 @@ import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
     ModalComponent,
     SelectComponent,
     ButtonComponent,
-    AclTooltipDirective
+    AclTooltipDirective,
+    MultilangFieldComponent,
+    AclLocalizedTextPipe
   ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css',
@@ -357,7 +362,8 @@ export class UsersComponent implements OnInit {
 
   saveRole(): void {
     const draft = this.roleDraft();
-    if (!draft.name.trim()) return;
+    const nameStr = typeof draft.name === 'string' ? draft.name : (Object.values(draft.name)[0] || '');
+    if (!nameStr.trim()) return;
 
     this.saving.set(true);
     if (this.editingRoleId()) {
@@ -407,38 +413,80 @@ export class UsersComponent implements OnInit {
       .join('');
   }
 
-  roleOptions = computed(() => [
-    { label: this.i18n.t('admin.users.filterRoleAll'), value: '' },
-    { label: 'ADMIN - Administrateur', value: 'ADMIN' },
-    { label: 'SUPERVISOR - Superviseur', value: 'SUPERVISOR' },
-    { label: 'AGENT - Agent Recenseur', value: 'AGENT' },
-    { label: 'STATISTICIAN - Statisticien', value: 'STATISTICIAN' },
-    { label: 'AUDITOR - Auditeur', value: 'AUDITOR' },
-    ...this.roles()
-      .filter((r) => !['ADMIN', 'SUPERVISOR', 'AGENT', 'STATISTICIAN', 'AUDITOR'].includes(r.name))
-      .map((r) => ({ label: r.name, value: r.name })),
-  ]);
+  roleOptions = computed(() => {
+    this.i18n.language();
+    return [
+      { label: this.i18n.t('admin.users.filterRoleAll'), value: '' },
+      { label: 'ADMIN - Administrateur', value: 'ADMIN' },
+      { label: 'SUPERVISOR - Superviseur', value: 'SUPERVISOR' },
+      { label: 'AGENT - Agent Recenseur', value: 'AGENT' },
+      { label: 'STATISTICIAN - Statisticien', value: 'STATISTICIAN' },
+      { label: 'AUDITOR - Auditeur', value: 'AUDITOR' },
+      ...this.roles()
+        .filter((r) => !['ADMIN', 'SUPERVISOR', 'AGENT', 'STATISTICIAN', 'AUDITOR'].includes(typeof r.name === 'string' ? r.name : (r.name?.['fr'] || '')))
+        .map((r) => ({ label: this.formatLocalizedText(r.name), value: r.name })),
+    ];
+  });
 
-  userFormRoleOptions = computed(() => [
-    { label: 'ADMIN - Administrateur National', value: 'ADMIN' },
-    { label: 'SUPERVISOR - Superviseur Régional', value: 'SUPERVISOR' },
-    { label: 'AGENT - Agent Recenseur', value: 'AGENT' },
-    { label: 'STATISTICIAN - Analyste Statisticien', value: 'STATISTICIAN' },
-    { label: 'AUDITOR - Auditeur Sécurité', value: 'AUDITOR' },
-    ...this.roles()
-      .filter((r) => !['ADMIN', 'SUPERVISOR', 'AGENT', 'STATISTICIAN', 'AUDITOR'].includes(r.name))
-      .map((r) => ({ label: r.name, value: r.name })),
-  ]);
+  userFormRoleOptions = computed(() => {
+    this.i18n.language();
+    return [
+      { label: 'ADMIN - Administrateur National', value: 'ADMIN' },
+      { label: 'SUPERVISOR - Superviseur Régional', value: 'SUPERVISOR' },
+      { label: 'AGENT - Agent Recenseur', value: 'AGENT' },
+      { label: 'STATISTICIAN - Analyste Statisticien', value: 'STATISTICIAN' },
+      { label: 'AUDITOR - Auditeur Sécurité', value: 'AUDITOR' },
+      ...this.roles()
+        .filter((r) => !['ADMIN', 'SUPERVISOR', 'AGENT', 'STATISTICIAN', 'AUDITOR'].includes(typeof r.name === 'string' ? r.name : (r.name?.['fr'] || '')))
+        .map((r) => ({ label: this.formatLocalizedText(r.name), value: r.name })),
+    ];
+  });
 
-  statusOptions = computed(() => [
-    { label: this.i18n.t('admin.users.filterStatusAll'), value: '' },
-    { label: this.i18n.t('admin.users.filterStatusActive'), value: 'active' },
-    { label: this.i18n.t('admin.users.filterStatusInactive'), value: 'inactive' },
-  ]);
+  statusOptions = computed(() => {
+    this.i18n.language();
+    return [
+      { label: this.i18n.t('admin.users.filterStatusAll'), value: '' },
+      { label: this.i18n.t('admin.users.filterStatusActive'), value: 'active' },
+      { label: this.i18n.t('admin.users.filterStatusInactive'), value: 'inactive' },
+    ];
+  });
 
-  zoneOptions = computed(() =>
-    this.availableZones().map((z) => ({ label: `${z.name} (${z.code})`, value: z.id }))
-  );
+  zoneOptions = computed(() => {
+    this.i18n.language();
+    return this.availableZones().map((z) => {
+      const name = this.formatLocalizedText(z.name);
+      return { label: `${name} (${z.code})`, value: z.id };
+    });
+  });
+
+  private formatLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object' && val !== null) {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {
+            // fallback
+          }
+        }
+      }
+    }
+    return String(val);
+  }
 
   toggleZoneSelection(zoneId: string): void {
     const current = [...this.userDraft().zone_ids];

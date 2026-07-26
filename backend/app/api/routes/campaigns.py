@@ -26,7 +26,8 @@ def list_campaigns(
     q = select(Campaign)
     if query:
         search_lower = f"%{query.lower()}%"
-        q = q.where(Campaign.name.ilike(search_lower))
+        from sqlalchemy import cast, String
+        q = q.where(cast(Campaign.name, String).ilike(search_lower))
         
     return paginate_query(db, q, page, page_size, sort_by, sort_order)
 

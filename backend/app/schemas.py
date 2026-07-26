@@ -278,7 +278,7 @@ class FamilyMedicalSummaryOut(BaseModel):
 class ZoneIn(BaseModel):
     model_config = ConfigDict(json_schema_extra={"x-field-i18n": field_metadata("zone")})
 
-    name: str = Field(..., description="Nom lisible de la zone géographique.", examples=["District Centre"])
+    name: LocalizedString = Field(..., description="Nom lisible ou dictionnaire de traductions de la zone.", examples=["District Centre"])
     code: str = Field(..., description="Code unique de la zone.", examples=["CTR-01"])
     type: ZoneType = Field(..., description="Niveau administratif de la zone.")
     parent_id: str | None = Field(default=None, description="Identifiant de la zone parente.")
@@ -288,7 +288,7 @@ class ZoneIn(BaseModel):
 class CampaignIn(BaseModel):
     model_config = ConfigDict(json_schema_extra={"x-field-i18n": field_metadata("campaign")})
 
-    name: str = Field(..., description="Nom de la campagne de recensement.", examples=["Recensement National 2026"])
+    name: LocalizedString = Field(..., description="Nom lisible ou dictionnaire de traductions de la campagne.", examples=["Recensement National 2026"])
     status: CampaignStatus = Field(default=CampaignStatus.PLANNED, description="Statut de la campagne.")
     start_date: str | None = Field(default=None, description="Date de début au format ISO `YYYY-MM-DD`.", examples=["2026-07-01"])
     end_date: str | None = Field(default=None, description="Date de fin au format ISO `YYYY-MM-DD`.", examples=["2026-12-31"])
@@ -403,8 +403,8 @@ class SyncPullResponse(BaseModel):
 
 
 class AppRoleIn(BaseModel):
-    name: str = Field(..., description="Nom du rôle.")
-    description: str | None = None
+    name: LocalizedString = Field(..., description="Nom ou traductions du rôle.")
+    description: LocalizedString | None = None
     permissions: list[str] = Field(default_factory=list)
 
 class AppRoleOut(AppRoleIn):

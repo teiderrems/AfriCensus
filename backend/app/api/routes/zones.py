@@ -28,7 +28,8 @@ def list_zones(
     q = visible_query(q, Zone, user)
     if query:
         search_lower = f"%{query.lower()}%"
-        q = q.where(Zone.name.ilike(search_lower))
+        from sqlalchemy import cast, String
+        q = q.where(cast(Zone.name, String).ilike(search_lower))
         
     return paginate_query(db, q, page, page_size, sort_by, sort_order)
 

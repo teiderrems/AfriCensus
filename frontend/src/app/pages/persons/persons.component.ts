@@ -258,12 +258,39 @@ export class PersonsComponent implements OnInit {
 
   campaignLabel(campaignId: string): string {
     const campaign = this.campaigns().find((item) => item.id === campaignId);
-    return campaign ? `${campaign.name} · ${campaign.status}` : campaignId;
+    return campaign ? `${this.resolveLocalizedText(campaign.name)} · ${campaign.status}` : campaignId;
   }
 
   zoneLabel(zoneId: string): string {
     const zone = this.zones().find((item) => item.id === zoneId);
-    return zone ? `${zone.name} · ${zone.code}` : zoneId;
+    return zone ? `${this.resolveLocalizedText(zone.name)} · ${zone.code}` : zoneId;
+  }
+
+  private resolveLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object' && val !== null) {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {}
+        }
+      }
+    }
+    return String(val);
   }
 
   private upsertPerson(person: PersonRecord): void {

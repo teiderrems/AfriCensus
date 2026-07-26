@@ -28,16 +28,8 @@ export class ChartComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.chart && (changes['data'] || changes['options'] || changes['type'])) {
-      if (changes['type']) {
-        this.destroyChart();
-        this.initChart();
-      } else {
-        this.chart.data = this.data;
-        if (this.options) {
-          this.chart.options = { ...this.chart.options, ...this.options };
-        }
-        this.chart.update();
-      }
+      this.destroyChart();
+      this.initChart();
     }
   }
 

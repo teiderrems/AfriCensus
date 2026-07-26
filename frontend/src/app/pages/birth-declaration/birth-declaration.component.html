@@ -1,6 +1,7 @@
-<section class="page">
+<section class="page animate-fade-in-up">
   <header class="page-head">
     <div>
+      <span class="eyebrow">{{ i18n.t('birthDeclaration.eyebrow') }}</span>
       <h1>{{ i18n.t('birthDeclaration.title') }}</h1>
       <p>{{ i18n.t('birthDeclaration.subtitle') }}</p>
     </div>
@@ -12,7 +13,7 @@
   </header>
 
   @if (status()) {
-  <p class="status" [class.error]="status().startsWith('Erreur')">{{ status() }}</p>
+  <p class="status" [class.error]="(status() || '').toLowerCase().includes('erreur') || (status() || '').toLowerCase().includes('error')">{{ status() }}</p>
   }
 
   <section class="steps">

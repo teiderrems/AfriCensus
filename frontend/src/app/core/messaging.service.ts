@@ -2,12 +2,14 @@ import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ChatGroup, ChatMessage, ConversationSummary } from './models';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MessagingService implements OnDestroy {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly baseUrl = '/api/v1/messages';
 
   readonly conversations = signal<ConversationSummary[]>([]);
@@ -250,6 +252,11 @@ export class MessagingService implements OnDestroy {
 
   private handleTypingEvent(data: any): void {
     const senderId: string = data.sender_id;
+    const currentUserId = this.auth.currentUser()?.id;
+
+    // Never show typing indicator to the user themselves
+    if (senderId && currentUserId && senderId === currentUserId) return;
+
     const senderName: string = data.sender_name || 'Quelqu\'un';
     const isTyping: boolean = data.is_typing;
     const targetId: string = data.target_id;

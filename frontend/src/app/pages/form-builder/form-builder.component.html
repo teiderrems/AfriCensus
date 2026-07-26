@@ -11,7 +11,7 @@
   <main class="canvas">
     <header>
       <div>
-        <h1>{{ i18n.language() === 'fr' ? title.fr : title.en }}</h1>
+        <h1>{{ title[i18n.language()] || title['fr'] || title['en'] || '' }}</h1>
         <p>{{ i18n.t('formBuilder.defaultDescription') }}</p>
       </div>
       <acl-button type="button" (click)="saveDraft()"><lucide-icon name="save"></lucide-icon> {{

@@ -183,24 +183,32 @@ def init_db(db: Session) -> None:
 
     # 3. Seed Zones (50 Zones)
     try:
-        if db.query(Zone).count() < 50:
-            zone_types = ["REGION", "PROVINCE", "DISTRICT", "URBAN", "RURAL", "PERIURBAN"]
-            # Main root zone
-            if not db.query(Zone).filter(Zone.id == "zone-seed-1").first():
-                db.add(Zone(
-                    id="zone-seed-1", name="Région Capitale", code="REG-01", type="REGION",
-                    parent_id=None, status="ACTIVE", progress=85, created_by="user-admin-1",
-                    created_at="2026-01-01T00:00:00Z", updated_at="2026-01-01T00:00:00Z"
-                ))
+        zone_types = ["REGION", "PROVINCE", "DISTRICT", "URBAN", "RURAL", "PERIURBAN"]
+        zone_names_fr = ["Région Capitale", "Province du Nord", "District du Sud", "Zone Urbaine Est", "Zone Rurale Ouest", "Région Côtière Centrale"]
+        zone_names_en = ["Capital Region", "Northern Province", "Southern District", "Eastern Urban Area", "Western Rural Zone", "Central Coastal Region"]
 
+        # Main root zone
+        root_zone = db.query(Zone).filter(Zone.id == "zone-seed-1").first()
+        if not root_zone:
+            db.add(Zone(
+                id="zone-seed-1",
+                name={"fr": "Région Capitale", "en": "Capital Region"},
+                code="REG-01", type="REGION",
+                parent_id=None, status="ACTIVE", progress=85, created_by="user-admin-1",
+                created_at="2026-01-01T00:00:00Z", updated_at="2026-01-01T00:00:00Z"
+            ))
+
+        if db.query(Zone).count() < 50:
             for i in range(2, 51):
                 zid = f"zone-seed-{i}"
                 if not db.query(Zone).filter(Zone.id == zid).first():
                     parent_id = f"zone-seed-{(i // 5) + 1}" if i > 5 else "zone-seed-1"
                     ztype = zone_types[(i - 1) % len(zone_types)]
+                    fr_n = zone_names_fr[(i - 1) % len(zone_names_fr)] + f" {i}"
+                    en_n = zone_names_en[(i - 1) % len(zone_names_en)] + f" {i}"
                     db.add(Zone(
                         id=zid,
-                        name=f"Zone Territoriale {i}",
+                        name={"fr": fr_n, "en": en_n},
                         code=f"Z-{i:03d}",
                         type=ztype,
                         parent_id=parent_id,
@@ -210,14 +218,22 @@ def init_db(db: Session) -> None:
                         created_at="2026-01-01T00:00:00Z",
                         updated_at="2026-01-01T00:00:00Z"
                     ))
+
+        # Migration: Ensure all existing Zone names are FR/EN dicts
+        for z in db.query(Zone).all():
+            if isinstance(z.name, str):
+                z.name = {"fr": z.name, "en": z.name}
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(z, "name")
+        db.commit()
     except Exception as e:
         logger.error(f"Error seeding Zones: {e}")
         db.rollback()
 
     # 4. Seed Campaigns (50 Campaigns)
     try:
+        statuses = ["ACTIVE", "COMPLETED", "DRAFT", "ARCHIVED"]
         if db.query(Campaign).count() < 50:
-            statuses = ["ACTIVE", "COMPLETED", "DRAFT", "ARCHIVED"]
             for i in range(1, 51):
                 cid = f"camp-seed-{i}"
                 if not db.query(Campaign).filter(Campaign.id == cid).first():
@@ -225,7 +241,10 @@ def init_db(db: Session) -> None:
                     year = 2020 + (i % 7)
                     db.add(Campaign(
                         id=cid,
-                        name=f"Campagne Démographique {year} - Phase {i}",
+                        name={
+                            "fr": f"Campagne Démographique {year} - Phase {i}",
+                            "en": f"Demographic Campaign {year} - Phase {i}"
+                        },
                         status=status,
                         start_date=f"{year}-01-15",
                         end_date=f"{year}-12-15",
@@ -234,6 +253,14 @@ def init_db(db: Session) -> None:
                         created_at="2026-01-01T00:00:00Z",
                         updated_at="2026-01-01T00:00:00Z"
                     ))
+
+        # Migration: Ensure all existing Campaign names are FR/EN dicts
+        for c in db.query(Campaign).all():
+            if isinstance(c.name, str):
+                c.name = {"fr": c.name, "en": c.name}
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(c, "name")
+        db.commit()
     except Exception as e:
         logger.error(f"Error seeding Campaigns: {e}")
         db.rollback()

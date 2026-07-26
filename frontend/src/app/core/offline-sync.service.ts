@@ -2,9 +2,9 @@ import { Injectable, computed, signal } from '@angular/core';
 import { Observable, catchError, of, throwError } from 'rxjs';
 
 import { ApiService } from './api.service';
-import { MedicalHistoryWriteDto } from './dtos';
+import { FamilyRelationWriteDto, HouseholdWriteDto, MedicalHistoryWriteDto, PersonWriteDto } from './dtos';
 import { I18nService } from './i18n/i18n.service';
-import { MedicalHistory, SyncItem, SyncPullResponse, SyncPushResult } from './models';
+import { FamilyRelationRecord, HouseholdRecord, MedicalHistory, PersonRecord, SyncItem, SyncPullResponse, SyncPushResult } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class OfflineSyncService {
@@ -45,6 +45,108 @@ export class OfflineSyncService {
     } catch {
       return null;
     }
+  }
+
+  // ─── Household Offline ───────────────────────────────────────────────
+  createHousehold(payload: HouseholdWriteDto): Observable<HouseholdRecord> {
+    if (!this.online()) {
+      return of(this.queueHousehold(payload));
+    }
+    return this.api.createHousehold(payload).pipe(
+      catchError((error) => {
+        if (error?.status === 0) {
+          return of(this.queueHousehold(payload));
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  queueHousehold(payload: HouseholdWriteDto): HouseholdRecord {
+    const localId = payload.local_id || this.localId('household');
+    const item: SyncItem = {
+      entity_type: 'household',
+      operation: 'CREATE',
+      local_entity_id: localId,
+      payload: { ...payload, local_id: localId } as any,
+    };
+    this.enqueue(item);
+    return {
+      id: localId,
+      ...payload,
+      local_id: localId,
+      validation_status: 'DRAFT',
+      sync_status: 'PENDING_SYNC',
+      updated_at: new Date().toISOString(),
+    } as HouseholdRecord;
+  }
+
+  // ─── Person Offline ──────────────────────────────────────────────────
+  createPerson(payload: PersonWriteDto): Observable<PersonRecord> {
+    if (!this.online()) {
+      return of(this.queuePerson(payload));
+    }
+    return this.api.createPerson(payload).pipe(
+      catchError((error) => {
+        if (error?.status === 0) {
+          return of(this.queuePerson(payload));
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  queuePerson(payload: PersonWriteDto): PersonRecord {
+    const localId = payload.local_id || this.localId('person');
+    const item: SyncItem = {
+      entity_type: 'person',
+      operation: 'CREATE',
+      local_entity_id: localId,
+      payload: { ...payload, local_id: localId } as any,
+    };
+    this.enqueue(item);
+    return {
+      id: localId,
+      ...payload,
+      local_id: localId,
+      validation_status: 'DRAFT',
+      sync_status: 'PENDING_SYNC',
+      updated_at: new Date().toISOString(),
+    } as PersonRecord;
+  }
+
+  // ─── Family Relation Offline ─────────────────────────────────────────
+  createFamilyRelation(payload: FamilyRelationWriteDto): Observable<FamilyRelationRecord> {
+    if (!this.online()) {
+      return of(this.queueFamilyRelation(payload));
+    }
+    return this.api.createFamilyRelation(payload).pipe(
+      catchError((error) => {
+        if (error?.status === 0) {
+          return of(this.queueFamilyRelation(payload));
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  queueFamilyRelation(payload: FamilyRelationWriteDto): FamilyRelationRecord {
+    const localId = payload.local_id || this.localId('family-relation');
+    const item: SyncItem = {
+      entity_type: 'family_relation',
+      operation: 'CREATE',
+      local_entity_id: localId,
+      payload: { ...payload, local_id: localId } as any,
+    };
+    this.enqueue(item);
+    return {
+      id: localId,
+      ...payload,
+      local_id: localId,
+      validation_status: 'DRAFT',
+      sync_status: 'PENDING_SYNC',
+      updated_at: new Date().toISOString(),
+    } as FamilyRelationRecord;
   }
 
   createMedicalHistory(payload: MedicalHistoryWriteDto): Observable<MedicalHistory> {

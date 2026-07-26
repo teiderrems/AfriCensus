@@ -29,14 +29,20 @@ export class HouseholdsComponent implements OnInit {
     { label: this.i18n.t('household.selectResponsible'), value: '' },
     ...this.persons().map(p => ({ label: p.first_name + ' ' + p.last_name, value: p.id }))
   ]);
-  householdCampaignOptions = computed(() => [
-    { label: this.i18n.t('admin.campaign.select'), value: '' },
-    ...this.campaigns().map(c => ({ label: c.name, value: c.id }))
-  ]);
-  householdZoneOptions = computed(() => [
-    { label: this.i18n.t('admin.zone.select'), value: '' },
-    ...this.zones().map(z => ({ label: z.name, value: z.id }))
-  ]);
+  householdCampaignOptions = computed(() => {
+    this.i18n.language();
+    return [
+      { label: this.i18n.t('admin.campaign.select'), value: '' },
+      ...this.campaigns().map(c => ({ label: this.resolveLocalizedText(c.name), value: c.id }))
+    ];
+  });
+  householdZoneOptions = computed(() => {
+    this.i18n.language();
+    return [
+      { label: this.i18n.t('admin.zone.select'), value: '' },
+      ...this.zones().map(z => ({ label: `${this.resolveLocalizedText(z.name)} (${z.code})`, value: z.id }))
+    ];
+  });
 
   readonly households = signal<HouseholdRecord[]>([]);
   readonly persons = signal<PersonRecord[]>([]);
@@ -351,12 +357,39 @@ export class HouseholdsComponent implements OnInit {
 
   campaignLabel(campaignId: string): string {
     const campaign = this.campaigns().find((item) => item.id === campaignId);
-    return campaign ? `${campaign.name} · ${campaign.status}` : campaignId;
+    return campaign ? `${this.resolveLocalizedText(campaign.name)} · ${campaign.status}` : campaignId;
   }
 
   zoneLabel(zoneId: string): string {
     const zone = this.zones().find((item) => item.id === zoneId);
-    return zone ? `${zone.name} · ${zone.code}` : zoneId;
+    return zone ? `${this.resolveLocalizedText(zone.name)} · ${zone.code}` : zoneId;
+  }
+
+  private resolveLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object' && val !== null) {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {}
+        }
+      }
+    }
+    return String(val);
   }
 
   private upsertHousehold(household: HouseholdRecord): void {

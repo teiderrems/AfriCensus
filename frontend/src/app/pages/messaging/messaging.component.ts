@@ -35,11 +35,24 @@ export class MessagingComponent implements OnInit {
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('messageTextarea') private messageTextarea!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 
   searchQuery = signal<string>('');
   activeFilter = signal<'ALL' | 'DIRECT' | 'GROUPS'>('ALL');
   newMessageText = signal<string>('');
   replyingTo = signal<ChatMessage | null>(null);
+  sidebarCollapsed = signal<boolean>(false);
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update(c => !c);
+  }
+
+  onSearchClick(): void {
+    if (this.sidebarCollapsed()) {
+      this.sidebarCollapsed.set(false);
+      setTimeout(() => this.searchInput?.nativeElement.focus(), 50);
+    }
+  }
 
   // Emoji Picker State & Categories
   showEmojiPicker = signal<boolean>(false);

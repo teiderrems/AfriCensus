@@ -1,68 +1,86 @@
-<section class="page">
-  <header>
-    <h1>{{ i18n.t('reports.title') }}</h1>
+<section class="page animate-fade-in-up">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">{{ i18n.t('reports.eyebrow') }}</span>
+      <h1>{{ i18n.t('reports.title') }}</h1>
+    </div>
     <a class="btn primary" href="/api/v1/exports/persons.csv">
       <lucide-icon name="download"></lucide-icon> {{ i18n.t('reports.exportCsv') }}
     </a>
   </header>
 
   @if (summary(); as data) {
-    <div class="metrics-grid">
-      <acl-card class="metric-card">
+  <div class="metrics-grid">
+    <acl-card class="metric-card animate-fade-in-up stagger-1">
+      <div class="metric-header">
         <h3>{{ i18n.t('reports.totalPersons') }}</h3>
-        <p class="metric-value">{{ totalPersons() }}</p>
-      </acl-card>
-      
-      <acl-card class="metric-card">
-        <h3>{{ i18n.t('reports.totalHouseholds') }}</h3>
-        <p class="metric-value">{{ totalHouseholds() }}</p>
-      </acl-card>
-
-      <acl-card class="metric-card">
-        <h3>{{ i18n.t('reports.avgMembers') }}</h3>
-        <p class="metric-value">{{ avgMembers() }}</p>
-      </acl-card>
-    </div>
-
-    <div class="charts-grid">
-      <acl-card class="chart-card">
-        <h2>{{ i18n.t('reports.byGender') }}</h2>
-        <div class="chart-container">
-          <acl-chart type="doughnut" [data]="genderChartData()"></acl-chart>
+        <div class="metric-icon persons">
+          <lucide-icon name="users"></lucide-icon>
         </div>
-      </acl-card>
-
-      <acl-card class="chart-card">
-        <h2>{{ i18n.t('reports.byAgeGroup') }}</h2>
-        <div class="chart-container">
-          <acl-chart type="bar" [data]="ageGroupChartData()"></acl-chart>
-        </div>
-      </acl-card>
-
-      <acl-card class="chart-card">
-        <h2>{{ i18n.t('reports.byHousingType') }}</h2>
-        <div class="chart-container">
-          <acl-chart type="pie" [data]="housingTypeChartData()"></acl-chart>
-        </div>
-      </acl-card>
-
-      <acl-card class="chart-card">
-        <h2>{{ i18n.t('reports.byValidationStatus') }}</h2>
-        <div class="chart-container">
-          <acl-chart type="doughnut" [data]="validationChartData()"></acl-chart>
-        </div>
-      </acl-card>
-      
-      <acl-card class="chart-card full-width">
-        <h2>{{ i18n.t('reports.byZone') }}</h2>
-        <div class="chart-container large">
-          <acl-chart type="bar" [data]="zoneChartData()"></acl-chart>
-        </div>
-      </acl-card>
-    </div>
-  } @else {
-    <acl-card>
-      <p>{{ i18n.t('common.loading') }}</p>
+      </div>
+      <p class="metric-value">{{ totalPersons() }}</p>
     </acl-card>
+
+    <acl-card class="metric-card animate-fade-in-up stagger-2">
+      <div class="metric-header">
+        <h3>{{ i18n.t('reports.totalHouseholds') }}</h3>
+        <div class="metric-icon households">
+          <lucide-icon name="house"></lucide-icon>
+        </div>
+      </div>
+      <p class="metric-value">{{ totalHouseholds() }}</p>
+    </acl-card>
+
+    <acl-card class="metric-card animate-fade-in-up stagger-3">
+      <div class="metric-header">
+        <h3>{{ i18n.t('reports.avgMembers') }}</h3>
+        <div class="metric-icon average">
+          <lucide-icon name="users-round"></lucide-icon>
+        </div>
+      </div>
+      <p class="metric-value">{{ avgMembers() }}</p>
+    </acl-card>
+  </div>
+
+  <div class="charts-grid">
+    <acl-card class="chart-card animate-fade-in-up stagger-1">
+      <h2>{{ i18n.t('reports.byGender') }}</h2>
+      <div class="chart-container">
+        <acl-chart type="doughnut" [data]="genderChartData()"></acl-chart>
+      </div>
+    </acl-card>
+
+    <acl-card class="chart-card animate-fade-in-up stagger-2">
+      <h2>{{ i18n.t('reports.byAgeGroup') }}</h2>
+      <div class="chart-container">
+        <acl-chart type="bar" [data]="ageGroupChartData()"></acl-chart>
+      </div>
+    </acl-card>
+
+    <acl-card class="chart-card animate-fade-in-up stagger-3">
+      <h2>{{ i18n.t('reports.byHousingType') }}</h2>
+      <div class="chart-container">
+        <acl-chart type="pie" [data]="housingTypeChartData()"></acl-chart>
+      </div>
+    </acl-card>
+
+    <acl-card class="chart-card animate-fade-in-up stagger-4">
+      <h2>{{ i18n.t('reports.byValidationStatus') }}</h2>
+      <div class="chart-container">
+        <acl-chart type="doughnut" [data]="validationChartData()"></acl-chart>
+      </div>
+    </acl-card>
+
+    <acl-card class="chart-card full-width animate-fade-in-up stagger-4">
+      <h2>{{ i18n.t('reports.byZone') }}</h2>
+      <div class="chart-container large">
+        <acl-chart type="bar" [data]="zoneChartData()"></acl-chart>
+      </div>
+    </acl-card>
+  </div>
+  } @else {
+  <acl-card class="animate-pulse-glow">
+    <p>{{ i18n.t('common.loading') }}</p>
+  </acl-card>
   }
 </section>

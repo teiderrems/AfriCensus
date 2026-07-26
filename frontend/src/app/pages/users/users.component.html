@@ -176,12 +176,12 @@
           <header class="role-head">
             <div>
               <div class="role-title">
-                <h3>{{ role.name }}</h3>
+                <h3>{{ role.name | aclLocalizedText }}</h3>
                 <span class="role-tag" [class.system]="role.is_system">
                   {{ role.is_system ? i18n.t('admin.roles.system') : i18n.t('admin.roles.custom') }}
                 </span>
               </div>
-              <p>{{ role.description || i18n.t('admin.roles.noDescription') }}</p>
+              <p>{{ (role.description | aclLocalizedText) || i18n.t('admin.roles.noDescription') }}</p>
             </div>
             <div class="role-meta">
               <span class="meta-item">
@@ -284,7 +284,7 @@
               [checked]="userDraft().zone_ids.includes(z.id)"
               (change)="toggleZoneSelection(z.id)"
             />
-            <span>{{ z.name }} ({{ z.code }})</span>
+            <span>{{ z.name | aclLocalizedText }} ({{ z.code }})</span>
           </label>
         }
       </div>
@@ -351,24 +351,19 @@
   <div class="role-form">
     <div class="field">
       <label for="roleName">{{ i18n.t('admin.roles.fieldName') }} *</label>
-      <input
-        type="text"
+      <acl-multilang-field
         id="roleName"
         name="roleName"
-        required
         [(ngModel)]="roleDraft().name"
-        placeholder="ex: RESPONSABLE_ZONE"
-      />
+      ></acl-multilang-field>
     </div>
     <div class="field">
       <label for="roleDesc">{{ i18n.t('admin.roles.fieldDesc') }}</label>
-      <input
-        type="text"
+      <acl-multilang-field
         id="roleDesc"
         name="roleDesc"
         [(ngModel)]="roleDraft().description"
-        [placeholder]="i18n.t('admin.roles.fieldDescPlaceholder')"
-      />
+      ></acl-multilang-field>
     </div>
 
     <div class="permission-matrix">

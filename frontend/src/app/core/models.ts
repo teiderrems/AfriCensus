@@ -46,7 +46,7 @@ export type ValidationStatus = 'DRAFT' | 'SUBMITTED' | 'VALIDATED' | 'NEEDS_CORR
 
 export interface Zone {
   id: string;
-  name: string;
+  name: string | Record<string, string>;
   code: string;
   type: string;
   parent_id?: string | null;
@@ -56,7 +56,7 @@ export interface Zone {
 
 export interface Campaign {
   id: string;
-  name: string;
+  name: string | Record<string, string>;
   status: string;
   start_date?: string | null;
   end_date?: string | null;

@@ -1,6 +1,7 @@
-<section class="page">
+<section class="page animate-fade-in-up">
       <header class="page-head">
         <div>
+          <span class="eyebrow">{{ i18n.t('households.eyebrow') }}</span>
           <h1>{{ i18n.t('households.title') }}</h1>
         </div>
         <acl-button type="button" (click)="openCreateHousehold()">
@@ -8,7 +9,7 @@
           {{ i18n.t('household.create.title') }}
         </acl-button>
       </header>
-      <acl-card class="card">
+      <acl-card class="card animate-fade-in-up stagger-1">
         <div class="table-controls" aria-label="Filtres des ménages">
           <div class="field">
             <label for="householdSearch">{{ i18n.t('common.search') }}</label>

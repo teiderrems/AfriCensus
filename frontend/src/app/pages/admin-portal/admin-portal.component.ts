@@ -31,10 +31,11 @@ type AdminTab = 'infra' | 'users' | 'security' | 'config';
 
 import { ConfirmService } from '@/app/core/confirm';
 import { ButtonComponent } from '@/app/shared/button/button';
+import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
 
 @Component({
   selector: 'acl-admin-portal-page',
-  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent, ButtonComponent, AclTooltipDirective],
+  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent],
   templateUrl: './admin-portal.component.html',
   styleUrl: './admin-portal.component.css',
 })
@@ -79,13 +80,18 @@ export class AdminPortalComponent implements OnInit {
   readonly users = signal<User[]>([]);
   readonly zones = signal<any[]>([]);
 
-  readonly zoneOptions = computed(() => this.zones().map(z => ({
-    label: z.name,
-    value: z.id
-  })));
+  readonly zoneOptions = computed(() => {
+    this.i18n.language();
+    return this.zones().map(z => ({
+      label: `${this.formatLocalizedText(z.name)} (${z.code})`,
+      value: z.id
+    }));
+  });
   readonly summary = signal<DashboardSummary | null>(null);
   readonly auditLogs = signal<AuditLog[]>([]);
   readonly homeContent = signal<HomeContent | null>(null);
+  readonly homeDraft = signal<any>(null);
+  readonly homeEditorMode = signal<'form' | 'json'>('form');
   readonly homeContentJson = signal('');
   readonly homeContentStatus = signal('');
   readonly dismissedAlertIds = signal<Set<string>>(new Set());
@@ -455,6 +461,20 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
+  setHomeEditorMode(mode: 'form' | 'json'): void {
+    if (mode === 'json' && this.homeDraft()) {
+      this.homeContentJson.set(JSON.stringify(this.homeDraft(), null, 2));
+    } else if (mode === 'form') {
+      try {
+        const parsed = JSON.parse(this.homeContentJson());
+        this.homeDraft.set(parsed);
+      } catch {
+        // preserve current draft
+      }
+    }
+    this.homeEditorMode.set(mode);
+  }
+
   async saveHomeContent(): Promise<void> {
     const confirmed = await this.confirmService.ask(
       this.i18n.t('action.confirm'),
@@ -463,13 +483,18 @@ export class AdminPortalComponent implements OnInit {
     if (!confirmed) return;
 
     this.homeContentStatus.set('');
-    let payload: HomeContent;
-    try {
-      payload = JSON.parse(this.homeContentJson()) as HomeContent;
-    } catch {
-      this.homeContentStatus.set(this.i18n.t('admin.status.jsonError'));
-      return;
+    let payload: any;
+    if (this.homeEditorMode() === 'form') {
+      payload = this.homeDraft();
+    } else {
+      try {
+        payload = JSON.parse(this.homeContentJson());
+      } catch {
+        this.homeContentStatus.set(this.i18n.t('admin.status.jsonError'));
+        return;
+      }
     }
+
     this.api.updateHomeContent(payload).subscribe({
       next: (content) => {
         this.setHomeContent(content);
@@ -534,7 +559,10 @@ export class AdminPortalComponent implements OnInit {
 
   private setHomeContent(content: HomeContent): void {
     this.homeContent.set(content);
-    this.homeContentJson.set(JSON.stringify(content, null, 2));
+    if (content) {
+      this.homeDraft.set(JSON.parse(JSON.stringify(content)));
+      this.homeContentJson.set(JSON.stringify(content, null, 2));
+    }
   }
 
   auditSeverityFor(log: AuditLog): 'critical' | 'warning' | 'info' {
@@ -555,5 +583,34 @@ export class AdminPortalComponent implements OnInit {
     if (!userId) return 'system';
     const user = this.users().find(u => u.id === userId);
     return user ? user.full_name : userId;
+  }
+
+  formatLocalizedText(val: any): string {
+    if (!val) return '';
+    const currentLang = this.i18n.language();
+    if (typeof val === 'object' && val !== null) {
+      return val[currentLang] || val['fr'] || val['en'] || Object.values(val)[0] || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        const closeBraceIdx = trimmed.indexOf('}');
+        if (closeBraceIdx !== -1) {
+          const jsonPart = trimmed.substring(0, closeBraceIdx + 1);
+          const codeSuffix = trimmed.substring(closeBraceIdx + 1);
+          try {
+            const normalized = jsonPart.replace(/'/g, '"');
+            const parsed = JSON.parse(normalized);
+            if (typeof parsed === 'object' && parsed !== null) {
+              const text = parsed[currentLang] || parsed['fr'] || parsed['en'] || Object.values(parsed)[0] || '';
+              return String(text) + codeSuffix;
+            }
+          } catch {
+            // fallback
+          }
+        }
+      }
+    }
+    return String(val);
   }
 }
