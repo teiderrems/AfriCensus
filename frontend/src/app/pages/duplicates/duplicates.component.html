@@ -15,7 +15,8 @@
 
   <section class="filters-bar">
     <div class="filter-controls">
-      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes"
+        (valueChange)="setPageSize($event)" />
     </div>
   </section>
 
@@ -32,32 +33,31 @@
         </thead>
         <tbody>
           @for (row of duplicates(); track row.id) {
-            <tr>
-              <td><strong>{{ row.score | number:'1.2-2' }}</strong></td>
-              <td>{{ row.person_a?.first_name }} {{ row.person_a?.last_name }}</td>
-              <td>{{ row.person_b?.first_name }} {{ row.person_b?.last_name }}</td>
-              <td class="row-actions">
-                <acl-button variant="icon-action-danger" type="button" [aclTooltip]="'duplicates.notDuplicate' | translate" (click)="resolve(row.id, 'NOT_DUPLICATE')">
-                  <lucide-icon name="x-circle"></lucide-icon>
-                </acl-button>
-                <acl-button variant="icon-action" type="button" [aclTooltip]="'duplicates.merge' | translate" (click)="resolve(row.id, 'MERGE')">
-                  <lucide-icon name="git-merge"></lucide-icon>
-                </acl-button>
-              </td>
-            </tr>
+          <tr>
+            <td><strong>{{ row.score | number:'1.2-2' }}</strong></td>
+            <td>{{ row.person_a?.first_name }} {{ row.person_a?.last_name }}</td>
+            <td>{{ row.person_b?.first_name }} {{ row.person_b?.last_name }}</td>
+            <td class="row-actions">
+              <acl-button variant="icon-action-danger" type="button"
+                [aclTooltip]="'duplicates.notDuplicate' | translate" (click)="resolve(row.id, 'NOT_DUPLICATE')">
+                <lucide-icon name="circle-x"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action" type="button" [aclTooltip]="'duplicates.merge' | translate"
+                (click)="resolve(row.id, 'MERGE')">
+                <lucide-icon name="git-merge"></lucide-icon>
+              </acl-button>
+            </td>
+          </tr>
           }
           @if (!duplicates().length) {
-            <tr><td colspan="4" class="empty-cell">{{ 'duplicates.empty' | translate }}</td></tr>
+          <tr>
+            <td colspan="4" class="empty-cell">{{ 'duplicates.empty' | translate }}</td>
+          </tr>
           }
         </tbody>
       </table>
     </div>
-    <acl-table-pagination
-      [totalItems]="totalDuplicates()"
-      [page]="page()"
-      [totalPages]="totalPages()"
-      (previous)="previousPage()"
-      (next)="nextPage()"
-    />
+    <acl-table-pagination [totalItems]="totalDuplicates()" [page]="page()" [totalPages]="totalPages()"
+      (previous)="previousPage()" (next)="nextPage()" />
   </acl-card>
 </section>
