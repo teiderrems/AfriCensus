@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     auth_rate_limit_attempts: int = Field(default=5, alias="AUTH_RATE_LIMIT_ATTEMPTS")
     auth_rate_limit_window_seconds: int = Field(default=300, alias="AUTH_RATE_LIMIT_WINDOW_SECONDS")
     cors_origins: str = Field(
-        default="http://localhost:4200,http://127.0.0.1:4200,http://localhost:8000,http://127.0.0.1:8000",
+        default="http://localhost:4200,http://127.0.0.1:4200,http://localhost:8080,http://127.0.0.1:8080",
         alias="CORS_ORIGINS",
     )
 
