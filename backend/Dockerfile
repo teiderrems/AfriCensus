@@ -29,6 +29,6 @@ RUN poetry install --only main
 COPY --from=frontend-build /frontend/dist/africensus-link/browser ./frontend/dist/africensus-link/browser
 RUN mkdir -p data
 
-EXPOSE 8000
+EXPOSE 8080
 
-CMD ["sh", "-c", "poetry run africensus-migrate && poetry run africensus-seed && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
