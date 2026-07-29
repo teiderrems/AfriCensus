@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     frontend_public_url: str = Field(default="", alias="FRONTEND_PUBLIC_URL")
     default_language: str = Field(default="fr", alias="DEFAULT_LANGUAGE")
     supported_languages: str = Field(default="fr,en", alias="SUPPORTED_LANGUAGES")
-    allowed_hosts: str = Field(default="localhost,127.0.0.1,backend,0.0.0.0,testserver", alias="ALLOWED_HOSTS")
+    allowed_hosts: str = Field(default="*", alias="ALLOWED_HOSTS")
     security_headers_enabled: bool = Field(default=True, alias="SECURITY_HEADERS_ENABLED")
     auth_rate_limit_attempts: int = Field(default=5, alias="AUTH_RATE_LIMIT_ATTEMPTS")
     auth_rate_limit_window_seconds: int = Field(default=300, alias="AUTH_RATE_LIMIT_WINDOW_SECONDS")
