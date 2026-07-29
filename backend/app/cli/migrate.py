@@ -43,8 +43,27 @@ def reset():
         except Exception:
             pass
 
-    print("Creating all tables and seeding database...")
+    print("Creating all tables via migrations...")
+    # Generate initial migration
+    print("Generating initial migration...")
+    alembic.config.main(argv=["revision", "--autogenerate", "-m", "Initial schema"])
+    
+    # Apply migration
+    print("Applying migration...")
+    alembic.config.main(argv=["upgrade", "head"])
+
+    print("Seeding database...")
     with SessionLocal() as db:
         init_db(db)
     
-    print("Database has been fully reset and seeded!")
+    print("Database has been fully reset, migrated, and seeded!")
+
+def seed():
+    """Seed the database with initial data without dropping tables."""
+    from app.database import SessionLocal
+    from app.init_db import init_db
+    
+    print("Seeding database...")
+    with SessionLocal() as db:
+        init_db(db)
+    print("Seeding completed successfully!")

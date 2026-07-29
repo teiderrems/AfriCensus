@@ -100,7 +100,7 @@
             [class.parent-child]="link.category === 'parent_child'" [class.spouse]="link.category === 'spouse'"
             [class.guardian]="link.category === 'guardian'" [class.dragging]="draggedLinkId() === link.id"
             [attr.d]="edgePath(link, source, target)" (pointerdown)="startLinkDrag(link, $event)"
-            marker-end="url(#arrow)"></path>
+            [attr.marker-end]="link.category === 'spouse' ? null : 'url(#arrow)'"></path>
           <circle class="edge-target-hitbox" [attr.cx]="target.x + (manualLinkOffsets()[link.id]?.tx || 0)" [attr.cy]="target.y - 42" r="16"
             fill="transparent" style="cursor: ew-resize;" (pointerdown)="startTargetDrag(link, $event)"></circle>
           }

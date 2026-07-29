@@ -38,8 +38,8 @@
                     <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('households.responsible.createTitle')" (click)="openResponsibleModal(row)">
                       <lucide-icon name="users"></lucide-icon>
                     </acl-button>
-                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.submit')" (click)="submitHousehold(row)">
-                      <lucide-icon name="upload"></lucide-icon>
+                    <acl-button variant="icon-action-warning" type="button" [aclTooltip]="i18n.t('action.submit')" (click)="submitHousehold(row)">
+                      <lucide-icon name="circle-check"></lucide-icon>
                     </acl-button>
                     <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deleteHousehold(row)">
                       <lucide-icon name="trash-2"></lucide-icon>

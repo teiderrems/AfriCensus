@@ -322,7 +322,7 @@ def db_build_family_tree(db: Session, person_id: str, user: dict[str, Any], dept
 
                 pair_key = tuple(sorted([src, tgt]))
                 if tgt in distances and rel_id not in links_seen:
-                    if rel_id.endswith('_inv') and pair_key in pairs_seen:
+                    if pair_key in pairs_seen:
                         continue
                     links_seen.add(rel_id)
                     pairs_seen.add(pair_key)

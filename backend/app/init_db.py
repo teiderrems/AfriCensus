@@ -15,10 +15,7 @@ logger = logging.getLogger(__name__)
 
 def init_db(db: Session) -> None:
     """Ensure database tables exist and seed default records (~50 per entity, 10-level family tree)."""
-    try:
-        Base.metadata.create_all(bind=engine)
-    except Exception as e:
-        logger.warning(f"Could not execute create_all automatically: {e}")
+    # Base.metadata.create_all(bind=engine) is handled by Alembic migrations
 
     # 1. Seed HomeContent
     try:

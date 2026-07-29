@@ -115,7 +115,7 @@ export class CampaignsComponent implements OnInit {
   async deleteCampaign(c: Campaign) {
     const name = this.resolveLocalizedText(c.name);
     if (await this.confirm.ask(
-      this.i18n.t('campaigns.deleteTitle' as any) || 'Supprimer la campagne',
+      this.i18n.t('action.delete'),
       this.i18n.t('campaigns.confirmDelete' as any) || `Voulez-vous vraiment supprimer la campagne "${name}" ?`,
       'danger'
     )) {

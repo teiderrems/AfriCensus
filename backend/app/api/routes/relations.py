@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ...dependencies import current_user, require_roles
 from ...schemas import DecisionRequest, FamilyRelationIn, Role
-from ...services import db_create_item, db_decision, inverse_relation, db_set_status, db_visible_item
-
+from ...services import db_create_item, db_decision, inverse_relation, db_set_status, db_visible_item, db_soft_delete
 
 router = APIRouter(prefix="/family-relations", tags=["family-relations"])
 from sqlalchemy.orm import Session
+from fastapi import Response
 from ...database import get_db
 
 
@@ -57,3 +57,10 @@ def reject_relation(
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
     return db_decision(db, "family_relations", item_id, "REJECTED", payload.comment, user["id"], "REJECT_RELATION")
+
+
+@router.delete("/{item_id}", status_code=204)
+def delete_relation(item_id: str, user: dict[str, Any] = Depends(current_user), db: Session = Depends(get_db)):
+    db_visible_item(db, "family_relations", item_id, user)
+    db_soft_delete(db, "family_relations", item_id, user["id"], "DELETE_RELATION")
+    return Response(status_code=204)

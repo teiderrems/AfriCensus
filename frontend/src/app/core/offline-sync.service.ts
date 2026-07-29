@@ -237,7 +237,7 @@ export class OfflineSyncService {
     this.queue.set(this.queue().filter((item) => !syncedIds.has(item.local_entity_id)));
     this.persistQueue();
     if (errors.length) {
-      this.lastSyncError.set(`${errors.length} élément(s) n'ont pas pu être synchronisés.`);
+      this.lastSyncError.set(this.i18n.t('sync.syncErrorCount', { count: errors.length }));
     }
   }
 

@@ -159,8 +159,9 @@ export class MedicalHistoryComponent implements OnInit {
   async createHistory(): Promise<void> {
     if (!this.canSubmit()) return;
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('medical.confirmSave')
+      this.i18n.t('action.add'),
+      this.i18n.t('medical.confirmSave'),
+      'warning'
     );
     if (!confirmed) return;
 

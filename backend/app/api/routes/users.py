@@ -85,6 +85,17 @@ def get_me(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
     return public_user(user) | {"active": user.get("active", True)}
 
 
+@router.post("/me/password", status_code=204, summary="Mettre à jour son propre mot de passe")
+def update_my_password(payload: PasswordUpdate, user: dict[str, Any] = Depends(current_user), db: Session = Depends(get_db)):
+    db_user = db.scalar(select(User).where(User.id == user["id"]))
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db_user.password_hash = hash_password(payload.password)
+    db_audit(db, user["id"], "UPDATE_OWN_PASSWORD", "users", user["id"])
+    db.commit()
+    return Response(status_code=204)
+
+
 @router.get("/{user_id}", response_model=UserOut, summary="Lire un utilisateur")
 def get_user(user_id: str, user: dict[str, Any] = Depends(require_roles(Role.ADMIN, Role.SUPERVISOR, Role.AUDITOR)), db: Session = Depends(get_db)) -> dict[str, Any]:
     item = _find_user_for_role(user_id, user, db)

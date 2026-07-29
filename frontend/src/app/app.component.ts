@@ -14,11 +14,10 @@ import { ToastService } from './core/toast.service';
 import { UpperCasePipe } from '@angular/common';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog';
 import { AclTooltipDirective } from './shared/tooltip/tooltip';
-import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 
 @Component({
   selector: 'acl-root',
-  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, UpperCasePipe, ConfirmDialogComponent, AclTooltipDirective, BreadcrumbComponent],
+  imports: [FormsModule, RouterOutlet, RouterLink, RouterLinkActive, LucideAngularModule, UpperCasePipe, ConfirmDialogComponent, AclTooltipDirective],
   template: `
     <a class="skip-link" href="#main-content">{{ i18n.t('a11y.skipToContent') }}</a>
     
@@ -113,9 +112,7 @@ import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
               </button>
             </div>
           </header>
-          <div class="sub-header-breadcrumb">
-            <acl-breadcrumb />
-          </div>
+
           @if (notificationsOpen()) {
             <aside class="notification-panel" role="status" aria-live="polite">
               <strong>{{ i18n.t('notifications.title') }}</strong>

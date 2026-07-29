@@ -4,4 +4,8 @@
 **/.venv
 **/node_modules
 **/dist
+**/.angular
+.agents
+.codex
+mobile/
 backend/data/db.json

@@ -19,6 +19,9 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    volumes:
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
     environment:
       AFRICENSUS_SECRET_KEY: "${AFRICENSUS_SECRET_KEY:-dev-secret-change-me}"
       AFRICENSUS_ACCESS_TOKEN_TTL: "${AFRICENSUS_ACCESS_TOKEN_TTL:-3600}"

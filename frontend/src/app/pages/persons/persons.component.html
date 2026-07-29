@@ -48,9 +48,9 @@
                 (click)="editPerson(row)">
                 <lucide-icon name="pencil"></lucide-icon>
               </acl-button>
-              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.submit')"
+              <acl-button variant="icon-action-warning" type="button" [aclTooltip]="i18n.t('action.submit')"
                 (click)="submitPerson(row)">
-                <lucide-icon name="upload"></lucide-icon>
+                <lucide-icon name="circle-check"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')"
                 (click)="deletePerson(row)">

@@ -25,8 +25,9 @@ export class ValidationComponent implements OnInit {
 
   async validate(id: string): Promise<void> {
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('validation.confirmValidate')
+      this.i18n.t('validation.action.validate' as any) || 'Valider la fiche',
+      this.i18n.t('validation.confirmValidate'),
+      'warning'
     );
     if (!confirmed) return;
     this.api.validatePerson(id).subscribe({
@@ -37,8 +38,9 @@ export class ValidationComponent implements OnInit {
 
   async correction(id: string): Promise<void> {
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('validation.confirmCorrection')
+      this.i18n.t('action.edit' as any) || 'Demander une correction',
+      this.i18n.t('validation.confirmCorrection'),
+      'warning'
     );
     if (!confirmed) return;
     this.api.requestCorrection(id, this.i18n.t('validation.defaultCorrectionMessage')).subscribe({
