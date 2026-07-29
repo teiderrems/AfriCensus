@@ -108,8 +108,9 @@ export class BirthDeclarationComponent implements OnInit {
   async submitDeclaration(): Promise<void> {
     if (!this.canSubmit()) return;
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('birth.confirmSubmit')
+      this.i18n.t('action.submit'),
+      this.i18n.t('birth.confirmSubmit'),
+      'warning'
     );
     if (!confirmed) return;
 

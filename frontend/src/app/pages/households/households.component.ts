@@ -272,8 +272,9 @@ export class HouseholdsComponent implements OnInit {
   async createAndAssignResponsiblePerson(): Promise<void> {
     if (!this.canSaveResponsiblePerson()) return;
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('households.confirmAssignHead')
+      this.i18n.t('action.createAndAssign' as any) || 'Créer et associer',
+      this.i18n.t('households.confirmAssignHead'),
+      'warning'
     );
     if (!confirmed) return;
 
@@ -311,8 +312,9 @@ export class HouseholdsComponent implements OnInit {
 
   async submitHousehold(household: HouseholdRecord): Promise<void> {
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('households.confirmSubmit')
+      this.i18n.t('action.submit'),
+      this.i18n.t('households.confirmSubmit'),
+      'warning'
     );
     if (!confirmed) return;
 
@@ -329,8 +331,9 @@ export class HouseholdsComponent implements OnInit {
 
   async deleteHousehold(household: HouseholdRecord): Promise<void> {
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('households.confirmDelete')
+      this.i18n.t('action.delete'),
+      this.i18n.t('households.confirmDelete'),
+      'danger'
     );
     if (!confirmed) return;
 

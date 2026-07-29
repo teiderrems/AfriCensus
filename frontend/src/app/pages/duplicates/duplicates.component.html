@@ -42,7 +42,7 @@
                 [aclTooltip]="'duplicates.notDuplicate' | translate" (click)="resolve(row.id, 'NOT_DUPLICATE')">
                 <lucide-icon name="circle-x"></lucide-icon>
               </acl-button>
-              <acl-button variant="icon-action" type="button" [aclTooltip]="'duplicates.merge' | translate"
+              <acl-button variant="icon-action-warning" type="button" [aclTooltip]="'duplicates.merge' | translate"
                 (click)="resolve(row.id, 'MERGE')">
                 <lucide-icon name="git-merge"></lucide-icon>
               </acl-button>

@@ -21,7 +21,11 @@ RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
 COPY backend/pyproject.toml backend/poetry.lock* ./
 RUN poetry install --only main --no-root
 
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/alembic ./alembic
 COPY backend/app ./app
+COPY backend/README.md ./README.md
+RUN poetry install --only main
 COPY --from=frontend-build /frontend/dist/africensus-link/browser ./frontend/dist/africensus-link/browser
 RUN mkdir -p data
 

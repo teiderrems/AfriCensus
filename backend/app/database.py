@@ -42,9 +42,4 @@ def get_db() -> Generator[Session]:
         db.close()
 
 
-try:
-    from .init_db import init_db
-    with SessionLocal() as _db:
-        init_db(_db)
-except Exception as _e:
-    print(f"[DB Auto-Init Warning] {_e}")
+

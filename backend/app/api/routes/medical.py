@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, Query
 
 from ...dependencies import current_user, require_roles
 from ...schemas import DecisionRequest, FamilyMedicalSummaryOut, MedicalHistoryIn, MedicalHistoryOut, Role, PaginatedResponse
-from ...services import db_create_item, db_decision, db_family_medical_summary, db_set_status, db_visible_item
-
+from ...services import db_create_item, db_decision, db_family_medical_summary, db_set_status, db_visible_item, db_soft_delete
+from fastapi import APIRouter, Depends, Query, Response
 from ...database import get_db
 from ...db_services import paginate_query, visible_query
 from ...models import MedicalHistory
@@ -60,6 +60,14 @@ def create_medical_history(payload: MedicalHistoryIn, user: dict[str, Any] = Dep
         "sync_status": "SYNCED",
     }
     return db_create_item(db, "medical_histories", item, user["id"], "CREATE_MEDICAL_HISTORY")
+
+
+@router.delete("/medical-histories/{item_id}", status_code=204)
+def delete_medical_history(item_id: str, user: dict[str, Any] = Depends(current_user), db: Session = Depends(get_db)):
+    db_visible_item(db, "medical_histories", item_id, user)
+    db_soft_delete(db, "medical_histories", item_id, user["id"], "DELETE_MEDICAL_HISTORY")
+    return Response(status_code=204)
+
 
 
 @router.post("/medical-histories/{item_id}/validate", response_model=MedicalHistoryOut)

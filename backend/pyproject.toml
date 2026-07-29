@@ -25,6 +25,7 @@ africensus-api = "app.main:main"
 africensus-migrate = "app.cli.migrate:main"
 africensus-makemigrations = "app.cli.migrate:makemigrations"
 africensus-reset = "app.cli.migrate:reset"
+africensus-seed = "app.cli.migrate:seed"
 
 [tool.poetry]
 packages = [{ include = "app" }]

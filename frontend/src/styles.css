@@ -743,7 +743,7 @@ a {
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: none;
     opacity: 1;
   }
 }
@@ -755,7 +755,7 @@ a {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -766,7 +766,7 @@ a {
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
 }
 

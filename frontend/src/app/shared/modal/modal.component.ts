@@ -18,6 +18,7 @@ export class ModalComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) title = '';
   @Input() subtitle = '';
   @Input() variant: 'default' | 'danger' | 'warning' = 'default';
+  @Input() size: 'sm' | 'md' | 'lg' = 'md';
   @Input() titleId = `modal-title-${Math.random().toString(36).slice(2)}`;
   @Input() isForm = false;
   @Output() readonly closed = new EventEmitter<void>();

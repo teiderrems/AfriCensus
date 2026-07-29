@@ -210,8 +210,9 @@ export class PersonsComponent implements OnInit {
 
   async submitPerson(person: PersonRecord): Promise<void> {
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('persons.confirmSubmit')
+      this.i18n.t('action.submit'),
+      this.i18n.t('persons.confirmSubmit'),
+      'warning'
     );
     if (!confirmed) return;
 
@@ -228,8 +229,9 @@ export class PersonsComponent implements OnInit {
 
   async deletePerson(person: PersonRecord): Promise<void> {
     const confirmed = await this.confirmService.ask(
-      this.i18n.t('action.confirm'),
-      this.i18n.t('persons.confirmDelete')
+      this.i18n.t('action.delete'),
+      this.i18n.t('persons.confirmDelete'),
+      'danger'
     );
     if (!confirmed) return;
 

@@ -119,7 +119,7 @@ export class ZonesComponent implements OnInit {
   }
 
   async deleteZone(z: Zone) {
-    if (await this.confirm.ask('Confirmation', this.i18n.t('zones.confirmDelete' as any) || 'Delete?')) {
+    if (await this.confirm.ask(this.i18n.t('action.delete'), this.i18n.t('zones.confirmDelete' as any) || 'Delete?', 'danger')) {
       this.api.deleteZone(z.id).subscribe(() => this.load());
     }
   }

@@ -4,6 +4,8 @@
         @if (isForm) {
           <form
             class="modal"
+            [class.modal-lg]="size === 'lg'"
+            [class.modal-sm]="size === 'sm'"
             role="dialog"
             aria-modal="true"
             [attr.aria-labelledby]="titleId"
@@ -16,6 +18,8 @@
         @else {
           <article
             class="modal"
+            [class.modal-lg]="size === 'lg'"
+            [class.modal-sm]="size === 'sm'"
             role="dialog"
             aria-modal="true"
             [attr.aria-labelledby]="titleId"

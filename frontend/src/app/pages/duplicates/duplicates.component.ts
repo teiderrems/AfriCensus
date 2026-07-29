@@ -53,7 +53,10 @@ export class DuplicatesComponent implements OnInit {
   }
 
   async resolve(id: string, action: string) {
-    if (await this.confirm.ask('Confirmation', this.i18n.t('action.confirm' as any) || 'Confirm?')) {
+    const title = action === 'MERGE' ? this.i18n.t('duplicates.merge') : this.i18n.t('duplicates.notDuplicate');
+    const message = action === 'MERGE' ? this.i18n.t('duplicates.confirmMerge') : this.i18n.t('duplicates.confirmNotDuplicate');
+    
+    if (await this.confirm.ask(title, message, action === 'MERGE' ? 'warning' : 'danger')) {
       this.api.resolveDuplicate(id, action).subscribe(() => this.load());
     }
   }

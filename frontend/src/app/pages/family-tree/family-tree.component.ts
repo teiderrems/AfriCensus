@@ -225,9 +225,47 @@ export class FamilyTreeComponent implements OnInit {
   }
 
   resetView(): void {
-    this.scale.set(1);
-    this.translateX.set(0);
-    this.translateY.set(0);
+    const nodes = this.layoutNodes();
+    if (!nodes || nodes.length === 0) {
+      this.scale.set(1);
+      this.translateX.set(0);
+      this.translateY.set(0);
+      return;
+    }
+    
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    
+    for (const node of nodes) {
+      minX = Math.min(minX, node.x - 100);
+      maxX = Math.max(maxX, node.x + 100);
+      minY = Math.min(minY, node.y - 60);
+      maxY = Math.max(maxY, node.y + 60);
+    }
+    
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    
+    const viewportWidth = 1100;
+    const viewportHeight = 620;
+    const padding = 40;
+    
+    const scaleX = (viewportWidth - padding * 2) / (contentWidth || viewportWidth);
+    const scaleY = (viewportHeight - padding * 2) / (contentHeight || viewportHeight);
+    
+    const scale = Math.min(scaleX, scaleY, 1.2);
+    
+    const centerX = minX + contentWidth / 2;
+    const centerY = minY + contentHeight / 2;
+    
+    const translateX = viewportWidth / 2 - centerX * scale;
+    const translateY = viewportHeight / 2 - centerY * scale;
+    
+    this.scale.set(scale);
+    this.translateX.set(translateX);
+    this.translateY.set(translateY);
   }
 
   resetLayout(): void {
@@ -425,6 +463,9 @@ export class FamilyTreeComponent implements OnInit {
     if (this.nodeDragStart || this.linkDragStart || this.targetDragStart) {
       return;
     }
+    if (!this.showDetails()) {
+      this.showDetails.set(true);
+    }
     this.panStart = { x: event.clientX, y: event.clientY, tx: this.translateX(), ty: this.translateY() };
   }
 
@@ -604,6 +645,9 @@ export class FamilyTreeComponent implements OnInit {
     const control = this.edgeControlPoint(link, source, target);
     this.capturePointer(event);
     this.panStart = null;
+    if (!this.showDetails()) {
+      this.showDetails.set(true);
+    }
     this.linkDragStart = {
       id: link.id,
       offsetX: point.x - control.x,
@@ -652,6 +696,9 @@ export class FamilyTreeComponent implements OnInit {
       }
       this.capturePointer(event);
       this.panStart = null;
+      if (!this.showDetails()) {
+        this.showDetails.set(true);
+      }
       const currentTx = this.manualLinkOffsets()[link.id]?.tx || 0;
       this.targetDragStart = {
         id: link.id,

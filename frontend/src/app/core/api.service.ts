@@ -66,6 +66,10 @@ export class ApiService {
     return this.http.put<FormDefinition>(`/api/v1/forms/${id}`, payload);
   }
 
+  deleteForm(id: string) {
+    return this.http.delete<void>(`/api/v1/forms/${id}`);
+  }
+
   fieldCatalog(lang?: string) {
     const params = lang ? new HttpParams().set('lang', lang) : undefined;
     return this.http.get<FieldCatalogDto>('/api/v1/i18n/fields', { params });
@@ -256,6 +260,10 @@ export class ApiService {
     return this.http.post<FamilyRelationRecord>('/api/v1/family-relations', payload);
   }
 
+  deleteFamilyRelation(id: string) {
+    return this.http.delete<void>(`/api/v1/family-relations/${id}`);
+  }
+
   validationQueue(params?: any) {
     let httpParams = new HttpParams();
     if (params) {
@@ -301,6 +309,10 @@ export class ApiService {
 
   createMedicalHistory(payload: MedicalHistoryWriteDto) {
     return this.http.post<MedicalHistory>('/api/v1/medical-histories', payload);
+  }
+
+  deleteMedicalHistory(id: string) {
+    return this.http.delete<void>(`/api/v1/medical-histories/${id}`);
   }
 
   syncPush(payload: SyncPushRequest) {

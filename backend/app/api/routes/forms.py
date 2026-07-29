@@ -1,10 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from ...dependencies import current_user, require_roles, get_db
 from ...schemas import FormDefinitionIn, FormDefinitionOut, Role, PaginatedResponse
-from ...services import db_create_item, db_update_item
+from ...services import db_create_item, db_update_item, db_find_or_404, db_soft_delete
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 from ...models import FormDefinition
@@ -54,3 +54,22 @@ def update_form(
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
     return db_update_item(db, "form_definitions", item_id, payload.model_dump(), user["id"], "UPDATE_FORM_DEFINITION")
+
+
+@router.get("/{item_id}", response_model=FormDefinitionOut)
+def get_form(
+    item_id: str,
+    _: dict[str, Any] = Depends(current_user),
+    db: Session = Depends(get_db)
+) -> dict[str, Any]:
+    return db_find_or_404(db, "form_definitions", item_id)
+
+
+@router.delete("/{item_id}", status_code=204)
+def delete_form(
+    item_id: str,
+    user: dict[str, Any] = Depends(require_roles(Role.ADMIN)),
+    db: Session = Depends(get_db)
+):
+    db_soft_delete(db, "form_definitions", item_id, user["id"], "DELETE_FORM_DEFINITION")
+    return Response(status_code=204)

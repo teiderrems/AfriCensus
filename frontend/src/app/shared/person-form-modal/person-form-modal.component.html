@@ -1,4 +1,4 @@
-<acl-modal [open]="open" [title]="title" [subtitle]="subtitle || i18n.t('person.draft.subtitle')" [isForm]="true" (submitted)="saved.emit()" (closed)="closed.emit()">
+<acl-modal [open]="open" size="lg" [title]="title" [subtitle]="subtitle || i18n.t('person.draft.subtitle')" [isForm]="true" (submitted)="saved.emit()" (closed)="closed.emit()">
       <div class="person-form">
         <div class="field">
           <label for="personModalFirstName">{{ i18n.t('person.firstName') }}</label>

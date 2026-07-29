@@ -261,11 +261,13 @@ p {
     font-size: 18px;
   }
   .modal-actions,
-  .modal-footer {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 10px;
-    align-items: stretch;
+  .modal-footer,
+  :host ::ng-deep .modal-actions,
+  :host ::ng-deep .modal-footer {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 10px !important;
+    align-items: stretch !important;
   }
   .modal-actions acl-button,
   .modal-footer acl-button,

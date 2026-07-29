@@ -294,7 +294,8 @@ export class UsersComponent implements OnInit {
       this.i18n.t('admin.users.action.delete'),
       this.i18n.t('admin.users.confirmDelete')
         .replace('{name}', user.full_name)
-        .replace('{username}', user.username)
+        .replace('{username}', user.username),
+      'danger'
     );
 
     if (ok) {
@@ -390,8 +391,9 @@ export class UsersComponent implements OnInit {
   async deleteRole(role: AppRole): Promise<void> {
     if (role.is_system) return;
     const ok = await this.confirm.ask(
-      this.i18n.t('admin.roles.deleteRole'),
-      this.i18n.t('admin.roles.confirmDelete').replace('{name}', role.name)
+      this.i18n.t('admin.roles.deleteRole' as any) || 'Supprimer le rôle',
+      this.i18n.t('admin.roles.confirmDelete').replace('{name}', role.name),
+      'danger'
     );
 
     if (ok) {

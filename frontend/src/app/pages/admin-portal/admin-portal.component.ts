@@ -444,7 +444,8 @@ export class AdminPortalComponent implements OnInit {
   async saveSystemConfig(): Promise<void> {
     const confirmed = await this.confirmService.ask(
       this.i18n.t('action.confirm'),
-      this.i18n.t('admin.confirmSaveConfig')
+      this.i18n.t('admin.confirmSaveConfig'),
+      'warning'
     );
     if (!confirmed) return;
     this.configStatus.set(this.i18n.t('admin.status.configSaved'));
@@ -478,7 +479,8 @@ export class AdminPortalComponent implements OnInit {
   async saveHomeContent(): Promise<void> {
     const confirmed = await this.confirmService.ask(
       this.i18n.t('action.confirm'),
-      this.i18n.t('admin.confirmSaveHome')
+      this.i18n.t('admin.confirmSaveHome'),
+      'warning'
     );
     if (!confirmed) return;
 
