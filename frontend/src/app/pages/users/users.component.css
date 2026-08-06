@@ -469,4 +469,7 @@ th {
   .full-width {
     grid-column: span 1;
   }
+  .roles-grid {
+    grid-template-columns: 1fr;
+  }
 }

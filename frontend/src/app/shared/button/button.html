@@ -1,6 +1,6 @@
 <button 
   [type]="type" 
-  [disabled]="disabled" 
+  [disabled]="disabled || loading" 
   [attr.title]="tooltip || title || null"
   [attr.aria-label]="tooltip || title || null" 
   [ngClass]="{

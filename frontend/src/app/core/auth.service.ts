@@ -33,6 +33,14 @@ export class AuthService {
     );
   }
 
+  forgotPassword(identifier: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>('/api/v1/auth/forgot-password', { identifier });
+  }
+
+  resetPassword(token: string, new_password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>('/api/v1/auth/reset-password', { token, new_password });
+  }
+
   token(): string | null {
     if (this.isTokenExpired()) {
       this.clearSession();

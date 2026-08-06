@@ -1,7 +1,7 @@
 <div class="error-page">
-  <lucide-angular name="shield-alert"></lucide-angular>
-  <h1>{{ i18n.t('error.unauthorized.title') || 'Accès refusé' }}</h1>
-  <p>{{ i18n.t('error.unauthorized.message') || 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.' }}</p>
+  <lucide-angular name="shield-alert" class="main-icon"></lucide-angular>
+  <h1>{{ i18n.t('error.forbidden.title') || 'Accès refusé' }}</h1>
+  <p>{{ i18n.t('error.forbidden.message') || 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.' }}</p>
   <a routerLink="/portal" class="btn primary">
     <lucide-angular name="house"></lucide-angular>
     {{ i18n.t('action.backHome') || 'Retour à l\'accueil' }}

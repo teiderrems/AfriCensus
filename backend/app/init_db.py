@@ -12,6 +12,22 @@ from .security import hash_password
 
 logger = logging.getLogger(__name__)
 
+def init_admin(db: Session) -> None:
+    """Ensure the default administrator exists (used after migration on empty DB)."""
+    try:
+        admin_uname = "admin"
+        admin = db.query(User).filter(User.username == admin_uname).first()
+        if not admin:
+            db.add(User(
+                id="user-admin-1", username=admin_uname, full_name="Administrateur National",
+                role="ADMIN", password_hash=hash_password("admin123"), active=True, zone_ids=[]
+            ))
+            db.commit()
+            logger.info("Default admin user created.")
+    except Exception as e:
+        logger.error(f"Error creating default admin: {e}")
+        db.rollback()
+
 
 def init_db(db: Session) -> None:
     """Ensure database tables exist and seed default records (~50 per entity, 10-level family tree)."""
@@ -137,9 +153,11 @@ def init_db(db: Session) -> None:
 
     # 2. Seed Users (50 Users)
     try:
+        # Initialize admin first
+        init_admin(db)
+        
         # Core required accounts
         core_users = [
-            ("user-admin-1", "admin", "Administrateur National", "ADMIN", "admin123", []),
             ("user-supervisor-1", "superviseur", "Superviseur Régional", "SUPERVISOR", "demo123", ["zone-seed-1"]),
             ("user-agent-1", "agent", "Agent Recenseur", "AGENT", "agent123", ["zone-seed-1"]),
             ("user-stat-1", "statisticien", "Statisticien National", "STATISTICIAN", "stat123", []),

@@ -30,6 +30,7 @@ type HealthCard = {
 type AdminTab = 'infra' | 'users' | 'security' | 'config';
 
 import { ConfirmService } from '@/app/core/confirm';
+import { ToastService } from '@/app/core/toast.service';
 import { ButtonComponent } from '@/app/shared/button/button';
 import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
 
@@ -116,7 +117,7 @@ export class AdminPortalComponent implements OnInit {
   readonly userPage = signal(1);
   readonly selectedUser = signal<User | null>(null);
   readonly selectedAuditLog = signal<AuditLog | null>(null);
-  readonly pageSize = 5;
+  readonly pageSize = signal(5);
   readonly lastUpdated = signal('Just now');
   readonly apiVolume = [40, 60, 35, 85, 50, 95, 70, 45, 60, 40, 72, 54];
 
@@ -132,10 +133,10 @@ export class AdminPortalComponent implements OnInit {
       return matchesQuery && matchesRole && matchesStatus;
     });
   });
-  readonly userTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize)));
+  readonly userTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
   readonly pagedUsers = computed(() => {
-    const start = (Math.min(this.userPage(), this.userTotalPages()) - 1) * this.pageSize;
-    return this.filteredUsers().slice(start, start + this.pageSize);
+    const start = (Math.min(this.userPage(), this.userTotalPages()) - 1) * this.pageSize();
+    return this.filteredUsers().slice(start, start + this.pageSize());
   });
   readonly userDrawerOpen = computed(() => Boolean(this.selectedUser()));
   readonly selectedUserTitle = computed(() => this.selectedUser()?.full_name || this.i18n.t('admin.drawer.details'));
@@ -231,7 +232,13 @@ export class AdminPortalComponent implements OnInit {
     }));
   });
 
-  constructor(private readonly api: ApiService, private readonly router: Router, readonly i18n: I18nService, private readonly confirmService: ConfirmService) { }
+  constructor(
+    private readonly api: ApiService,
+    private readonly router: Router,
+    readonly i18n: I18nService,
+    private readonly confirmService: ConfirmService,
+    private readonly toast: ToastService
+  ) { }
 
   ngOnInit(): void {
     this.lastUpdated.set(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -260,6 +267,55 @@ export class AdminPortalComponent implements OnInit {
 
   setTab(tab: AdminTab): void {
     this.activeTab.set(tab);
+  }
+
+  readonly isSeeding = signal(false);
+  readonly isResetting = signal(false);
+
+  async seedSystem(): Promise<void> {
+    const confirmed = await this.confirmService.ask(
+      this.i18n.t('admin.system.seed'),
+      this.i18n.t('admin.system.seedConfirm'),
+      'default'
+    );
+    if (!confirmed) return;
+    
+    this.isSeeding.set(true);
+    this.api.systemSeed().subscribe({
+      next: () => {
+        this.toast.success(this.i18n.t('admin.system.seedSuccess'));
+        this.refreshAdminData();
+        this.isSeeding.set(false);
+      },
+      error: (err: any) => {
+        console.error('Seed error:', err);
+        this.toast.error(this.i18n.t('admin.system.seedError'));
+        this.isSeeding.set(false);
+      }
+    });
+  }
+
+  async resetSystem(): Promise<void> {
+    const confirmed = await this.confirmService.ask(
+      this.i18n.t('admin.system.reset'),
+      this.i18n.t('admin.system.resetConfirm'),
+      'danger'
+    );
+    if (!confirmed) return;
+    
+    this.isResetting.set(true);
+    this.api.systemReset().subscribe({
+      next: () => {
+        this.toast.success(this.i18n.t('admin.system.resetSuccess'));
+        this.refreshAdminData();
+        this.isResetting.set(false);
+      },
+      error: (err: any) => {
+        console.error('Reset error:', err);
+        this.toast.error(this.i18n.t('admin.system.resetError'));
+        this.isResetting.set(false);
+      }
+    });
   }
 
   refreshAdminData(): void {
@@ -512,6 +568,11 @@ export class AdminPortalComponent implements OnInit {
 
   nextUserPage(): void {
     this.userPage.set(Math.min(this.userTotalPages(), this.userPage() + 1));
+  }
+
+  setPageSize(value: number | string): void {
+    this.pageSize.set(Number(value));
+    this.userPage.set(1);
   }
 
   handleAlertAction(alertId: string, action: string): void {

@@ -7,20 +7,25 @@
             <p>{{ i18n.t('login.subtitle') }}</p>
           </div>
         </div>
-        <form (ngSubmit)="submit()">
+        <form (ngSubmit)="submit()" (submit)="$event.preventDefault()">
           <div class="field">
             <label for="username">{{ i18n.t('login.username') }}</label>
             <input id="username" name="username" [(ngModel)]="username" autocomplete="username" required>
           </div>
           <div class="field">
             <label for="password">{{ i18n.t('login.password') }}</label>
-            <input id="password" name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required>
+            <div class="input-with-icon">
+              <input id="password" name="password" [(ngModel)]="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="current-password" required>
+              <button type="button" class="input-icon-btn" (click)="showPassword.set(!showPassword())" tabindex="-1">
+                <lucide-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="20"></lucide-icon>
+              </button>
+            </div>
           </div>
           @if (error()) {
             <p class="error">{{ error() }}</p>
           }
-          <acl-button type="submit">
-            <lucide-icon name="log-in"></lucide-icon>
+          <acl-button type="submit" [loading]="loading()">
+            <lucide-icon [name]="loading() ? 'loader' : 'log-in'" [class.animate-spin]="loading()"></lucide-icon>
             {{ i18n.t('login.submit') }}
           </acl-button>
         </form>

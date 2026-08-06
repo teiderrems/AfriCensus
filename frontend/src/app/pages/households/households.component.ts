@@ -6,12 +6,13 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '@/app/core/api.service';
 import { ConfirmService } from '@/app/core/confirm';
 import { HouseholdWriteDto, PersonWriteDto } from '@/app/core/dtos';
+import { LayoutService } from '@/app/core/layout.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Campaign, HouseholdRecord, PersonRecord, Zone } from '@/app/core/models';
 import { ToastService } from '@/app/core/toast.service';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { PersonFormModalComponent } from '@/app/shared/person-form-modal/person-form-modal.component';
 import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
@@ -20,7 +21,7 @@ import { ButtonComponent } from '@/app/shared/button/button';
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, ModalComponent, PageSizeSelectComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
+  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, ModalComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './households.component.html',
   styleUrl: './households.component.css',
 })
@@ -87,7 +88,11 @@ export class HouseholdsComponent implements OnInit {
   });
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredHouseholds().length / this.pageSize())));
   readonly pagedHouseholds = computed(() => {
-    const start = (Math.min(this.page(), this.totalPages()) - 1) * this.pageSize();
+    const page = Math.min(this.page(), this.totalPages());
+    if (this.layout.isMobile()) {
+      return this.filteredHouseholds().slice(0, page * this.pageSize());
+    }
+    const start = (page - 1) * this.pageSize();
     return this.filteredHouseholds().slice(start, start + this.pageSize());
   });
   readonly householdDrawerOpen = computed(() => Boolean(this.selectedHousehold()));
@@ -114,7 +119,8 @@ export class HouseholdsComponent implements OnInit {
     private readonly api: ApiService,
     readonly i18n: I18nService,
     private readonly confirmService: ConfirmService,
-    private readonly toastService: ToastService
+    private readonly toastService: ToastService,
+    private readonly layout: LayoutService
   ) { }
   ngOnInit(): void {
     this.api.households().subscribe({

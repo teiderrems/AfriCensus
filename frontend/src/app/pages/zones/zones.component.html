@@ -25,12 +25,12 @@
       />
     </div>
     <div class="filter-controls">
-      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+      
     </div>
   </section>
 
   <acl-card>
-    <div class="table-wrap">
+    <div class="table-wrap hide-mobile">
       <table class="responsive-table">
         <thead>
           <tr>
@@ -59,7 +59,34 @@
         </tbody>
       </table>
     </div>
-    <acl-table-pagination
+
+    <div class="mobile-list hide-desktop">
+      @for (row of zones(); track row.id) {
+        <div class="mobile-card">
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'zones.name' | translate }}</span>
+            <span class="mobile-card-value"><strong>{{ row.name | aclLocalizedText }}</strong></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'zones.code' | translate }}</span>
+            <span class="mobile-card-value">{{ row.code }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'zones.type' | translate }}</span>
+            <span class="mobile-card-value">{{ row.type }}</span>
+          </div>
+          <div class="mobile-card-actions">
+                <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')" (click)="openDetails(row)"><lucide-icon name="eye"></lucide-icon></acl-button>
+                <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')" (click)="editZone(row)"><lucide-icon name="pencil"></lucide-icon></acl-button>
+                <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deleteZone(row)"><lucide-icon name="trash-2"></lucide-icon></acl-button>
+          </div>
+        </div>
+      }
+      @if (!zones().length) {
+        <div class="mobile-card"><div class="empty-cell">{{ 'zones.empty' | translate }}</div></div>
+      }
+    </div>
+    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)"
       [totalItems]="totalZones()"
       [page]="page()"
       [totalPages]="totalPages()"
@@ -67,15 +94,18 @@
       (next)="nextPage()"
     />
   </acl-card>
-  <acl-detail-drawer
+  
+</section>
+
+<acl-detail-drawer
     [open]="drawerOpen()"
     [title]="selectedZoneTitle()"
     [subtitle]="('zones.drawer.subtitle' | translate)"
     [items]="selectedZoneDetails()"
     (closed)="drawerOpen.set(false)"
   />
-  <acl-modal [open]="modalOpen()" [title]="editingZoneId() ? ('zones.edit' | translate) : ('zones.create' | translate)" (closed)="modalOpen.set(false)">
-    <form class="modal-form" (ngSubmit)="saveZone()">
+  <acl-modal [open]="modalOpen()" [title]="editingZoneId() ? ('zones.edit' | translate) : ('zones.create' | translate)"  (closed)="modalOpen.set(false)">
+    <form class="modal-form" (ngSubmit)="saveZone()" (submit)="$event.preventDefault()">
       <div class="form-grid">
         <div class="field">
           <label>{{ 'zones.name' | translate }}</label>
@@ -96,11 +126,10 @@
       </div>
       <footer class="modal-footer">
         <acl-button variant="secondary" type="button" (click)="modalOpen.set(false)">{{ 'action.cancel' | translate }}</acl-button>
-        <acl-button type="submit" [disabled]="saving()">
-          <lucide-icon [name]="saving() ? 'loader' : 'save'"></lucide-icon>
+        <acl-button type="submit" [loading]="saving()">
+          <lucide-icon [name]="saving() ? 'loader' : 'save'" [class.animate-spin]="saving()"></lucide-icon>
           {{ 'action.confirm' | translate }}
         </acl-button>
       </footer>
     </form>
   </acl-modal>
-</section>

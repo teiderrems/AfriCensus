@@ -2,20 +2,22 @@
   <div class="lang-tabs-bar">
     <div class="lang-tabs" role="group" [attr.aria-label]="i18n.t('multilang.selectLanguageAria')">
       @for (lang of activeTabLangs; track lang) {
-        <button
-          type="button"
-          class="lang-tab-btn"
-          [class.active]="activeLang === lang"
-          [class.has-content]="hasContent(lang)"
-          [attr.aria-pressed]="activeLang === lang"
-          (click)="selectLang(lang)"
-        >
-          <span class="lang-code">{{ lang.toUpperCase() }}</span>
-          <span class="content-indicator" [class.filled]="hasContent(lang)"></span>
+        <div class="lang-tab-wrapper" style="display: flex; align-items: center;">
+          <button
+            type="button"
+            class="lang-tab-btn"
+            [class.active]="activeLang === lang"
+            [class.has-content]="hasContent(lang)"
+            [attr.aria-pressed]="activeLang === lang"
+            (click)="selectLang(lang)"
+          >
+            <span class="lang-code">{{ lang.toUpperCase() }}</span>
+            <span class="content-indicator" [class.filled]="hasContent(lang)"></span>
+          </button>
           @if (activeTabLangs.length > 2) {
-            <span class="remove-btn" (click)="removeLang(lang, $event)" [title]="i18n.t('multilang.removeLanguage')">×</span>
+            <button type="button" class="remove-btn" (click)="removeLang(lang, $event)" [title]="i18n.t('multilang.removeLanguage')" [attr.aria-label]="i18n.t('multilang.removeLanguage')">×</button>
           }
-        </button>
+        </div>
       }
       @if (unaddedLangs.length > 0) {
         <div class="add-lang-container">

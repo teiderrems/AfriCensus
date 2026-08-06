@@ -202,6 +202,7 @@
   place-items: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .action-btn:hover {
@@ -382,13 +383,19 @@
   background: var(--surface);
 }
 
+.back-to-list-btn {
+  display: none;
+}
+
+
 .wa-chat-header {
   height: 64px;
   padding: 0 20px;
   border-bottom: 2px solid var(--outline-soft);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 16px;
   background: var(--surface-high);
 }
 
@@ -599,7 +606,7 @@
   display: none;
   position: absolute;
   top: -24px; /* Float above the bubble */
-  right: 0;
+  left: 0;
   align-items: center;
   gap: 2px;
   background: var(--surface);
@@ -617,10 +624,10 @@
   display: flex;
 }
 
-/* Own messages: align bar to the left */
+/* Own messages: align bar to the right */
 .message-wrapper.own .bubble-actions {
-  right: auto;
-  left: 0;
+  left: auto;
+  right: 0;
   flex-direction: row-reverse;
 }
 
@@ -937,15 +944,15 @@
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  border: none;
   background: var(--primary);
   color: var(--on-primary);
+  border: none;
   display: grid;
   place-items: center;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  flex-shrink: 0;
 }
 
 .wa-send-btn:hover:not([disabled]) {
@@ -998,13 +1005,23 @@
 }
 
 @media (max-width: 860px) {
+  .messaging-page {
+    padding: 0;
+    height: calc(100vh - 64px);
+    max-height: calc(100vh - 64px);
+  }
+
   .whatsapp-container {
-    height: calc(100vh - 80px);
+    height: 100%;
     border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
   }
 
   .wa-sidebar {
     width: 100% !important;
+    min-width: 0 !important;
     height: 100% !important;
     border-right: none;
     flex: 1 1 100% !important;
@@ -1025,6 +1042,7 @@
     display: flex !important;
   }
 
+
   .back-to-list-btn {
     display: inline-flex;
     align-items: center;
@@ -1036,7 +1054,6 @@
     background: var(--surface);
     color: var(--primary);
     cursor: pointer;
-    margin-right: 8px;
     flex-shrink: 0;
   }
 

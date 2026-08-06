@@ -25,3 +25,7 @@
     .btn.primary { background: var(--primary); color: var(--on-primary); }
     .error { color: var(--error); font-weight: 700; }
     .hint { font-size: 13px; }
+.input-with-icon { position: relative; }
+.input-with-icon input { padding-right: 48px; }
+.input-icon-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: transparent; border: none; padding: 8px; cursor: pointer; color: var(--muted); display: grid; place-items: center; border-radius: 6px; }
+.input-icon-btn:hover { background: var(--surface-low); color: var(--ink); }

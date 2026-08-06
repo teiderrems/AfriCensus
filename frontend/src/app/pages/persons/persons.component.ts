@@ -1,15 +1,17 @@
 import { LucideAngularModule } from 'lucide-angular';
 import { Component, OnInit, computed, signal } from '@angular/core';
+import { AttachmentService, AttachmentRecord } from '@/app/core/services/attachment.service';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '@/app/core/api.service';
 import { PersonWriteDto } from '@/app/core/dtos';
+import { LayoutService } from '@/app/core/layout.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ConfirmService } from '@/app/core/confirm';
 import { Campaign, HouseholdRecord, PersonRecord, Zone } from '@/app/core/models';
 import { ToastService } from '@/app/core/toast.service';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { PersonFormModalComponent } from '@/app/shared/person-form-modal/person-form-modal.component';
 import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
@@ -18,7 +20,7 @@ import { ButtonComponent } from "@/app/shared/button/button";
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclTooltipDirective],
+  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PersonFormModalComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './persons.component.html',
   styleUrl: './persons.component.css',
 })
@@ -48,7 +50,11 @@ export class PersonsComponent implements OnInit {
   });
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredPersons().length / this.pageSize())));
   readonly pagedPersons = computed(() => {
-    const start = (Math.min(this.page(), this.totalPages()) - 1) * this.pageSize();
+    const page = Math.min(this.page(), this.totalPages());
+    if (this.layout.isMobile()) {
+      return this.filteredPersons().slice(0, page * this.pageSize());
+    }
+    const start = (page - 1) * this.pageSize();
     return this.filteredPersons().slice(start, start + this.pageSize());
   });
   readonly personDrawerOpen = computed(() => Boolean(this.selectedPerson()));
@@ -56,6 +62,29 @@ export class PersonsComponent implements OnInit {
     const person = this.selectedPerson();
     return person ? `${person.first_name} ${person.last_name}` : 'Détails';
   });
+  readonly selectedPersonAvatarUrl = signal<string | null>(null);
+
+  constructor(
+    private readonly api: ApiService,
+    readonly i18n: I18nService,
+    private readonly confirmService: ConfirmService,
+    private readonly toastService: ToastService,
+    private readonly layout: LayoutService,
+    private readonly attachmentService: AttachmentService
+  ) {
+    import('@angular/core').then(({ effect }) => {
+      effect(() => {
+        const person = this.selectedPerson();
+        if (person) {
+          this.attachmentService.getAttachmentUrlByEntity(person.local_id || person.id, 'profile_photo')
+            .then(url => this.selectedPersonAvatarUrl.set(url));
+        } else {
+          this.selectedPersonAvatarUrl.set(null);
+        }
+      });
+    });
+  }
+
   readonly selectedPersonDetails = computed<DetailDrawerItem[]>(() => {
     const person = this.selectedPerson();
     if (!person) return [];
@@ -71,12 +100,7 @@ export class PersonsComponent implements OnInit {
     ];
   });
 
-  constructor(
-    private readonly api: ApiService,
-    readonly i18n: I18nService,
-    private readonly confirmService: ConfirmService,
-    private readonly toastService: ToastService
-  ) { }
+
   ngOnInit(): void {
     this.api.households().subscribe({
       next: (rows) => {
@@ -157,7 +181,7 @@ export class PersonsComponent implements OnInit {
     return Boolean(draft.first_name.trim() && draft.last_name.trim() && draft.household_id && draft.campaign_id && draft.zone_id);
   }
 
-  async savePerson(): Promise<void> {
+  async savePerson(event?: {draft: PersonWriteDto, photo: File | null}): Promise<void> {
     if (!this.canSavePerson()) return;
     const confirmed = await this.confirmService.ask(
       this.i18n.t('action.confirm'),
@@ -169,7 +193,30 @@ export class PersonsComponent implements OnInit {
     const id = this.editingPersonId();
     const request = id ? this.api.updatePerson(id, this.draft()) : this.api.createPerson(this.draft());
     request.subscribe({
-      next: (person) => {
+      next: async (person) => {
+        // Handle photo upload if present
+        if (event && event.photo) {
+          try {
+            const compressedFile = await this.attachmentService.compressImage(event.photo);
+            const attachmentId = crypto.randomUUID();
+            const record: AttachmentRecord = {
+              id: attachmentId,
+              entity_type: 'person',
+              entity_id: person.local_id || person.id,
+              attachment_type: 'profile_photo',
+              file_name: compressedFile.name,
+              mime_type: compressedFile.type,
+              file_size: compressedFile.size,
+              sync_status: 'PENDING_SYNC',
+              created_at: new Date().toISOString()
+            };
+            await this.attachmentService.saveAttachmentLocally(record, compressedFile);
+            // In a full implementation, we'd trigger a background sync here
+          } catch (e) {
+            console.error("Failed to compress/save photo", e);
+          }
+        }
+
         this.upsertPerson(person);
         this.toastService.success(id ? this.i18n.t('persons.status.updated') : this.i18n.t('persons.status.created'));
         this.personModalOpen.set(false);

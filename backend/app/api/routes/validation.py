@@ -8,7 +8,7 @@ from ...schemas import Role, PaginatedResponse
 from ...db_services import visible_query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, literal, union_all, String, or_, func, desc
-from ...models import Person, Household
+from ...models import Person, Household, FormResponse
 import math
 
 
@@ -58,6 +58,17 @@ def validation_queue(
             ))
         queries.append(pq)
         
+    if not entity_type or entity_type == 'form_responses':
+        fq = select(
+            FormResponse.id.label('id'),
+            literal('form_responses').label('entity_type'),
+            FormResponse.updated_at.label('updated_at'),
+            FormResponse.validation_status.label('status'),
+            literal('Formulaire Dynamique').label('name')
+        ).where(FormResponse.validation_status.in_(["SUBMITTED", "NEEDS_CORRECTION"]))
+        fq = visible_query(fq, FormResponse, user)
+        queries.append(fq)
+        
     if not queries:
         return {"items": [], "total": 0, "page": page, "page_size": page_size, "total_pages": 1}
         
@@ -77,6 +88,7 @@ def validation_queue(
     
     household_ids = [r.id for r in results if r.entity_type == 'households']
     person_ids = [r.id for r in results if r.entity_type == 'persons']
+    form_response_ids = [r.id for r in results if r.entity_type == 'form_responses']
     
     entities = []
     if household_ids:
@@ -91,6 +103,13 @@ def validation_queue(
         for p in persons:
             d = p.to_dict()
             d['entity_type'] = 'persons'
+            entities.append(d)
+            
+    if form_response_ids:
+        form_responses = db.scalars(select(FormResponse).where(FormResponse.id.in_(form_response_ids))).all()
+        for f in form_responses:
+            d = f.to_dict()
+            d['entity_type'] = 'form_responses'
             entities.append(d)
             
     order_map = { (r.id, r.entity_type): i for i, r in enumerate(results) }

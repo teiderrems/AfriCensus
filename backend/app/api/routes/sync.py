@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 from ...database import get_db
-from ...models import Zone, Campaign, Household, Person, FamilyRelation, MedicalHistory, FormDefinition
+from ...models import Zone, Campaign, Household, Person, FamilyRelation, MedicalHistory, FormDefinition, FormResponse
 from ...db_services import visible_query
 from ...dependencies import current_user
 from ...schemas import (
@@ -13,6 +13,7 @@ from ...schemas import (
     HouseholdIn,
     MedicalHistoryIn,
     PersonIn,
+    FormResponseIn,
     SyncPullResponse,
     SyncPushRequest,
     SyncPushResponse,
@@ -35,6 +36,7 @@ def sync_push(payload: SyncPushRequest, user: dict[str, Any] = Depends(current_u
         "person": (PersonIn, "persons"),
         "family_relation": (FamilyRelationIn, "family_relations"),
         "medical_history": (MedicalHistoryIn, "medical_histories"),
+        "dynamic_forms": (FormResponseIn, "form_responses"),
     }
     results = []
     for sync_item in payload.items:
@@ -57,6 +59,8 @@ def sync_push(payload: SyncPushRequest, user: dict[str, Any] = Depends(current_u
             results.append({"local_entity_id": sync_item.local_entity_id, "status": "ERROR", "error": str(exc)})
     return {"results": results}
 
+
+from .messaging import build_conversations_for_user
 
 @router.post(
     "/pull",
@@ -87,6 +91,9 @@ def sync_pull(user: dict[str, Any] = Depends(current_user), db: Session = Depend
     medical_histories = [m.to_dict() for m in db.scalars(visible_query(select(MedicalHistory), MedicalHistory, user).where(MedicalHistory.deleted_at.is_(None))).all()]
     forms = [f.to_dict() for f in db.scalars(select(FormDefinition).where(FormDefinition.deleted_at.is_(None))).all()]
     
+    # ── Conversations ──
+    conversations = build_conversations_for_user(db, user["id"])
+    
     return {
         "zones": zones,
         "campaigns": campaigns,
@@ -96,4 +103,5 @@ def sync_pull(user: dict[str, Any] = Depends(current_user), db: Session = Depend
         "medical_histories": medical_histories,
         "corrections": [item for item in visible_persons + visible_households if item.get("validation_status") == "NEEDS_CORRECTION"],
         "forms": forms,
+        "conversations": conversations,
     }

@@ -7,15 +7,16 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { AppRole, PermissionModule, User, Zone } from '@/app/core/models';
 import { AppRoleWriteDto, UserCreateDto, UserUpdateDto } from '@/app/core/dtos';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { TranslatePipe } from '@/app/shared/pipes/translate.pipe';
 import { ConfirmService } from '@/app/core/confirm';
+import { ToastService } from '@/app/core/toast.service';
 import { ButtonComponent } from "@/app/shared/button/button";
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
-
+import { LayoutService } from '@/app/core/layout.service';
 import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
 import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
@@ -25,7 +26,6 @@ import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
     FormsModule,
     LucideAngularModule,
     TablePaginationComponent,
-    PageSizeSelectComponent,
     DetailDrawerComponent,
     ModalComponent,
     SelectComponent,
@@ -90,7 +90,9 @@ export class UsersComponent implements OnInit {
   constructor(
     readonly api: ApiService,
     readonly i18n: I18nService,
-    private readonly confirm: ConfirmService
+    private readonly confirm: ConfirmService,
+    public readonly layout: LayoutService,
+    private readonly toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -125,21 +127,28 @@ export class UsersComponent implements OnInit {
     this.loadUsers();
   }
 
-  loadUsers(): void {
+  loadUsers(append = false): void {
     this.loading.set(true);
     let activeParam: boolean | undefined = undefined;
     if (this.statusFilter() === 'active') activeParam = true;
     if (this.statusFilter() === 'inactive') activeParam = false;
 
-    this.api.users(this.page(), this.pageSize(), this.search(), this.roleFilter(), activeParam, this.sortBy(), this.sortOrder())
+    this.api.users(this.page(), this.pageSize(), this.roleFilter(), activeParam, this.search(), this.sortBy(), this.sortOrder())
       .subscribe({
         next: (res) => {
-          this.users.set(res.items);
+          if (append) {
+            this.users.update(prev => [...prev, ...res.items]);
+          } else {
+            this.users.set(res.items);
+          }
           this.totalItems.set(res.total);
           this.totalPages.set(Math.ceil(res.total / this.pageSize()) || 1);
           this.loading.set(false);
         },
-        error: () => this.loading.set(false),
+        error: () => {
+          if (!append) this.users.set([]);
+          this.loading.set(false);
+        }
       });
   }
 
@@ -192,7 +201,7 @@ export class UsersComponent implements OnInit {
   nextPage(): void {
     if (this.page() < this.totalPages()) {
       this.page.update((p) => p + 1);
-      this.loadUsers();
+      this.loadUsers(this.layout.isMobile());
     }
   }
 
@@ -241,6 +250,7 @@ export class UsersComponent implements OnInit {
         next: () => {
           this.saving.set(false);
           this.userModalOpen.set(false);
+          this.toastService.success(this.i18n.t('action.success') || 'Succès');
           this.loadUsers();
         },
         error: () => this.saving.set(false),
@@ -250,6 +260,7 @@ export class UsersComponent implements OnInit {
         next: () => {
           this.saving.set(false);
           this.userModalOpen.set(false);
+          this.toastService.success(this.i18n.t('action.success') || 'Succès');
           this.loadUsers();
         },
         error: () => this.saving.set(false),
@@ -263,7 +274,10 @@ export class UsersComponent implements OnInit {
       : this.api.activateUser(user.id);
 
     action$.subscribe({
-      next: () => this.loadUsers(),
+      next: () => {
+        this.toastService.success(this.i18n.t('action.success') || 'Succès');
+        this.loadUsers();
+      },
       error: () => { },
     });
   }
@@ -284,6 +298,7 @@ export class UsersComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.passwordModalOpen.set(false);
+        this.toastService.success(this.i18n.t('action.success') || 'Succès');
       },
       error: () => this.saving.set(false),
     });
@@ -300,7 +315,10 @@ export class UsersComponent implements OnInit {
 
     if (ok) {
       this.api.deleteUser(user.id).subscribe({
-        next: () => this.loadUsers(),
+        next: () => {
+          this.toastService.success(this.i18n.t('action.success') || 'Succès');
+          this.loadUsers();
+        },
         error: () => { },
       });
     }
@@ -372,6 +390,7 @@ export class UsersComponent implements OnInit {
         next: () => {
           this.saving.set(false);
           this.roleModalOpen.set(false);
+          this.toastService.success(this.i18n.t('action.success') || 'Succès');
           this.loadRoles();
         },
         error: () => this.saving.set(false),
@@ -381,6 +400,7 @@ export class UsersComponent implements OnInit {
         next: () => {
           this.saving.set(false);
           this.roleModalOpen.set(false);
+          this.toastService.success(this.i18n.t('action.success') || 'Succès');
           this.loadRoles();
         },
         error: () => this.saving.set(false),
@@ -398,7 +418,10 @@ export class UsersComponent implements OnInit {
 
     if (ok) {
       this.api.deleteRole(role.id).subscribe({
-        next: () => this.loadRoles(),
+        next: () => {
+          this.toastService.success(this.i18n.t('action.success') || 'Succès');
+          this.loadRoles();
+        },
         error: () => { },
       });
     }

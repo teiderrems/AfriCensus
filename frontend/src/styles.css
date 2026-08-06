@@ -17,6 +17,8 @@
   --color-terracotta-soft: var(--terracotta-soft);
   --color-error: var(--error);
   --color-error-soft: var(--error-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-outline: var(--outline);
   --color-outline-soft: var(--outline-soft);
   --color-muted: var(--muted);
@@ -40,6 +42,8 @@
   --terracotta-soft: #ffedd5;
   --error: #ef4444;
   --error-soft: #fee2e2;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
   --outline: #64748b;
   --outline-soft: #e2e8f0;
   --muted: #64748b;
@@ -65,6 +69,8 @@
   --terracotta-soft: #431407;
   --error: #f87171;
   --error-soft: #450a0a;
+  --warning: #fbbf24;
+  --warning-soft: #451a03;
   --outline: #94a3b8;
   --outline-soft: #1e293b;
   --muted: #94a3b8;
@@ -126,14 +132,19 @@ button {
 }
 
 /* Custom Ultra-Subtle & Barely Perceptible Scrollbars */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(130, 130, 130, 0.2) transparent;
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  *:hover {
+    scrollbar-color: rgba(130, 130, 130, 0.15) transparent;
+  }
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -141,21 +152,24 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: transparent;
   border-radius: 999px;
-  transition: background 0.2s ease;
 }
 
-:root.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+:root.dark *:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
 :root.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 
 ::-webkit-scrollbar-corner {
@@ -279,11 +293,18 @@ lucide-icon > svg {
     -webkit-backdrop-filter: blur(12px);
     border-color: color-mix(in srgb, var(--outline-soft) 50%, transparent);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    min-width: 0;
+    overflow-wrap: break-word;
   }
   .dark .card {
     background: color-mix(in srgb, var(--surface) 85%, transparent);
     border-color: color-mix(in srgb, var(--glass-border, #fff) 10%, transparent);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Prevent CSS Grid horizontal blowout */
+  .page, .stats, .content-grid, .admin-page, .admin-grid, .health-grid, .security-grid, .config-grid, .users-page {
+    min-width: 0;
   }
 
   .chip {
@@ -466,6 +487,9 @@ button.icon-action {
   appearance: none;
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -625,11 +649,16 @@ button.icon-action:active {
   border-color: color-mix(in srgb, var(--secondary) 40%, transparent);
 }
 
-.chip.NEEDS_CORRECTION,
 .chip.REJECTED {
   background: var(--error-soft);
   color: var(--error);
   border-color: color-mix(in srgb, var(--error) 40%, transparent);
+}
+
+.chip.NEEDS_CORRECTION {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
 }
 
 .chip.DRAFT {
@@ -845,9 +874,61 @@ a {
   }
 }
 
+.hide-desktop { display: none; }
 @media (max-width: 860px) {
   .hide-mobile {
     display: none !important;
+  }
+  .hide-desktop {
+    display: block !important;
+  }
+  
+  .mobile-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 0;
+  }
+  
+  .mobile-card {
+    background: var(--surface);
+    border: 1px solid var(--outline-soft);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .mobile-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .mobile-card-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  
+  .mobile-card-value {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+  }
+  
+  .mobile-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--outline-soft);
   }
 
   .table-controls {
@@ -1106,14 +1187,23 @@ a {
 .filter-controls {
   display: flex !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 12px !important;
   flex-wrap: wrap !important;
+  flex: 1 1 auto !important;
+  justify-content: flex-end !important;
 }
 
 .filter-controls acl-select,
 .filter-controls select,
 .filter-controls button {
   height: 44px !important;
+}
+
+.filter-controls acl-select {
+  flex: 1 1 180px !important;
+  min-width: 150px !important;
+  width: auto !important;
+  max-width: 250px !important;
 }
 
 /* Clickable Sort Headers styling */
@@ -1157,6 +1247,13 @@ th.cursor-pointer:hover {
     width: 100% !important;
     justify-content: space-between !important;
   }
+
+  .filter-controls acl-select,
+  .filter-controls select,
+  .filter-controls button {
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+  }
 }
 
 /* Responsive Global Tables & Container Guards */
@@ -1180,6 +1277,12 @@ th.cursor-pointer:hover {
     width: 100%;
     justify-content: flex-start;
     flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-actions .btn {
+    width: 100% !important;
+    flex: 1 1 100%;
   }
 
   .grid-2, .grid-3, .grid-4 {

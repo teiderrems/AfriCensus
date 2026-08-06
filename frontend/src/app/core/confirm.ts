@@ -6,7 +6,9 @@ export interface ConfirmState {
   title: string;
   message: string;
   variant?: 'default' | 'danger' | 'warning';
-  onConfirm: () => void;
+  isPrompt?: boolean;
+  promptPlaceholder?: string;
+  onConfirm: (promptValue?: string) => void;
   onCancel: () => void;
 }
 
@@ -24,8 +26,24 @@ export class ConfirmService {
         title,
         message,
         variant,
+        isPrompt: false,
         onConfirm: () => resolve(true),
         onCancel: () => resolve(false)
+      });
+    });
+  }
+
+  prompt(title: string, message: string, placeholder: string = ''): Promise<string | null> {
+    return new Promise<string | null>((resolve) => {
+      this.confirmState.next({
+        show: true,
+        title,
+        message,
+        variant: 'warning',
+        isPrompt: true,
+        promptPlaceholder: placeholder,
+        onConfirm: (val?: string) => resolve(val || ''),
+        onCancel: () => resolve(null)
       });
     });
   }

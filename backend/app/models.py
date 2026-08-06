@@ -15,15 +15,20 @@ class DictMixin:
 
 class User(Base, DictMixin):
     __tablename__ = "users"
-    dict_fields = ("id", "username", "full_name", "role", "password_hash", "active", "zone_ids")
+    dict_fields = ("id", "username", "email", "phone", "full_name", "role", "password_hash", "active", "zone_ids", "password_changed_at", "force_password_change", "preferred_language")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     username: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    email: Mapped[str | None] = mapped_column(String(120), unique=True, index=True, nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(40), unique=True, index=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String(200))
     role: Mapped[str] = mapped_column(String(40), index=True)
     password_hash: Mapped[str] = mapped_column(String(128))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     zone_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    password_changed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    force_password_change: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    preferred_language: Mapped[str] = mapped_column(String(10), default="fr", server_default="fr")
 
 
 class Zone(Base, DictMixin):
@@ -267,6 +272,24 @@ class FormDefinition(Base, DictMixin):
     deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
+class FormResponse(Base, DictMixin):
+    __tablename__ = "form_responses"
+    dict_fields = ("id", "form_definition_id", "zone_id", "campaign_id", "data", "validation_status", "sync_status", "decision_comment", "created_by", "created_at", "updated_at", "deleted_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    form_definition_id: Mapped[str] = mapped_column(String(64), index=True)
+    zone_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    campaign_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    validation_status: Mapped[str] = mapped_column(String(40), default="SUBMITTED", index=True)
+    sync_status: Mapped[str] = mapped_column(String(40), default="synced", index=True)
+    decision_comment: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
 class AuditLog(Base, DictMixin):
     __tablename__ = "audit_logs"
     dict_fields = ("id", "user_id", "action", "entity_type", "entity_id", "created_at")
@@ -372,6 +395,43 @@ class FaqItem(Base, DictMixin):
     updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
+class Attachment(Base, DictMixin):
+    __tablename__ = "attachments"
+    dict_fields = (
+        "id", "local_id", "entity_type", "entity_id", "attachment_type", 
+        "file_name", "mime_type", "file_size", "file_path", "sync_status",
+        "created_by", "created_at", "updated_at", "deleted_at"
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    local_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    entity_type: Mapped[str] = mapped_column(String(80), index=True)
+    entity_id: Mapped[str] = mapped_column(String(120), index=True)
+    attachment_type: Mapped[str] = mapped_column(String(80), index=True)
+    file_name: Mapped[str] = mapped_column(String(255))
+    mime_type: Mapped[str] = mapped_column(String(120))
+    file_size: Mapped[int] = mapped_column(Integer)
+    file_path: Mapped[str] = mapped_column(String(500))
+    sync_status: Mapped[str] = mapped_column(String(40), index=True, default="synced")
+    created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class Notification(Base, DictMixin):
+    __tablename__ = "notifications"
+    dict_fields = ("id", "user_id", "title", "message", "type", "is_read", "created_at")
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    message: Mapped[str] = mapped_column(Text)
+    type: Mapped[str] = mapped_column(String(40), default="info")
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
 def _clean_payload(model: type, payload: dict) -> dict:
     from typing import Any
     fields = set(model.dict_fields)
@@ -405,4 +465,7 @@ MODEL_BY_COLLECTION = {
     'documents': Document,
     'home_content': HomeContent,
     'system_settings': SystemSetting,
+    'attachments': Attachment,
+    'form_responses': FormResponse,
+    'notifications': Notification,
 }

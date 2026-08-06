@@ -30,6 +30,10 @@
   overflow: hidden;
 }
 
+.acl-custom-select.is-open {
+  z-index: 9999;
+}
+
 .acl-custom-select.is-open .acl-select-trigger {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--primary-soft);

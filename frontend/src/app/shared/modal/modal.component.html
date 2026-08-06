@@ -6,10 +6,12 @@
             class="modal"
             [class.modal-lg]="size === 'lg'"
             [class.modal-sm]="size === 'sm'"
+            [class.overflow-visible]="overflowVisible"
             role="dialog"
             aria-modal="true"
             [attr.aria-labelledby]="titleId"
             (ngSubmit)="$event.preventDefault(); submitted.emit()"
+            (submit)="$event.preventDefault()"
           >
             <ng-container *ngTemplateOutlet="modalInner" />
           </form>
@@ -20,6 +22,7 @@
             class="modal"
             [class.modal-lg]="size === 'lg'"
             [class.modal-sm]="size === 'sm'"
+            [class.overflow-visible]="overflowVisible"
             role="dialog"
             aria-modal="true"
             [attr.aria-labelledby]="titleId"
@@ -34,7 +37,7 @@
       <header class="modal-head" [class.danger]="variant === 'danger'" [class.warning]="variant === 'warning'">
         <div class="modal-title-wrapper">
           @if (variant === 'danger') {
-            <lucide-icon name="alert-triangle" class="modal-icon text-error"></lucide-icon>
+            <lucide-icon name="triangle-alert" class="modal-icon text-error"></lucide-icon>
           } @else if (variant === 'warning') {
             <lucide-icon name="alert-circle" class="modal-icon text-warning"></lucide-icon>
           }

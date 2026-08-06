@@ -4,33 +4,39 @@ import { LucideAngularModule } from 'lucide-angular';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ButtonComponent } from '@/app/shared/button/button';
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
+import { LayoutService } from '@/app/core/layout.service';
+import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
 
 @Component({
   selector: 'acl-table-pagination',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ButtonComponent, AclTooltipDirective],
+  imports: [CommonModule, LucideAngularModule, ButtonComponent, AclTooltipDirective, PageSizeSelectComponent],
   templateUrl: './table-pagination.component.html',
   styleUrl: './table-pagination.component.css',
 })
 export class TablePaginationComponent implements AfterViewInit, OnDestroy {
   i18n = inject(I18nService);
   private elementRef = inject(ElementRef);
+  private layout = inject(LayoutService);
 
   @Input() ariaLabel = 'Pagination du tableau';
   @Input() totalItems = 0;
   @Input() page = 1;
+  @Input() limit = 10;
+  @Input() limitOptions = [5, 10, 20, 50, 100];
   @Input() totalPages = 1;
 
   @Output() previous = new EventEmitter<void>();
   @Output() next = new EventEmitter<void>();
   @Output() pageChange = new EventEmitter<number>();
+  @Output() limitChange = new EventEmitter<number>();
 
   private observer?: IntersectionObserver;
 
   ngAfterViewInit(): void {
     if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
       this.observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && this.page < this.totalPages && window.innerWidth <= 768) {
+        if (entries[0].isIntersecting && this.page < this.totalPages && this.layout.isMobile()) {
           this.next.emit();
         }
       }, { threshold: 0.2 });

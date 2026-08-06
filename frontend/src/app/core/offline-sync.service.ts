@@ -5,6 +5,7 @@ import { ApiService } from './api.service';
 import { FamilyRelationWriteDto, HouseholdWriteDto, MedicalHistoryWriteDto, PersonWriteDto } from './dtos';
 import { I18nService } from './i18n/i18n.service';
 import { FamilyRelationRecord, HouseholdRecord, MedicalHistory, PersonRecord, SyncItem, SyncPullResponse, SyncPushResult } from './models';
+import { AttachmentService } from './services/attachment.service';
 
 @Injectable({ providedIn: 'root' })
 export class OfflineSyncService {
@@ -22,6 +23,7 @@ export class OfflineSyncService {
   constructor(
     private readonly api: ApiService,
     private readonly i18n: I18nService,
+    private readonly attachmentService: AttachmentService
   ) {
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => {
@@ -192,15 +194,29 @@ export class OfflineSyncService {
     this.persistQueue();
   }
 
-  syncNow(): void {
+  async syncNow(): Promise<void> {
     if (!this.online() || this.syncing()) {
       return;
     }
     const items = this.queue();
     this.syncing.set(true);
     this.lastSyncError.set('');
+    
+    // Sync Attachments First (or parallel)
+    const pendingAttachments = await this.attachmentService.getPendingAttachments();
+    let attachmentErrors = 0;
+    for (const record of pendingAttachments) {
+      const success = await this.attachmentService.uploadAttachment(record);
+      if (!success) {
+        attachmentErrors++;
+      }
+    }
+    
     if (!items.length) {
       this.pullLatest();
+      if (attachmentErrors > 0) {
+        this.lastSyncError.set(`${attachmentErrors} pièces jointes n'ont pas pu être synchronisées.`);
+      }
       return;
     }
     this.api.syncPush({ items }).subscribe({

@@ -15,9 +15,10 @@ export class ButtonComponent {
   @Input() tooltip = '';
   @Input() iconOnly = false;
   @Input() disabled = false;
+  @Input() loading = false;
 
   @HostBinding('style.pointer-events')
   get pointerEvents(): string {
-    return this.disabled ? 'none' : 'auto';
+    return (this.disabled || this.loading) ? 'none' : 'auto';
   }
 }

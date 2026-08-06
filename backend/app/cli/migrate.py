@@ -2,10 +2,16 @@ import sys
 import alembic.config
 
 def main():
-    """Run alembic upgrade head"""
+    """Run alembic upgrade head and initialize admin if needed."""
     print("Running database migrations...")
     alembic_args = ["upgrade", "head"]
     alembic.config.main(argv=alembic_args)
+
+    from app.database import SessionLocal
+    from app.init_db import init_admin
+    print("Ensuring default admin exists...")
+    with SessionLocal() as db:
+        init_admin(db)
 
 def makemigrations():
     """Run alembic revision --autogenerate"""

@@ -1,2 +1,16 @@
-.page-size-control { display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 44px; }
-.page-size-label { color: var(--muted); font-size: 13px; font-weight: 700; white-space: nowrap; margin: 0; }
+.page-size-control { display: inline-flex; align-items: center; gap: 8px; min-width: 0; height: 32px; }
+.page-size-label { color: var(--muted); font-size: 13px; font-weight: 700; white-space: nowrap; margin: 0; display: none; } /* Hiding label for ultra-compact layout */
+
+::ng-deep .page-size-control .acl-select-trigger {
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 0 10px;
+  border-width: 1px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+::ng-deep .page-size-control .acl-select-icon lucide-icon {
+  width: 14px;
+  height: 14px;
+}

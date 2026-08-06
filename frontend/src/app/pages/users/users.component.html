@@ -54,21 +54,16 @@
           [ngModel]="statusFilter()"
           (ngModelChange)="onStatusFilterChange($event)"
         ></acl-select>
-        <acl-page-size-select
-          controlId="usersPageSize"
-          [value]="pageSize()"
-          [options]="pageSizes"
-          (valueChange)="onPageSizeChange($event)"
-        />
+        
       </div>
     </section>
 
     <article class="panel users-panel">
-      <div class="table-wrap">
-        <table class="responsive-table" aria-label="Liste des utilisateurs">
+      <div class="table-wrap hide-mobile">
+        <table class="data-table">
           <thead>
             <tr>
-              <th scope="col" class="cursor-pointer" (click)="toggleSort('full_name')">
+              <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('full_name')" (keydown.enter)="toggleSort('full_name')" (keydown.space)="toggleSort('full_name'); $event.preventDefault()">
                 <div class="th-sort-content">
                   {{ i18n.t('admin.users.table.user') }}
                   @if (sortBy() === 'full_name') {
@@ -78,7 +73,7 @@
                   }
                 </div>
               </th>
-              <th scope="col" class="cursor-pointer" (click)="toggleSort('role')">
+              <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('role')" (keydown.enter)="toggleSort('role')" (keydown.space)="toggleSort('role'); $event.preventDefault()">
                 <div class="th-sort-content">
                   {{ i18n.t('admin.users.table.role') }}
                   @if (sortBy() === 'role') {
@@ -89,7 +84,7 @@
                 </div>
               </th>
               <th>{{ i18n.t('admin.users.table.zones') }}</th>
-              <th scope="col" class="cursor-pointer" (click)="toggleSort('active')">
+              <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('active')" (keydown.enter)="toggleSort('active')" (keydown.space)="toggleSort('active'); $event.preventDefault()">
                 <div class="th-sort-content">
                   {{ i18n.t('admin.users.table.status') }}
                   @if (sortBy() === 'active') {
@@ -157,7 +152,66 @@
           </tbody>
         </table>
       </div>
-      <acl-table-pagination
+      
+      <div class="mobile-list hide-desktop">
+        @for (user of users(); track user.id) {
+          <div class="mobile-card">
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('admin.users.table.user') }}</span>
+              <div class="mobile-card-value identity">
+                <span class="avatar" aria-hidden="true">{{ initials(user.full_name) }}</span>
+                <div>
+                  <strong>{{ user.full_name }}</strong>
+                  <small class="username">&#x40;{{ user.username }}</small>
+                </div>
+              </div>
+            </div>
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('admin.users.table.role') }}</span>
+              <span class="mobile-card-value"><span class="role-badge {{ user.role | lowercase }}">{{ user.role }}</span></span>
+            </div>
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('admin.users.table.zones') }}</span>
+              <span class="mobile-card-value">
+                <span class="zone-badge">
+                  {{ user.zone_ids && user.zone_ids.length ? (user.zone_ids.length + ' zone(s)') : i18n.t('admin.users.zoneNational') }}
+                </span>
+              </span>
+            </div>
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('admin.users.table.status') }}</span>
+              <span class="mobile-card-value">
+                <span class="status-chip" [class.inactive]="user.active === false">
+                  <i class="dot" aria-hidden="true"></i>
+                  {{ user.active !== false ? i18n.t('admin.users.statusActive') : i18n.t('admin.users.statusInactive') }}
+                </span>
+              </span>
+            </div>
+            <div class="mobile-card-actions">
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.view')" (click)="selectedUser.set(user)">
+                    <lucide-icon name="eye"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.edit')" (click)="editUser(user)">
+                    <lucide-icon name="pencil"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.resetPassword')" (click)="openPasswordModal(user)">
+                    <lucide-icon name="key"></lucide-icon>
+                  </acl-button>
+                  <acl-button [variant]="user.active !== false ? 'icon-action-warning' : 'icon-action'" type="button" [aclTooltip]="user.active !== false ? i18n.t('admin.users.action.deactivate') : i18n.t('admin.users.action.activate')" (click)="toggleActive(user)">
+                    <lucide-icon [name]="user.active !== false ? 'ban' : 'circle-check'"></lucide-icon>
+                  </acl-button>
+                  <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('admin.users.action.delete')" (click)="deleteUser(user)">
+                    <lucide-icon name="trash-2"></lucide-icon>
+                  </acl-button>
+            </div>
+          </div>
+        }
+        @if (users().length === 0 && !loading()) {
+          <div class="mobile-card"><div class="empty-cell">{{ i18n.t('admin.users.emptyList') }}</div></div>
+        }
+      </div>
+
+      <acl-table-pagination [limit]="pageSize()" (limitChange)="onPageSizeChange($event)"
         [ariaLabel]="i18n.t('admin.users.paginationLabel')"
         [totalItems]="totalItems()"
         [page]="page()"
@@ -222,12 +276,29 @@
 </section>
 
 <!-- CREATE / EDIT USER MODAL -->
+
+
+<!-- RESET PASSWORD MODAL -->
+
+
+<!-- CREATE / EDIT ROLE MODAL WITH PERMISSION MATRIX -->
+
+
+<!-- DETAIL DRAWER -->
+<acl-detail-drawer
+  [open]="selectedUser() != null"
+  [title]="i18n.t('admin.users.drawerTitle')"
+  [items]="selectedUserDetails()"
+  (closed)="selectedUser.set(null)"
+/>
+
 <acl-modal
   [open]="userModalOpen()"
   size="lg"
   [title]="editingUserId() ? i18n.t('admin.users.modalEditTitle') : i18n.t('admin.users.modalCreateTitle')"
   [subtitle]="i18n.t('admin.users.modalSubtitle')"
   [isForm]="true"
+  
   (submitted)="saveUser()"
   (closed)="userModalOpen.set(false)"
 >
@@ -241,6 +312,28 @@
         required
         [(ngModel)]="userDraft().username"
         placeholder="ex: j.dupont"
+      />
+    </div>
+    <div class="field">
+      <label for="email">{{ i18n.t('admin.users.fieldEmail') }}</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        [(ngModel)]="userDraft().email"
+        placeholder="ex: j.dupont@mail.com"
+        email
+      />
+    </div>
+    <div class="field">
+      <label for="phone">{{ i18n.t('admin.users.fieldPhone') }}</label>
+      <input
+        type="tel"
+        id="phone"
+        name="phone"
+        [(ngModel)]="userDraft().phone"
+        placeholder="ex: +22890000000"
+        pattern="^\+?[1-9]\d{1,14}$"
       />
     </div>
     <div class="field">
@@ -307,12 +400,10 @@
     </acl-button>
   </ng-container>
 </acl-modal>
-
-<!-- RESET PASSWORD MODAL -->
 <acl-modal
   [open]="passwordModalOpen()"
   [title]="i18n.t('admin.users.passwordResetTitle')"
-  [subtitle]="i18n.t('admin.users.passwordResetSubtitle').replace('{name}', passwordResetUser()?.full_name || '')"
+  [subtitle]="i18n.t('admin.users.passwordResetSubtitle', { name: passwordResetUser()?.full_name || '' })"
   [isForm]="true"
   (submitted)="savePasswordReset()"
   (closed)="passwordModalOpen.set(false)"
@@ -340,8 +431,6 @@
     </acl-button>
   </ng-container>
 </acl-modal>
-
-<!-- CREATE / EDIT ROLE MODAL WITH PERMISSION MATRIX -->
 <acl-modal
   [open]="roleModalOpen()"
   size="lg"
@@ -417,11 +506,3 @@
     </acl-button>
   </ng-container>
 </acl-modal>
-
-<!-- DETAIL DRAWER -->
-<acl-detail-drawer
-  [open]="selectedUser() != null"
-  [title]="i18n.t('admin.users.drawerTitle')"
-  [items]="selectedUserDetails()"
-  (closed)="selectedUser.set(null)"
-/>

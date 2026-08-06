@@ -57,9 +57,7 @@ export class MessagingService implements OnDestroy {
   // ─── Realtime WebSocket ──────────────────────────────────────────────────
 
   initRealtimeConnection(): void {
-    const token =
-      sessionStorage.getItem('africensus_access_token') ||
-      localStorage.getItem('africensus_access_token');
+    const token = this.auth.token();
 
     if (!token) {
       this.startPolling();

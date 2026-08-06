@@ -1,4 +1,4 @@
-import { Component, Directive, ElementRef, HostListener, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Directive, ElementRef, HostListener, HostBinding, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { Overlay, OverlayPositionBuilder, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 
@@ -104,6 +104,7 @@ export class TooltipComponent {
 })
 export class AclTooltipDirective implements OnInit, OnDestroy {
   @Input('aclTooltip') text = '';
+  @HostBinding('attr.aria-label') get ariaLabel() { return this.text; }
   private overlayRef: OverlayRef | null = null;
   private tooltipInstance: TooltipComponent | null = null;
 

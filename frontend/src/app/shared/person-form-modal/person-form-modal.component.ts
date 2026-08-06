@@ -28,9 +28,22 @@ export class PersonFormModalComponent {
   @Input() submitLabel = 'Enregistrer';
   @Input() submitIcon = 'save';
   @Output() readonly closed = new EventEmitter<void>();
-  @Output() readonly saved = new EventEmitter<void>();
+  @Output() readonly saved = new EventEmitter<{draft: PersonWriteDto, photo: File | null}>();
   @Output() readonly draftChange = new EventEmitter<PersonWriteDto>();
   @Output() readonly householdSelected = new EventEmitter<string>();
+
+  profilePhoto: File | null = null;
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.profilePhoto = file;
+    }
+  }
+
+  onSubmit() {
+    this.saved.emit({ draft: this.draft, photo: this.profilePhoto });
+  }
 
   get genderOptions() {
     return [

@@ -6,12 +6,14 @@ import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Campaign, Zone } from '@/app/core/models';
 import { CampaignWriteDto } from '@/app/core/dtos';
+import { LayoutService } from '@/app/core/layout.service';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
 import { TranslatePipe } from '@/app/shared/pipes/translate.pipe';
 import { ConfirmService } from '@/app/core/confirm';
+import { ToastService } from '@/app/core/toast.service';
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { DatePickerComponent } from '@/app/shared/date-picker/date-picker.component';
 import { LocalizedDatePipe } from '@/app/shared/pipes/localized-date.pipe';
@@ -23,9 +25,8 @@ import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
 @Component({
   selector: 'acl-campaigns',
-  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, PageSizeSelectComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, DatePickerComponent, LocalizedDatePipe, CardComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AclLocalizedTextPipe],
-  templateUrl: './campaigns.component.html',
-  styleUrl: './campaigns.component.css'
+  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, DatePickerComponent, LocalizedDatePipe, CardComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AclLocalizedTextPipe],
+  templateUrl: './campaigns.component.html'
 })
 export class CampaignsComponent implements OnInit {
   readonly campaigns = signal<Campaign[]>([]);
@@ -72,13 +73,23 @@ export class CampaignsComponent implements OnInit {
     { label: this.i18n.t('status.COMPLETED'), value: 'COMPLETED' }
   ]);
 
-  constructor(private api: ApiService, readonly i18n: I18nService, private confirm: ConfirmService) { }
+  constructor(
+    private api: ApiService,
+    readonly i18n: I18nService,
+    private confirm: ConfirmService,
+    private layout: LayoutService,
+    private toastService: ToastService
+  ) { }
 
   ngOnInit() { this.load(); }
 
-  load() {
+  load(append = false) {
     this.api.campaigns(this.page(), this.pageSize(), this.search(), this.sortBy(), this.sortOrder()).subscribe(res => {
-      this.campaigns.set(res.items);
+      if (append) {
+        this.campaigns.update(prev => [...prev, ...res.items]);
+      } else {
+        this.campaigns.set(res.items);
+      }
       this.totalCampaigns.set(res.total);
     });
   }
@@ -96,7 +107,7 @@ export class CampaignsComponent implements OnInit {
   setSearch(val: string) { this.search.set(val); this.page.set(1); this.load(); }
   setPageSize(val: number) { this.pageSize.set(val); this.page.set(1); this.load(); }
   previousPage() { if (this.page() > 1) { this.page.update(p => p - 1); this.load(); } }
-  nextPage() { if (this.page() < this.totalPages()) { this.page.update(p => p + 1); this.load(); } }
+  nextPage() { if (this.page() < this.totalPages()) { this.page.update(p => p + 1); this.load(this.layout.isMobile()); } }
 
   openDetails(c: Campaign) { this.selectedCampaign.set(c); this.drawerOpen.set(true); }
 
@@ -119,7 +130,10 @@ export class CampaignsComponent implements OnInit {
       this.i18n.t('campaigns.confirmDelete' as any) || `Voulez-vous vraiment supprimer la campagne "${name}" ?`,
       'danger'
     )) {
-      this.api.deleteCampaign(c.id).subscribe(() => this.load());
+      this.api.deleteCampaign(c.id).subscribe(() => {
+        this.toastService.success(this.i18n.t('action.success') || 'Campagne supprimée');
+        this.load();
+      });
     }
   }
 
@@ -156,7 +170,12 @@ export class CampaignsComponent implements OnInit {
       ? this.api.updateCampaign(this.editingCampaignId()!, this.draft())
       : this.api.createCampaign(this.draft());
     req.subscribe({
-      next: () => { this.saving.set(false); this.modalOpen.set(false); this.load(); },
+      next: () => { 
+        this.saving.set(false); 
+        this.modalOpen.set(false); 
+        this.toastService.success(this.i18n.t('action.success') || 'Succès');
+        this.load(); 
+      },
       error: () => { this.saving.set(false); }
     });
   }

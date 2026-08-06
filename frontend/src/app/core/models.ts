@@ -1,10 +1,23 @@
 export interface User {
   id: string;
   username: string;
+  email?: string;
+  phone?: string;
   full_name: string;
   role: 'AGENT' | 'SUPERVISOR' | 'ADMIN' | 'STATISTICIAN' | 'AUDITOR';
   zone_ids: string[];
   active?: boolean;
+  preferred_language?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export interface PaginatedResponse<T> {

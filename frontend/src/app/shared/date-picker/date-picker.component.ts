@@ -26,7 +26,7 @@ export class DatePickerComponent implements ControlValueAccessor {
   @Input() disabled: boolean = false;
   @Input() placeholder: string = 'YYYY-MM-DD';
 
-  value: string | null = null; // YYYY-MM-DD
+  readonly value = signal<string | null>(null); // YYYY-MM-DD
 
   readonly isOpen = signal(false);
   readonly openAbove = signal(false);
@@ -68,7 +68,8 @@ export class DatePickerComponent implements ControlValueAccessor {
     const today = new Date();
     today.setHours(0,0,0,0);
     
-    const selectedDate = this.value ? new Date(this.value) : null;
+    const val = this.value();
+    const selectedDate = val ? new Date(val) : null;
     if (selectedDate) selectedDate.setHours(0,0,0,0);
 
     for (let i = 0; i < 42; i++) {
@@ -88,10 +89,11 @@ export class DatePickerComponent implements ControlValueAccessor {
   });
 
   readonly displayValue = computed(() => {
-    if (!this.value) return this.placeholder;
+    const val = this.value();
+    if (!val) return this.placeholder;
     const lang = this.i18n.language();
     const formatter = new Intl.DateTimeFormat(lang, { year: 'numeric', month: 'long', day: 'numeric' });
-    const [y, m, d] = this.value.split('-').map(Number);
+    const [y, m, d] = val.split('-').map(Number);
     return formatter.format(new Date(y, m - 1, d));
   });
 
@@ -130,8 +132,9 @@ export class DatePickerComponent implements ControlValueAccessor {
       // Open above only if space below is less than 220px AND top space is greater than bottom space
       this.openAbove.set(distToBottom < 220 && distToTop > distToBottom);
 
-      if (this.value) {
-        const [y, m, d] = this.value.split('-').map(Number);
+      const val = this.value();
+      if (val) {
+        const [y, m, d] = val.split('-').map(Number);
         this.currentMonth.set(new Date(y, m - 1, 1));
       } else {
         const now = new Date();
@@ -157,15 +160,15 @@ export class DatePickerComponent implements ControlValueAccessor {
     event.stopPropagation();
     if (this.disabled) return;
     
-    this.value = day.formatted;
+    this.value.set(day.formatted);
     this.isOpen.set(false);
     
-    this.onChange(this.value);
+    this.onChange(this.value());
     this.onTouched();
   }
 
   writeValue(val: any): void {
-    this.value = val;
+    this.value.set(val || null);
   }
 
   registerOnChange(fn: any): void {

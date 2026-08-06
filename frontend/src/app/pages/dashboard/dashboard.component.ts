@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { DashboardSummary } from '@/app/core/models';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
 import { CardComponent } from '@/app/shared/card/card.component';
@@ -15,7 +15,7 @@ import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
 @Component({
   selector: 'acl-dashboard-page',
-  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclLocalizedTextPipe],
+  imports: [LucideAngularModule, FormsModule, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclLocalizedTextPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })

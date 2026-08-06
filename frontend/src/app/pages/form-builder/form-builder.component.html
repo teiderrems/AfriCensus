@@ -1,8 +1,8 @@
 <section class="builder">
-  <aside class="palette">
+  <aside class="palette" id="paletteList" cdkDropList [cdkDropListConnectedTo]="['formList']" [cdkDropListSortingDisabled]="true">
     <h2>{{ i18n.t('formBuilder.palette.title') }}</h2>
     @for (type of fieldTypes; track type.type) {
-    <button type="button" (click)="addField(type.type)">
+    <button type="button" (click)="addField(type.type)" cdkDrag [cdkDragData]="type.type">
       <lucide-icon [name]="type.icon"></lucide-icon>
       {{ i18n.t($any('formBuilder.fieldType.' + type.type)) }}
     </button>
@@ -14,8 +14,17 @@
         <h1>{{ title[i18n.language()] || title['fr'] || title['en'] || '' }}</h1>
         <p>{{ i18n.t('formBuilder.defaultDescription') }}</p>
       </div>
-      <acl-button type="button" (click)="saveDraft()"><lucide-icon name="save"></lucide-icon> {{
-        i18n.t('formBuilder.saveDraft') }}</acl-button>
+      <div class="header-actions">
+        <acl-button type="button" variant="secondary" (click)="preview()">
+          <lucide-icon name="eye"></lucide-icon> {{ i18n.t('formBuilder.preview') }}
+        </acl-button>
+        <acl-button type="button" variant="secondary" (click)="saveDraft()">
+          <lucide-icon name="save"></lucide-icon> {{ i18n.t('formBuilder.saveDraft') }}
+        </acl-button>
+        <acl-button type="button" [loading]="publishing()" (click)="publish()">
+          <lucide-icon [name]="publishing() ? 'loader' : 'send'" [class.animate-spin]="publishing()"></lucide-icon> {{ i18n.t('formBuilder.publish') }}
+        </acl-button>
+      </div>
     </header>
     <article class="form-title">
       <acl-multilang-field [(ngModel)]="title" type="text"
@@ -23,18 +32,20 @@
       <acl-multilang-field [(ngModel)]="description" type="textarea"
         [aria-label]="i18n.t('formBuilder.descriptionAria')"></acl-multilang-field>
     </article>
-    @for (field of fields(); track $index) {
-    <article class="question" [class.selected]="$index === selected()" (click)="selected.set($index)">
-      <div class="question-head">
-        <lucide-icon name="grip-vertical"></lucide-icon>
-        <acl-multilang-field class="question-field" [(ngModel)]="field.label" type="text"
-          [aria-label]="i18n.t('formBuilder.questionAria')"></acl-multilang-field>
-        <button type="button" [aclTooltip]="i18n.t('action.delete')" (click)="remove($index); $event.stopPropagation()"><lucide-icon
-            name="trash-2"></lucide-icon></button>
-      </div>
-      <input disabled [placeholder]="placeholder(field.type)">
-    </article>
-    }
+    <div id="formList" cdkDropList (cdkDropListDropped)="onDrop($event)" style="display: flex; flex-direction: column; gap: 20px;">
+      @for (field of fields(); track $index) {
+      <article class="question" cdkDrag [class.selected]="$index === selected()" tabindex="0" (click)="selected.set($index)" (keydown.enter)="selected.set($index)" (keydown.space)="selected.set($index); $event.preventDefault()">
+        <div class="question-head">
+          <lucide-icon name="grip-vertical" cdkDragHandle style="cursor: grab; color: var(--muted);"></lucide-icon>
+          <acl-multilang-field class="question-field" [(ngModel)]="field.label" type="text"
+            [aria-label]="i18n.t('formBuilder.questionAria')"></acl-multilang-field>
+          <button type="button" [aclTooltip]="i18n.t('action.delete')" [aria-label]="i18n.t('action.delete')" (click)="remove($index); $event.stopPropagation()"><lucide-icon
+              name="trash-2"></lucide-icon></button>
+        </div>
+        <input disabled tabindex="-1" [placeholder]="placeholder(field.type)" [aria-label]="placeholder(field.type)">
+      </article>
+      }
+    </div>
     <button class="drop" type="button" (click)="addField('short_text')">{{ i18n.t('formBuilder.dropElement') }}</button>
   </main>
   <aside class="settings">
@@ -61,3 +72,38 @@
     }
   </aside>
 </section>
+
+<acl-modal [open]="previewModalOpen()" [title]="title[i18n.language()] || title['fr'] || title['en'] || ''"
+  (closed)="previewModalOpen.set(false)" [isForm]="true" >
+  @for (field of fields(); track $index) {
+  <div style="margin-bottom: 20px;">
+    <label [for]="'preview-' + $index" style="display: block; font-weight: 700; margin-bottom: 8px;">
+      {{ field.label[i18n.language()] || field.label['fr'] || field.label['en'] || '' }}
+      @if (field.required) { <span class="text-error" aria-hidden="true">*</span> }
+    </label>
+    @if (field.type === 'long_text') {
+      <textarea class="input-preview" [id]="'preview-' + $index" rows="3" [placeholder]="placeholder(field.type)"></textarea>
+    } @else if (field.type === 'single_choice' || field.type === 'multiple_choice') {
+      <label style="display: flex; gap: 8px; align-items: center; cursor: pointer;">
+        <input [type]="field.type === 'multiple_choice' ? 'checkbox' : 'radio'" [name]="'preview-choice-' + $index" style="width: 20px; height: 20px;"> Option 1
+      </label>
+      <label style="display: flex; gap: 8px; align-items: center; margin-top: 4px; cursor: pointer;">
+        <input [type]="field.type === 'multiple_choice' ? 'checkbox' : 'radio'" [name]="'preview-choice-' + $index" style="width: 20px; height: 20px;"> Option 2
+      </label>
+    } @else if (field.type === 'date') {
+      <acl-date-picker [id]="'preview-' + $index" [placeholder]="placeholder(field.type)"></acl-date-picker>
+    } @else if (field.type === 'image') {
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; border: 1px dashed var(--outline-soft); border-radius: 12px; background: var(--surface);">
+        <lucide-icon name="image-plus" style="color: var(--muted); margin-bottom: 8px;" size="32"></lucide-icon>
+        <span style="color: var(--muted); margin-bottom: 12px; font-size: 14px;">{{ i18n.t('formBuilder.selectImage') || 'Sélectionnez une image' }}</span>
+        <input type="file" accept="image/*" class="input-preview" [id]="'preview-' + $index" style="width: 100%; font-size: 14px;">
+      </div>
+    } @else {
+      <input type="text" class="input-preview" [id]="'preview-' + $index" [placeholder]="placeholder(field.type)">
+    }
+  </div>
+  }
+  <div modal-actions>
+    <acl-button type="button" variant="secondary" (click)="previewModalOpen.set(false)">{{ i18n.t('action.close') || 'Fermer' }}</acl-button>
+  </div>
+</acl-modal>

@@ -1,0 +1,52 @@
+<div class="sidebar-backdrop" [class.active]="layout.mobileDrawerOpen()" (click)="layout.closeMobileDrawer()" aria-hidden="true"></div>
+<aside class="sidebar" [class.collapsed]="layout.sidebarCollapsed() && !layout.isMobile()" [class.mobile-open]="layout.mobileDrawerOpen()" aria-label="Navigation principale">
+  <div class="brand">
+    <div class="mark" aria-hidden="true" [aclTooltip]="layout.sidebarCollapsed() && !layout.mobileDrawerOpen() ? 'AfriCensus Link' : ''">AL</div>
+    @if (!layout.sidebarCollapsed() || layout.mobileDrawerOpen()) {
+      <div>
+        <strong>AfriCensus Link</strong>
+        <span>{{ portalRoleLabel() }}</span>
+      </div>
+    }
+    <button type="button" class="sidebar-toggle-btn hide-mobile"
+      [aclTooltip]="layout.sidebarCollapsed() ? i18n.t('a11y.expandSidebar') : i18n.t('a11y.collapseSidebar')"
+      [attr.aria-label]="layout.sidebarCollapsed() ? i18n.t('a11y.expandSidebar') : i18n.t('a11y.collapseSidebar')"
+      (click)="layout.toggleSidebar()">
+      <lucide-icon [name]="layout.sidebarCollapsed() ? 'chevron-right' : 'chevron-left'"></lucide-icon>
+    </button>
+    <button type="button" class="mobile-close-btn show-mobile"
+      [aclTooltip]="i18n.t('a11y.closeMenu')"
+      (click)="layout.closeMobileDrawer()">
+      <lucide-icon name="x"></lucide-icon>
+    </button>
+  </div>
+  <nav aria-label="Sections applicatives">
+    @for (item of nav(); track item.path) {
+      <a [routerLink]="item.path"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+         [aclTooltip]="layout.sidebarCollapsed() && !layout.mobileDrawerOpen() ? item.label : ''"
+         [attr.aria-label]="item.label"
+         (click)="layout.closeMobileDrawer()">
+        <lucide-icon [name]="item.icon"></lucide-icon>
+        @if (!layout.sidebarCollapsed() || layout.mobileDrawerOpen()) {
+          <span>{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+  <div class="sidebar-footer">
+    <button class="footer-btn" type="button" routerLink="/change-password" (click)="layout.closeMobileDrawer()" [aclTooltip]="layout.sidebarCollapsed() && !layout.mobileDrawerOpen() ? i18n.t('auth.changePassword.title') : ''">
+      <lucide-icon name="lock-keyhole"></lucide-icon>
+      @if (!layout.sidebarCollapsed() || layout.mobileDrawerOpen()) {
+        <span>{{ i18n.t('auth.changePassword.title') }}</span>
+      }
+    </button>
+    <button class="footer-btn" type="button" (click)="auth.logout(); layout.closeMobileDrawer()" [aclTooltip]="layout.sidebarCollapsed() && !layout.mobileDrawerOpen() ? i18n.t('app.logout') : ''">
+      <lucide-icon name="log-out"></lucide-icon>
+      @if (!layout.sidebarCollapsed() || layout.mobileDrawerOpen()) {
+        <span>{{ i18n.t('app.logout') }}</span>
+      }
+    </button>
+  </div>
+</aside>

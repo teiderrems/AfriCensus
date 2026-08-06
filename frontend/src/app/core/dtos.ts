@@ -2,6 +2,8 @@ import { MedicalSeverity, MedicalStatus, UserRole } from './models';
 
 export interface UserCreateDto {
   username: string;
+  email?: string;
+  phone?: string;
   full_name: string;
   role: UserRole;
   password: string;
@@ -11,6 +13,8 @@ export interface UserCreateDto {
 
 export interface UserUpdateDto {
   username?: string;
+  email?: string;
+  phone?: string;
   full_name?: string;
   role?: string;
   active?: boolean;

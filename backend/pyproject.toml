@@ -9,7 +9,7 @@ requires-python = ">=3.13,<4.0"
 dependencies = [
   "fastapi==0.116.1",
   "uvicorn[standard]==0.35.0",
-  "pydantic==2.11.7",
+  "pydantic>=2.11.7",
   "python-multipart==0.0.20",
   "httpx==0.28.1",
   "sqlalchemy==2.0.41",
@@ -17,7 +17,14 @@ dependencies = [
   "psycopg-binary>=3.2",
   "pydantic-settings==2.10.1",
   "alembic==1.14.0",
-  "PyJWT==2.10.1"
+  "PyJWT==2.10.1",
+  "orjson (>=3.11.9,<4.0.0)",
+  "google-api-python-client (>=2.198.0,<3.0.0)",
+  "google-auth (>=2.56.2,<3.0.0)",
+  "email-validator>=2.2.0",
+  "aiosmtplib (>=5.1.2,<6.0.0)",
+  "jinja2 (>=3.1.6,<4.0.0)",
+  "apscheduler (>=3.11.3,<4.0.0)"
 ]
 
 [project.scripts]
@@ -32,6 +39,9 @@ packages = [{ include = "app" }]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.4.1"
+ruff = "^0.16.1"
+pytest-cov = "^7.1.0"
+pytest-asyncio = "^1.4.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

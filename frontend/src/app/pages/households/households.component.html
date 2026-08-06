@@ -16,9 +16,9 @@
             <input id="householdSearch" name="householdSearch" type="search" [ngModel]="search()" (ngModelChange)="setSearch($event)" [placeholder]="i18n.t('households.searchPlaceholder')" />
           </div>
           <acl-status-filter controlId="householdStatus" [value]="statusFilter()" (valueChange)="setStatusFilter($event)" />
-          <acl-page-size-select controlId="householdPageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+          
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap hide-mobile">
           <table>
             <thead><tr><th>{{ i18n.t('households.col.code') }}</th><th>{{ i18n.t('households.col.address') }}</th><th>{{ i18n.t('households.col.members') }}</th><th>{{ i18n.t('common.status') }}</th><th>{{ i18n.t('common.actions') }}</th></tr></thead>
             <tbody>
@@ -53,8 +53,51 @@
             </tbody>
           </table>
         </div>
-        <acl-table-pagination
-          ariaLabel="Pagination des ménages"
+
+        <div class="mobile-list hide-desktop">
+          @for (row of pagedHouseholds(); track row.id) {
+            <div class="mobile-card">
+              <div class="mobile-card-row">
+                <span class="mobile-card-label">{{ i18n.t('households.col.code') }}</span>
+                <span class="mobile-card-value"><strong>{{ row.household_code }}</strong></span>
+              </div>
+              <div class="mobile-card-row">
+                <span class="mobile-card-label">{{ i18n.t('households.col.address') }}</span>
+                <span class="mobile-card-value">{{ row.address_text }}</span>
+              </div>
+              <div class="mobile-card-row">
+                <span class="mobile-card-label">{{ i18n.t('households.col.members') }}</span>
+                <span class="mobile-card-value">{{ row.member_count }}</span>
+              </div>
+              <div class="mobile-card-row">
+                <span class="mobile-card-label">{{ i18n.t('common.status') }}</span>
+                <span class="mobile-card-value"><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></span>
+              </div>
+              <div class="mobile-card-actions">
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')" (click)="openHousehold(row)">
+                      <lucide-icon name="eye"></lucide-icon>
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')" (click)="editHousehold(row)">
+                      <lucide-icon name="pencil"></lucide-icon>
+                    </acl-button>
+                    <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('households.responsible.createTitle')" (click)="openResponsibleModal(row)">
+                      <lucide-icon name="users"></lucide-icon>
+                    </acl-button>
+                    <acl-button variant="icon-action-warning" type="button" [aclTooltip]="i18n.t('action.submit')" (click)="submitHousehold(row)">
+                      <lucide-icon name="circle-check"></lucide-icon>
+                    </acl-button>
+                    <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')" (click)="deleteHousehold(row)">
+                      <lucide-icon name="trash-2"></lucide-icon>
+                    </acl-button>
+              </div>
+            </div>
+          }
+          @if (!pagedHouseholds().length) {
+            <div class="mobile-card"><div class="empty-cell">{{ i18n.t('households.empty') }}</div></div>
+          }
+        </div>
+        <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)"
+          [ariaLabel]="i18n.t('households.paginationLabel')"
           [totalItems]="filteredHouseholds().length"
           [page]="page()"
           [totalPages]="totalPages()"
@@ -62,7 +105,9 @@
           (next)="nextPage()"
         />
       </acl-card>
-      <acl-detail-drawer
+</section>
+
+<acl-detail-drawer
         [open]="householdDrawerOpen()"
         [title]="selectedHouseholdTitle()"
         [subtitle]="i18n.t('households.drawer.subtitle')"
@@ -73,6 +118,7 @@
         [open]="responsibleModalOpen()"
         [title]="i18n.t('households.responsible.title')"
         [subtitle]="responsibleHouseholdLabel()"
+        
         (closed)="closeResponsibleModal()"
       >
         <div class="responsible-panel">
@@ -93,7 +139,7 @@
           </acl-button>
         </ng-container>
       </acl-modal>
-      <acl-person-form-modal
+<acl-person-form-modal
         [open]="responsiblePersonModalOpen()"
         [title]="i18n.t('households.responsible.createTitle')"
         [subtitle]="i18n.t('households.responsible.createSubtitle')"
@@ -151,4 +197,3 @@
           </acl-button>
         </ng-container>
       </acl-modal>
-    </section>

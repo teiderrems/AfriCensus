@@ -183,10 +183,9 @@
         <acl-select id="relationCategory" name="relationCategory" [ngModel]="relationCategoryFilter()"
           (ngModelChange)="setRelationCategoryFilter($event)" [options]="relationCategoryOptions()"></acl-select>
       </div>
-      <acl-page-size-select controlId="relationPageSize" [value]="relationPageSize()" [options]="pageSizes"
-        (valueChange)="setRelationPageSize($event)" />
+      
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap hide-mobile">
       <table>
         <thead>
           <tr>
@@ -215,7 +214,37 @@
         </tbody>
       </table>
     </div>
-    <acl-table-pagination [ariaLabel]="i18n.t('familyTree.paginationAriaLabel')" [totalItems]="filteredRelationLinks().length"
+
+    <div class="mobile-list hide-desktop">
+      @for (link of pagedRelationLinks(); track link.id) {
+        <div class="mobile-card" [class.selected-row]="isSelectedLink(link)">
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('familyTree.table.source') }}</span>
+            <span class="mobile-card-value">{{ labelFor(link.source) }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('familyTree.table.relation') }}</span>
+            <span class="mobile-card-value"><strong>{{ shortRelation(link.type) }}</strong></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('familyTree.category') }}</span>
+            <span class="mobile-card-value"><span class="relation-chip {{ link.category }}">{{ labelCategory(link.category) }}</span></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('familyTree.table.target') }}</span>
+            <span class="mobile-card-value">{{ labelFor(link.target) }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('familyTree.table.status') }}</span>
+            <span class="mobile-card-value"><span class="chip {{ link.status }}">{{ link.status }}</span></span>
+          </div>
+        </div>
+      }
+      @if (!pagedRelationLinks().length) {
+        <div class="mobile-card"><div class="empty-cell">{{ i18n.t('familyTree.emptyLinks') }}</div></div>
+      }
+    </div>
+    <acl-table-pagination [limit]="relationPageSize()" (limitChange)="setRelationPageSize($event)" [ariaLabel]="i18n.t('familyTree.paginationAriaLabel')" [totalItems]="filteredRelationLinks().length"
       [page]="relationPage()" [totalPages]="relationTotalPages()" (previous)="previousRelationPage()"
       (next)="nextRelationPage()" />
   </acl-card>

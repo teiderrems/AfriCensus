@@ -1,18 +1,19 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { NgTemplateOutlet } from '@angular/common';
 import { ButtonComponent } from '@/app/shared/button/button';
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'acl-modal',
-  imports: [LucideAngularModule, NgTemplateOutlet, ButtonComponent, AclTooltipDirective],
+  imports: [LucideAngularModule, NgTemplateOutlet, ButtonComponent, AclTooltipDirective, FormsModule],
   templateUrl: './modal.component.html',
   styleUrl: './modal.component.css',
 })
-export class ModalComponent implements OnChanges, OnDestroy {
+export class ModalComponent implements OnInit, OnChanges, OnDestroy {
   readonly i18n = inject(I18nService);
   @Input({ required: true }) open = false;
   @Input({ required: true }) title = '';
@@ -21,6 +22,7 @@ export class ModalComponent implements OnChanges, OnDestroy {
   @Input() size: 'sm' | 'md' | 'lg' = 'md';
   @Input() titleId = `modal-title-${Math.random().toString(36).slice(2)}`;
   @Input() isForm = false;
+  @Input() overflowVisible = false;
   @Output() readonly closed = new EventEmitter<void>();
   @Output() readonly submitted = new EventEmitter<void>();
 
@@ -28,6 +30,11 @@ export class ModalComponent implements OnChanges, OnDestroy {
   private focusTimeout: any;
 
   constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
+
+  ngOnInit(): void {
+    // Teleport the modal to the body to prevent z-index and CSS scope issues
+    document.body.appendChild(this.elementRef.nativeElement);
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['open']) {
