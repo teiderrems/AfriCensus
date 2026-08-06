@@ -25,16 +25,16 @@
       />
     </div>
     <div class="filter-controls">
-      <acl-page-size-select controlId="pageSize" [value]="pageSize()" [options]="pageSizes" (valueChange)="setPageSize($event)" />
+      
     </div>
   </section>
 
   <acl-card>
-    <div class="table-wrap">
+    <div class="table-wrap hide-mobile">
       <table class="responsive-table">
         <thead>
           <tr>
-            <th scope="col" class="cursor-pointer" (click)="toggleSort('name')" [aclTooltip]="'validation.sort.name' | translate">
+            <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('name')" (keydown.enter)="toggleSort('name')" (keydown.space)="toggleSort('name'); $event.preventDefault()" [aclTooltip]="'validation.sort.name' | translate">
               <div class="th-sort-content">
                 {{ 'campaigns.name' | translate }}
                 @if (sortBy() === 'name') {
@@ -44,7 +44,7 @@
                 }
               </div>
             </th>
-            <th scope="col" class="cursor-pointer" (click)="toggleSort('status')" [aclTooltip]="'validation.sort.status' | translate">
+            <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('status')" (keydown.enter)="toggleSort('status')" (keydown.space)="toggleSort('status'); $event.preventDefault()" [aclTooltip]="'validation.sort.status' | translate">
               <div class="th-sort-content">
                 {{ 'campaigns.status' | translate }}
                 @if (sortBy() === 'status') {
@@ -54,7 +54,7 @@
                 }
               </div>
             </th>
-            <th scope="col" class="cursor-pointer" (click)="toggleSort('start_date')" [aclTooltip]="'validation.sort.updatedAt' | translate">
+            <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('start_date')" (keydown.enter)="toggleSort('start_date')" (keydown.space)="toggleSort('start_date'); $event.preventDefault()" [aclTooltip]="'validation.sort.updatedAt' | translate">
               <div class="th-sort-content">
                 {{ 'campaigns.startDate' | translate }}
                 @if (sortBy() === 'start_date') {
@@ -64,7 +64,7 @@
                 }
               </div>
             </th>
-            <th scope="col" class="cursor-pointer" (click)="toggleSort('end_date')" [aclTooltip]="'validation.sort.updatedAt' | translate">
+            <th scope="col" class="cursor-pointer" role="button" tabindex="0" (click)="toggleSort('end_date')" (keydown.enter)="toggleSort('end_date')" (keydown.space)="toggleSort('end_date'); $event.preventDefault()" [aclTooltip]="'validation.sort.updatedAt' | translate">
               <div class="th-sort-content">
                 {{ 'campaigns.endDate' | translate }}
                 @if (sortBy() === 'end_date') {
@@ -97,7 +97,38 @@
         </tbody>
       </table>
     </div>
-    <acl-table-pagination
+
+    <div class="mobile-list hide-desktop">
+      @for (row of campaigns(); track row.id) {
+        <div class="mobile-card">
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'campaigns.name' | translate }}</span>
+            <span class="mobile-card-value"><strong>{{ row.name | aclLocalizedText }}</strong></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'campaigns.status' | translate }}</span>
+            <span class="mobile-card-value"><span class="chip {{ row.status }}">{{ row.status }}</span></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'campaigns.startDate' | translate }}</span>
+            <span class="mobile-card-value">{{ row.start_date | aclLocalizedDate }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ 'campaigns.endDate' | translate }}</span>
+            <span class="mobile-card-value">{{ row.end_date | aclLocalizedDate }}</span>
+          </div>
+          <div class="mobile-card-actions">
+                <acl-button variant="icon-action" type="button" [aclTooltip]="('action.viewDetails' | translate)" (click)="openDetails(row)"><lucide-icon name="eye"></lucide-icon></acl-button>
+                <acl-button variant="icon-action" type="button" [aclTooltip]="('action.edit' | translate)" (click)="editCampaign(row)"><lucide-icon name="pencil"></lucide-icon></acl-button>
+                <acl-button variant="icon-action-danger" type="button" [aclTooltip]="('action.delete' | translate)" (click)="deleteCampaign(row)"><lucide-icon name="trash-2"></lucide-icon></acl-button>
+          </div>
+        </div>
+      }
+      @if (!campaigns().length) {
+        <div class="mobile-card"><div class="empty-cell">{{ 'campaigns.empty' | translate }}</div></div>
+      }
+    </div>
+    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)"
       [totalItems]="totalCampaigns()"
       [page]="page()"
       [totalPages]="totalPages()"
@@ -105,15 +136,18 @@
       (next)="nextPage()"
     />
   </acl-card>
-  <acl-detail-drawer
+  
+</section>
+
+<acl-detail-drawer
     [open]="drawerOpen()"
     [title]="selectedCampaignTitle()"
     [subtitle]="('campaigns.drawer.subtitle' | translate)"
     [items]="selectedCampaignDetails()"
     (closed)="drawerOpen.set(false)"
   />
-  <acl-modal [open]="modalOpen()" [title]="editingCampaignId() ? ('campaigns.edit' | translate) : ('campaigns.create' | translate)" (closed)="modalOpen.set(false)">
-    <form class="modal-form" (ngSubmit)="saveCampaign()">
+  <acl-modal [open]="modalOpen()" [title]="editingCampaignId() ? ('campaigns.edit' | translate) : ('campaigns.create' | translate)"  (closed)="modalOpen.set(false)">
+    <form class="modal-form" (ngSubmit)="saveCampaign()" (submit)="$event.preventDefault()">
       <div class="form-grid">
         <div class="field">
           <label>{{ 'campaigns.name' | translate }}</label>
@@ -134,11 +168,10 @@
       </div>
       <footer class="modal-footer">
         <acl-button variant="secondary" type="button" (click)="modalOpen.set(false)">{{ 'action.cancel' | translate }}</acl-button>
-        <acl-button type="submit" [disabled]="saving()">
-          <lucide-icon [name]="saving() ? 'loader' : 'save'"></lucide-icon>
+        <acl-button type="submit" [loading]="saving()">
+          <lucide-icon [name]="saving() ? 'loader' : 'save'" [class.animate-spin]="saving()"></lucide-icon>
           {{ 'action.confirm' | translate }}
         </acl-button>
       </footer>
     </form>
   </acl-modal>
-</section>

@@ -23,6 +23,23 @@ class Settings(BaseSettings):
         default="http://localhost:4200,http://127.0.0.1:4200,http://localhost:8080,http://127.0.0.1:8080",
         alias="CORS_ORIGINS",
     )
+    media_storage_provider: str = Field(default="local", alias="MEDIA_STORAGE_PROVIDER")
+    media_base_url: str = Field(default="", alias="MEDIA_BASE_URL")
+    aws_access_key_id: str | None = Field(default=None, alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str | None = Field(default=None, alias="AWS_SECRET_ACCESS_KEY")
+    aws_region_name: str | None = Field(default=None, alias="AWS_REGION")
+    aws_bucket_name: str | None = Field(default=None, alias="AWS_BUCKET_NAME")
+    
+    google_drive_folder_id: str | None = Field(default=None, alias="GOOGLE_DRIVE_FOLDER_ID")
+    google_application_credentials_json: str | None = Field(default=None, alias="GOOGLE_APPLICATION_CREDENTIALS_JSON")
+
+    smtp_host: str | None = Field(default=None, alias="SMTP_HOST")
+    smtp_port: int = Field(default=587, alias="SMTP_PORT")
+    smtp_user: str | None = Field(default=None, alias="SMTP_USER")
+    smtp_password: str | None = Field(default=None, alias="SMTP_PASSWORD")
+    smtp_tls: bool = Field(default=True, alias="SMTP_TLS")
+    mail_from: str = Field(default="noreply@africensus.org", alias="MAIL_FROM")
+    mail_from_name: str = Field(default="AfriCensus", alias="MAIL_FROM_NAME")
 
     model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore", populate_by_name=True)
 

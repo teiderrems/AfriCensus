@@ -3,8 +3,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query, Response
 
 from ...dependencies import current_user, require_roles, get_db
-from ...schemas import FormDefinitionIn, FormDefinitionOut, Role, PaginatedResponse
-from ...services import db_create_item, db_update_item, db_find_or_404, db_soft_delete
+from ...schemas import FormDefinitionIn, FormDefinitionOut, FormResponseOut, Role, PaginatedResponse
+from ...services import db_create_item, db_update_item, db_find_or_404, db_soft_delete, db_set_status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, or_
 from ...models import FormDefinition
@@ -73,3 +73,23 @@ def delete_form(
 ):
     db_soft_delete(db, "form_definitions", item_id, user["id"], "DELETE_FORM_DEFINITION")
     return Response(status_code=204)
+
+
+@router.post("/responses/{item_id}/validate", response_model=FormResponseOut)
+def validate_form_response(
+    item_id: str, 
+    user: dict[str, Any] = Depends(require_roles(Role.ADMIN, Role.SUPERVISOR, Role.AUDITOR)), 
+    db: Session = Depends(get_db)
+) -> dict[str, Any]:
+    return db_set_status(db, "form_responses", item_id, "VALIDATED", user["id"], "VALIDATE_FORM_RESPONSE")
+
+
+@router.post("/responses/{item_id}/request-correction", response_model=FormResponseOut)
+def request_correction_form_response(
+    item_id: str,
+    payload: dict[str, str],
+    user: dict[str, Any] = Depends(require_roles(Role.ADMIN, Role.SUPERVISOR, Role.AUDITOR)),
+    db: Session = Depends(get_db)
+) -> dict[str, Any]:
+    comment = payload.get("comment", "")
+    return db_set_status(db, "form_responses", item_id, "NEEDS_CORRECTION", user["id"], "CORRECTION_FORM_RESPONSE", comment=comment)

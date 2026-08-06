@@ -84,11 +84,18 @@ async def _broadcast(message_data: dict, sender_id: str, receiver_id: str, is_gr
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: str = Query(...)
+    token: str = Query(...),
+    db: Session = Depends(get_db)
 ):
     try:
-        user_dict = await get_current_user_ws(token)
-    except Exception:
+        from ...security import decode_token
+        payload = decode_token(token)
+        user = db.query(User).filter(User.id == payload["sub"]).first()
+        if not user or not user.active:
+            raise ValueError("Inactive or unknown user")
+        user_dict = user.to_dict()
+    except Exception as e:
+        print(f"WebSocket auth failed: {e}")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
@@ -193,14 +200,9 @@ async def websocket_endpoint(
 
 # --- REST Endpoints (HTTP Fallback & API) ---
 
-@router.get("/conversations", response_model=List[ConversationSummary])
-def get_conversations(
-    user_data: dict[str, Any] = Depends(current_user),
-    db: Session = Depends(get_db)
-) -> List[ConversationSummary]:
-    """Retrieve all direct user contacts and groups with last message and unread count."""
-    summaries: List[ConversationSummary] = []
-    current_user_id = user_data["id"]
+def build_conversations_for_user(db: Session, current_user_id: str) -> List[dict]:
+    """Retrieve all direct user contacts and groups with last message and unread count as dicts."""
+    summaries = []
     
     # 1. Add Chat Groups
     groups = db.query(ChatGroup).all()
@@ -221,16 +223,16 @@ def get_conversations(
             )
             .count()
         )
-        summaries.append(ConversationSummary(
-            id=g.id,
-            name=g.name,
-            is_group=True,
-            avatar=None,
-            role="CANAL",
-            last_message=last_msg.content if last_msg else "Canal de discussion initialisé",
-            last_timestamp=last_msg.timestamp if last_msg else g.created_at,
-            unread_count=unread_count
-        ))
+        summaries.append({
+            "id": g.id,
+            "name": g.name,
+            "is_group": True,
+            "avatar": None,
+            "role": "CANAL",
+            "last_message": last_msg.content if last_msg else "Canal de discussion initialisé",
+            "last_timestamp": last_msg.timestamp if last_msg else g.created_at,
+            "unread_count": unread_count
+        })
 
     # 2. Add Direct Users (excluding current user)
     users = db.query(User).filter(User.id != current_user_id, User.active.is_(True)).all()
@@ -257,19 +259,29 @@ def get_conversations(
             )
             .count()
         )
-        summaries.append(ConversationSummary(
-            id=u.id,
-            name=u.full_name or u.username,
-            is_group=False,
-            avatar=None,
-            role=u.role,
-            last_message=last_msg.content if last_msg else "Démarrer la discussion",
-            last_timestamp=last_msg.timestamp if last_msg else None,
-            unread_count=unread_count
-        ))
-
-    summaries.sort(key=lambda c: c.last_timestamp or "", reverse=True)
+        summaries.append({
+            "id": u.id,
+            "name": u.full_name or u.username,
+            "is_group": False,
+            "avatar": None,
+            "role": u.role,
+            "last_message": last_msg.content if last_msg else "Nouvelle conversation",
+            "last_timestamp": last_msg.timestamp if last_msg else None,
+            "unread_count": unread_count
+        })
+        
+    summaries.sort(key=lambda c: c.get("last_timestamp") or "", reverse=True)
     return summaries
+
+@router.get("/conversations", response_model=List[ConversationSummary])
+def get_conversations(
+    user_data: dict[str, Any] = Depends(current_user),
+    db: Session = Depends(get_db)
+) -> List[ConversationSummary]:
+    """Retrieve all direct user contacts and groups with last message and unread count."""
+    summaries_dict = build_conversations_for_user(db, user_data["id"])
+    return [ConversationSummary(**s) for s in summaries_dict]
+
 
 
 @router.get("/{target_id}", response_model=List[ChatMessageOut])

@@ -51,6 +51,7 @@
     .security-card {
       min-height: 172px; display: grid; align-content: space-between; gap: 8px; padding: 22px;
       border: 2px solid var(--outline-soft); border-radius: 8px; background: var(--surface);
+      min-width: 0; overflow-wrap: break-word;
     }
     .security-card lucide-icon { color: var(--primary); font-size: 34px; justify-self: end; }
     .security-card small { color: var(--muted); font-weight: 900; }
@@ -90,6 +91,7 @@
     .health-card {
       min-height: 220px; background: var(--surface); border: 2px solid var(--outline-soft); border-left-width: 6px;
       border-radius: 8px; padding: 22px; display: grid; gap: 10px; align-content: start;
+      min-width: 0; overflow-wrap: break-word;
     }
     .health-card.success { border-left-color: var(--growth); }
     .health-card.primary { border-left-color: var(--primary); }
@@ -128,7 +130,7 @@
     .metric-row .success { color: var(--growth); }
     .alerts-panel { padding: 0; overflow: hidden; }
     .home-content-panel { padding: 0; overflow: hidden; }
-    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .mode-switch { display: flex; background: var(--surface-low); border: 1px solid var(--outline-soft); border-radius: 8px; padding: 2px; }
     .mode-btn { display: flex; align-items: center; gap: 6px; border: none; background: transparent; color: var(--muted); padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; }
     .mode-btn:hover { color: var(--ink); }

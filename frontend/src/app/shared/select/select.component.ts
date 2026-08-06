@@ -197,9 +197,12 @@ export class SelectComponent implements ControlValueAccessor {
       let distToBottom = window.innerHeight - rect.bottom;
 
       if (containerEl) {
-        const cRect = containerEl.getBoundingClientRect();
-        distToTop = rect.top - cRect.top;
-        distToBottom = cRect.bottom - rect.bottom;
+        const style = window.getComputedStyle(containerEl);
+        if (style.overflow !== 'visible' && !containerEl.classList.contains('overflow-visible')) {
+          const cRect = containerEl.getBoundingClientRect();
+          distToTop = rect.top - cRect.top;
+          distToBottom = cRect.bottom - rect.bottom;
+        }
       }
 
       const shouldOpenAbove = distToBottom < 220 && distToTop > distToBottom;

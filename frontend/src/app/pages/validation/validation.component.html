@@ -15,18 +15,72 @@
               <p>{{ item.entity_type }} · {{ item.updated_at | aclLocalizedDate }}</p>
             </div>
             <div class="actions">
-              @if (item.entity_type === 'persons') {
-                <acl-button type="button" (click)="validate(item.id)">
+                <acl-button variant="secondary" type="button" (click)="viewItem(item)">
+                  <lucide-icon name="eye"></lucide-icon>
+                  {{ i18n.t($any('action.view')) || 'Visualiser' }}
+                </acl-button>
+                <acl-button type="button" (click)="validate(item)">
                   <lucide-icon name="circle-check"></lucide-icon>
                   {{ i18n.t('validation.validate') }}
                 </acl-button>
-                <acl-button variant="warning" type="button" (click)="correction(item.id)">
+                <acl-button variant="warning" type="button" (click)="correction(item)">
                   <lucide-icon name="file-pen"></lucide-icon>
                   {{ i18n.t('validation.requestCorrection') }}
                 </acl-button>
-              }
             </div>
           </acl-card>
         }
       </div>
     </section>
+
+    @if (selectedItem(); as item) {
+      <div class="drawer-backdrop active" (click)="selectedItem.set(null)"></div>
+      <aside class="detail-drawer active">
+        <header class="drawer-header">
+          <div>
+            <h2>{{ item.household_code || (item.first_name + ' ' + item.last_name) }}</h2>
+            <span class="chip {{ item.validation_status }}">{{ item.validation_status }}</span>
+          </div>
+          <button class="close-btn" (click)="selectedItem.set(null)">
+            <lucide-icon name="x"></lucide-icon>
+          </button>
+        </header>
+        <div class="drawer-body">
+          <section class="info-section">
+            <h3>{{ i18n.t($any('common.details')) || 'Détails' }}</h3>
+            <dl class="info-grid">
+              <div>
+                <dt>{{ i18n.t($any('common.type')) || 'Type' }}</dt>
+                <dd>{{ item.entity_type }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t($any('common.date')) || 'Date' }}</dt>
+                <dd>{{ item.updated_at | aclLocalizedDate }}</dd>
+              </div>
+              @if (item.address_text) {
+                <div class="full-width">
+                  <dt>{{ i18n.t($any('common.address')) || 'Adresse' }}</dt>
+                  <dd>{{ item.address_text }}</dd>
+                </div>
+              }
+              @if (item.gender) {
+                <div>
+                  <dt>{{ i18n.t($any('common.gender')) || 'Genre' }}</dt>
+                  <dd>{{ item.gender }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+        </div>
+        <footer class="drawer-footer">
+          <acl-button variant="warning" type="button" (click)="correction(item)">
+            <lucide-icon name="file-pen"></lucide-icon>
+            {{ i18n.t('validation.requestCorrection') }}
+          </acl-button>
+          <acl-button type="button" (click)="validate(item)">
+            <lucide-icon name="circle-check"></lucide-icon>
+            {{ i18n.t('validation.validate') }}
+          </acl-button>
+        </footer>
+      </aside>
+    }

@@ -6,12 +6,14 @@ import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Zone } from '@/app/core/models';
 import { ZoneWriteDto } from '@/app/core/dtos';
+import { LayoutService } from '@/app/core/layout.service';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
 import { TranslatePipe } from '@/app/shared/pipes/translate.pipe';
 import { ConfirmService } from '@/app/core/confirm';
+import { ToastService } from '@/app/core/toast.service';
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { ButtonComponent } from "@/app/shared/button/button";
 import { CardComponent } from '@/app/shared/card/card.component';
@@ -21,9 +23,8 @@ import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
 @Component({
   selector: 'acl-zones',
-  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, PageSizeSelectComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AclLocalizedTextPipe],
-  templateUrl: './zones.component.html',
-  styleUrl: './zones.component.css'
+  imports: [CommonModule, FormsModule, LucideAngularModule, TablePaginationComponent, DetailDrawerComponent, ModalComponent, TranslatePipe, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AclLocalizedTextPipe],
+  templateUrl: './zones.component.html'
 })
 export class ZonesComponent implements OnInit {
   readonly zones = signal<Zone[]>([]);
@@ -76,13 +77,23 @@ export class ZonesComponent implements OnInit {
     { label: this.i18n.t('zone.type.local'), value: 'LOCAL' }
   ]);
 
-  constructor(private api: ApiService, readonly i18n: I18nService, private confirm: ConfirmService) { }
+  constructor(
+    private api: ApiService,
+    readonly i18n: I18nService,
+    private confirm: ConfirmService,
+    private layout: LayoutService,
+    private toastService: ToastService
+  ) { }
 
   ngOnInit() { this.load(); }
 
-  load() {
+  load(append = false) {
     this.api.zones(this.page(), this.pageSize(), this.search(), this.sortBy(), this.sortOrder()).subscribe(res => {
-      this.zones.set(res.items);
+      if (append) {
+        this.zones.update(prev => [...prev, ...res.items]);
+      } else {
+        this.zones.set(res.items);
+      }
       this.totalZones.set(res.total);
     });
   }
@@ -102,7 +113,7 @@ export class ZonesComponent implements OnInit {
   }
 
   previousPage() { if (this.page() > 1) { this.page.update(p => p - 1); this.load(); } }
-  nextPage() { if (this.page() < this.totalPages()) { this.page.update(p => p + 1); this.load(); } }
+  nextPage() { if (this.page() < this.totalPages()) { this.page.update(p => p + 1); this.load(this.layout.isMobile()); } }
 
   openDetails(z: Zone) { this.selectedZone.set(z); this.drawerOpen.set(true); }
 
@@ -120,7 +131,10 @@ export class ZonesComponent implements OnInit {
 
   async deleteZone(z: Zone) {
     if (await this.confirm.ask(this.i18n.t('action.delete'), this.i18n.t('zones.confirmDelete' as any) || 'Delete?', 'danger')) {
-      this.api.deleteZone(z.id).subscribe(() => this.load());
+      this.api.deleteZone(z.id).subscribe(() => {
+        this.toastService.success(this.i18n.t('action.success') || 'Zone supprimée');
+        this.load();
+      });
     }
   }
 
@@ -130,7 +144,12 @@ export class ZonesComponent implements OnInit {
       ? this.api.updateZone(this.editingZoneId()!, this.draft())
       : this.api.createZone(this.draft());
     req.subscribe({
-      next: () => { this.saving.set(false); this.modalOpen.set(false); this.load(); },
+      next: () => { 
+        this.saving.set(false); 
+        this.modalOpen.set(false); 
+        this.toastService.success(this.i18n.t('action.success') || 'Succès');
+        this.load(); 
+      },
       error: () => { this.saving.set(false); }
     });
   }

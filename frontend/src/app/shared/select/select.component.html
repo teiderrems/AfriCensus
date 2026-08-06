@@ -19,7 +19,7 @@
       @if (searchable) {
         <div class="acl-select-search" (click)="$event.stopPropagation()">
           <lucide-icon name="search"></lucide-icon>
-          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" [placeholder]="i18n.t('action.searchPlaceholder')" />
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" [placeholder]="i18n.t('action.searchPlaceholder')" [attr.aria-label]="i18n.t('action.searchPlaceholder')" />
         </div>
       }
       <div class="acl-select-options" [style.maxHeight.px]="maxDropdownHeight()">

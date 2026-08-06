@@ -43,7 +43,7 @@
         <section class="workspace">
           <acl-card class="card">
             <h2>{{ i18n.t('medicalHistory.createHistory') }}</h2>
-            <form class="medical-form" (ngSubmit)="createHistory()">
+            <form class="medical-form" (ngSubmit)="createHistory()" (submit)="$event.preventDefault()">
               <div class="field">
                 <label for="condition">{{ i18n.t('medicalHistory.condition') }}</label>
                 <input id="condition" name="condition" required [ngModel]="draft().condition_name" (ngModelChange)="updateDraft('condition_name', $event)" />
@@ -131,9 +131,9 @@
               <label for="medicalRisk">{{ i18n.t('medicalHistory.risk') }}</label>
               <acl-select id="medicalRisk" name="medicalRisk" [ngModel]="medicalRiskFilter()" (ngModelChange)="setMedicalRiskFilter($event)" [options]="medicalRiskOptions()"></acl-select>
             </div>
-            <acl-page-size-select controlId="medicalPageSize" [value]="medicalPageSize()" [options]="pageSizes" (valueChange)="setMedicalPageSize($event)" />
+            
           </div>
-          <div class="table-wrap responsive-card">
+          <div class="table-wrap responsive-card hide-mobile">
             <table class="responsive-table">
               <thead>
                 <tr>
@@ -168,7 +168,46 @@
               </tbody>
             </table>
           </div>
-          <acl-table-pagination
+
+          <div class="mobile-list hide-desktop">
+            @for (record of pagedMedicalRecords(); track record.id) {
+              <div class="mobile-card">
+                <div class="mobile-card-row">
+                  <span class="mobile-card-label">{{ i18n.t('medicalHistory.person') }}</span>
+                  <span class="mobile-card-value">{{ record.person_label }}</span>
+                </div>
+                <div class="mobile-card-row">
+                  <span class="mobile-card-label">{{ i18n.t('medicalHistory.generation') }}</span>
+                  <span class="mobile-card-value">{{ groupLabel(record.family_group) }}</span>
+                </div>
+                <div class="mobile-card-row">
+                  <span class="mobile-card-label">{{ i18n.t('medicalHistory.condition') }}</span>
+                  <span class="mobile-card-value"><strong>{{ record.condition_name }}</strong><br /><span class="muted">{{ record.category }}</span></span>
+                </div>
+                <div class="mobile-card-row">
+                  <span class="mobile-card-label">{{ i18n.t('medicalHistory.severity') }}</span>
+                  <span class="mobile-card-value"><span class="severity {{ record.severity }}">{{ severityLabel(record.severity) }}</span></span>
+                </div>
+                <div class="mobile-card-row">
+                  <span class="mobile-card-label">{{ i18n.t('medicalHistory.status') }}</span>
+                  <span class="mobile-card-value">{{ statusLabel(record.status) }}</span>
+                </div>
+                <div class="mobile-card-row">
+                  <span class="mobile-card-label">{{ i18n.t('medicalHistory.hereditaryRisk') }}</span>
+                  <span class="mobile-card-value">{{ record.hereditary_risk ? i18n.t('persons.yes') : i18n.t('persons.no') }}</span>
+                </div>
+                <div class="mobile-card-actions">
+                  <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.viewDetails')" (click)="openMedicalRecord(record)">
+                    <lucide-icon name="eye"></lucide-icon>
+                  </acl-button>
+                </div>
+              </div>
+            }
+            @if (!pagedMedicalRecords().length) {
+              <div class="mobile-card"><div class="empty-cell">{{ i18n.t('medicalHistory.emptyHistory') }}</div></div>
+            }
+          </div>
+          <acl-table-pagination [limit]="medicalPageSize()" (limitChange)="setMedicalPageSize($event)"
             ariaLabel="Pagination des antécédents médicaux"
             [totalItems]="filteredMedicalRecords().length"
             [page]="medicalPage()"
@@ -177,6 +216,8 @@
             (next)="nextMedicalPage()"
           />
         </acl-card>
+      }
+    </section>
         <acl-detail-drawer
           [open]="medicalDrawerOpen()"
           [title]="selectedMedicalTitle()"
@@ -184,5 +225,3 @@
           [items]="selectedMedicalDetails()"
           (closed)="selectedMedicalRecord.set(null)"
         />
-      }
-    </section>

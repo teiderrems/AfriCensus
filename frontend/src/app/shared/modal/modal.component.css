@@ -2,8 +2,9 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   background: rgba(8, 13, 18, 0.55);
   backdrop-filter: blur(6px);
@@ -18,8 +19,8 @@
 
 .modal {
   width: min(500px, 92vw);
-  max-height: min(840px, calc(100vh - 48px));
-  overflow-y: auto;
+  max-height: min(840px, calc(100dvh - 48px));
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -55,6 +56,7 @@
   gap: 16px;
   padding-bottom: 14px;
   border-bottom: 1.5px solid var(--outline-soft);
+  flex-shrink: 0;
 }
 
 .modal-head.danger {
@@ -111,11 +113,23 @@ p {
 
 .modal-body {
   min-width: 0;
+  min-height: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
   box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+}
+
+.modal.overflow-visible {
+  overflow: visible !important;
+}
+
+.modal.overflow-visible .modal-body {
+  overflow: visible !important;
 }
 
 /* Global Form Styling inside Modals */
@@ -196,6 +210,7 @@ p {
   border-top: 1.5px solid var(--outline-soft) !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  flex-shrink: 0 !important;
 }
 
 .modal-actions:empty,
@@ -248,13 +263,10 @@ p {
 
 @media (max-width: 680px) {
   .modal-backdrop {
-    align-items: flex-end;
-    padding: 0;
+    padding: 16px;
   }
   .modal {
-    width: 100%;
-    max-height: 90vh;
-    border-radius: 20px 20px 0 0;
+    max-height: 90dvh;
     padding: 20px;
   }
   h2 {

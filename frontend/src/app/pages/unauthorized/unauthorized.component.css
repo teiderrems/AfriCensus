@@ -10,7 +10,7 @@
   color: var(--ink);
 }
 
-.error-page lucide-angular {
+.error-page .main-icon {
   width: 64px;
   height: 64px;
   color: var(--error);

@@ -7,7 +7,7 @@
       <!-- Sidebar Header -->
       <header class="wa-sidebar-header">
         <div class="header-actions">
-          <acl-button variant="action-btn" type="button"
+          <acl-button variant="action-btn" type="button" class="hide-mobile"
             [aclTooltip]="sidebarCollapsed() ? i18n.t('messaging.expandSidebar') : i18n.t('messaging.collapseSidebar')"
             (click)="toggleSidebar()">
             <lucide-icon [name]="sidebarCollapsed() ? 'panel-left-open' : 'panel-left-close'"></lucide-icon>
@@ -309,8 +309,11 @@
   </div>
 
   <!-- Create Group Modal -->
-  <acl-modal [open]="showGroupModal()" [title]="i18n.t('messaging.createGroupTitle')" (closed)="closeGroupModal()">
-    <form (ngSubmit)="submitGroup()" class="modal-form"
+  
+</div>
+
+<acl-modal [open]="showGroupModal()" [title]="i18n.t('messaging.createGroupTitle')" (closed)="closeGroupModal()">
+    <form (ngSubmit)="submitGroup()" class="modal-form" (submit)="$event.preventDefault()"
       style="width: 100%; display: flex; flex-direction: column; gap: 16px;">
       <div class="form-group" style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
         <label for="groupName" style="font-weight: 700; font-size: 13.5px; color: var(--ink);">{{
@@ -330,4 +333,3 @@
       </div>
     </form>
   </acl-modal>
-</div>

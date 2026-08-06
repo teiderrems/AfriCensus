@@ -12,10 +12,9 @@
         <acl-select id="auditEntity" name="auditEntity" [ngModel]="entityFilter()"
           (ngModelChange)="setEntityFilter($event)" [options]="auditEntityOptions()"></acl-select>
       </div>
-      <acl-page-size-select controlId="auditPageSize" [value]="pageSize()" [options]="pageSizes"
-        (valueChange)="setPageSize($event)" />
+      
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap hide-mobile">
       <table>
         <thead>
           <tr>
@@ -48,9 +47,40 @@
         </tbody>
       </table>
     </div>
-    <acl-table-pagination [ariaLabel]="i18n.t('audit.paginationLabel')" [totalItems]="filteredLogs().length"
+
+    <div class="mobile-list hide-desktop">
+      @for (log of pagedLogs(); track log.id) {
+        <div class="mobile-card">
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('audit.table.date') }}</span>
+            <span class="mobile-card-value">{{ log.created_at | aclLocalizedDate }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('audit.table.action') }}</span>
+            <span class="mobile-card-value"><strong>{{ log.action }}</strong></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('audit.table.entity') }}</span>
+            <span class="mobile-card-value">{{ log.entity_type }} · {{ log.entity_name || (log.entity_id | aclShortId) }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('audit.table.user') }}</span>
+            <span class="mobile-card-value">{{ log.user_name || userName(log.user_id) }}</span>
+          </div>
+          <div class="mobile-card-actions">
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('audit.table.viewDetails')" (click)="openLog(log)">
+                <lucide-icon name="eye"></lucide-icon>
+              </acl-button>
+          </div>
+        </div>
+      }
+      @if (!pagedLogs().length) {
+        <div class="mobile-card"><div class="empty-cell">{{ i18n.t('audit.emptyLogs') }}</div></div>
+      }
+    </div>
+    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)" [ariaLabel]="i18n.t('audit.paginationLabel')" [totalItems]="filteredLogs().length"
       [page]="page()" [totalPages]="totalPages()" (previous)="previousPage()" (next)="nextPage()" />
   </acl-card>
+</section>
   <acl-detail-drawer [open]="logDrawerOpen()" [title]="selectedLogTitle()" [subtitle]="i18n.t('audit.drawer.subtitle')"
     [items]="selectedLogDetails()" (closed)="selectedLog.set(null)" />
-</section>

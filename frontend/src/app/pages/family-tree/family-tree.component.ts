@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { CensusRecord, FamilyTree, FamilyTreeLink, FamilyTreeNode } from '@/app/core/models';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
 import { CardComponent } from '@/app/shared/card/card.component';
 import { ButtonComponent } from '@/app/shared/button/button';
@@ -17,7 +17,7 @@ type LinkOffsets = Record<string, { dx: number; dy: number; tx?: number }>;
 
 @Component({
   selector: 'acl-family-tree-page',
-  imports: [LucideAngularModule, FormsModule, PageSizeSelectComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
+  imports: [LucideAngularModule, FormsModule, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   styleUrl: './family-tree.component.css',
   templateUrl: "./family-tree.component.html"
 })

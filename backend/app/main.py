@@ -3,13 +3,32 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .api.router import api_router
 from .config import get_settings
 from .i18n import setup_i18n
 from .security_headers import setup_security_headers
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from contextlib import asynccontextmanager
+
+from .tasks import check_expiring_passwords
+
+scheduler = AsyncIOScheduler()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(
+        check_expiring_passwords,
+        CronTrigger(hour=0, minute=0), # Run daily at midnight
+        id="check_expiring_passwords",
+        replace_existing=True
+    )
+    scheduler.start()
+    yield
+    scheduler.shutdown()
 
 
 OPENAPI_TAGS = [
@@ -34,6 +53,8 @@ OPENAPI_TAGS = [
 def create_app() -> FastAPI:
     settings = get_settings()
     application = FastAPI(
+        lifespan=lifespan,
+        default_response_class=ORJSONResponse,
         title=settings.app_name,
         version=settings.app_version,
         summary="API MVP pour AfriCensus Link",
@@ -52,9 +73,9 @@ def create_app() -> FastAPI:
             "persistAuthorization": True,
             "displayRequestDuration": True,
             "filter": True,
-            "tryItOutEnabled": True,
-        },
+            },
     )
+    
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,

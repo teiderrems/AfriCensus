@@ -2,49 +2,30 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
 import { roleGuard } from './core/role.guard';
-import { AuditComponent } from './pages/audit/audit.component';
-import { AdminPortalComponent } from './pages/admin-portal/admin-portal.component';
-import { BirthDeclarationComponent } from './pages/birth-declaration/birth-declaration.component';
-import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { FormBuilderComponent } from './pages/form-builder/form-builder.component';
-import { FamilyTreeComponent } from './pages/family-tree/family-tree.component';
-import { HomeComponent } from './pages/home/home.component';
-import { HouseholdsComponent } from './pages/households/households.component';
-import { LoginComponent } from './pages/login/login.component';
-import { MedicalHistoryComponent } from './pages/medical-history/medical-history.component';
-import { PersonsComponent } from './pages/persons/persons.component';
-import { ReportsComponent } from './pages/reports/reports.component';
-import { RolePortalComponent } from './pages/role-portal/role-portal.component';
-import { ValidationComponent } from './pages/validation/validation.component';
-import { NotFoundComponent } from './pages/not-found/not-found.component';
-
-import { ZonesComponent } from './pages/zones/zones.component';
-import { CampaignsComponent } from './pages/campaigns/campaigns.component';
-import { DuplicatesComponent } from './pages/duplicates/duplicates.component';
-import { UsersComponent } from './pages/users/users.component';
-import { MessagingComponent } from './pages/messaging/messaging.component';
-import { UnauthorizedComponent } from './pages/unauthorized/unauthorized.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'unauthorized', component: UnauthorizedComponent },
-  { path: 'portal', canActivate: [authGuard], component: RolePortalComponent },
-  { path: 'dashboard', canActivate: [authGuard], component: DashboardComponent },
-  { path: 'admin-portal', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, component: AdminPortalComponent },
-  { path: 'users', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, component: UsersComponent },
-  { path: 'households', canActivate: [authGuard], component: HouseholdsComponent },
-  { path: 'persons', canActivate: [authGuard], component: PersonsComponent },
-  { path: 'birth-declaration', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AGENT'] }, component: BirthDeclarationComponent },
-  { path: 'family-tree', canActivate: [authGuard], component: FamilyTreeComponent },
-  { path: 'medical-history', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN'] }, component: MedicalHistoryComponent },
-  { path: 'validation', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, component: ValidationComponent },
-  { path: 'forms', canActivate: [authGuard], component: FormBuilderComponent },
-  { path: 'reports', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN', 'AUDITOR'] }, component: ReportsComponent },
-  { path: 'audit', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, component: AuditComponent },
-  { path: 'zones', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, component: ZonesComponent },
-  { path: 'campaigns', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, component: CampaignsComponent },
-  { path: 'duplicates', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, component: DuplicatesComponent },
-  { path: 'messaging', canActivate: [authGuard], component: MessagingComponent },
-  { path: '**', component: NotFoundComponent },
+  { path: '', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent) },
+  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
+  { path: 'forgot-password', loadComponent: () => import('./pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+  { path: 'reset-password', loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) },
+  { path: 'unauthorized', loadComponent: () => import('./pages/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent) },
+  { path: 'portal', canActivate: [authGuard], loadComponent: () => import('./pages/role-portal/role-portal.component').then(m => m.RolePortalComponent) },
+  { path: 'change-password', canActivate: [authGuard], loadComponent: () => import('./pages/change-password/change-password.component').then(m => m.ChangePasswordComponent) },
+  { path: 'dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+  { path: 'admin-portal', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, loadComponent: () => import('./pages/admin-portal/admin-portal.component').then(m => m.AdminPortalComponent) },
+  { path: 'users', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent) },
+  { path: 'households', canActivate: [authGuard], loadComponent: () => import('./pages/households/households.component').then(m => m.HouseholdsComponent) },
+  { path: 'persons', canActivate: [authGuard], loadComponent: () => import('./pages/persons/persons.component').then(m => m.PersonsComponent) },
+  { path: 'birth-declaration', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AGENT'] }, loadComponent: () => import('./pages/birth-declaration/birth-declaration.component').then(m => m.BirthDeclarationComponent) },
+  { path: 'family-tree', canActivate: [authGuard], loadComponent: () => import('./pages/family-tree/family-tree.component').then(m => m.FamilyTreeComponent) },
+  { path: 'medical-history', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN'] }, loadComponent: () => import('./pages/medical-history/medical-history.component').then(m => m.MedicalHistoryComponent) },
+  { path: 'validation', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, loadComponent: () => import('./pages/validation/validation.component').then(m => m.ValidationComponent) },
+  { path: 'forms', canActivate: [authGuard], loadComponent: () => import('./pages/form-builder/form-builder.component').then(m => m.FormBuilderComponent) },
+  { path: 'reports', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN', 'AUDITOR'] }, loadComponent: () => import('./pages/reports/reports.component').then(m => m.ReportsComponent) },
+  { path: 'audit', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, loadComponent: () => import('./pages/audit/audit.component').then(m => m.AuditComponent) },
+  { path: 'zones', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/zones/zones.component').then(m => m.ZonesComponent) },
+  { path: 'campaigns', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/campaigns/campaigns.component').then(m => m.CampaignsComponent) },
+  { path: 'duplicates', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/duplicates/duplicates.component').then(m => m.DuplicatesComponent) },
+  { path: 'messaging', canActivate: [authGuard], loadComponent: () => import('./pages/messaging/messaging.component').then(m => m.MessagingComponent) },
+  { path: '**', loadComponent: () => import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent) },
 ];

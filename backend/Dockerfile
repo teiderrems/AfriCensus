@@ -31,4 +31,4 @@ RUN mkdir -p data
 
 EXPOSE 8080
 
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "poetry run africensus-migrate && poetry run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips '*'"]

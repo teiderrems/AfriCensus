@@ -12,7 +12,7 @@
           </div>
         } @else if (state.variant === 'warning') {
           <div class="icon-badge warning">
-            <lucide-icon name="alert-triangle" class="icon"></lucide-icon>
+            <lucide-icon name="triangle-alert" class="icon"></lucide-icon>
           </div>
         } @else {
           <div class="icon-badge info">
@@ -30,6 +30,14 @@
 
     <div class="confirm-body">
       <p>{{ state.message }}</p>
+      @if (state.isPrompt) {
+        <textarea
+          class="prompt-input"
+          [placeholder]="state.promptPlaceholder || ''"
+          [(ngModel)]="promptValue"
+          rows="3"
+        ></textarea>
+      }
     </div>
 
     <div class="confirm-actions">
@@ -41,7 +49,7 @@
         </acl-button>
       } @else if (state.variant === 'warning') {
         <acl-button variant="warning" (click)="confirm()">
-          <lucide-icon name="alert-triangle"></lucide-icon>
+          <lucide-icon name="triangle-alert"></lucide-icon>
           {{ i18n.t('action.confirm') || 'Confirmer' }}
         </acl-button>
       } @else {

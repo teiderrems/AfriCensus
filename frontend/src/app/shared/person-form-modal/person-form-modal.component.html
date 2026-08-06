@@ -1,5 +1,9 @@
-<acl-modal [open]="open" size="lg" [title]="title" [subtitle]="subtitle || i18n.t('person.draft.subtitle')" [isForm]="true" (submitted)="saved.emit()" (closed)="closed.emit()">
+<acl-modal [open]="open" size="lg" [title]="title" [subtitle]="subtitle || i18n.t('person.draft.subtitle')" [isForm]="true"  (submitted)="onSubmit()" (closed)="closed.emit()">
       <div class="person-form">
+        <div class="field">
+          <label for="personModalAvatar">Photo de Profil (Optionnel)</label>
+          <input type="file" id="personModalAvatar" accept="image/*" (change)="onFileSelected($event)" class="file-input" />
+        </div>
         <div class="field">
           <label for="personModalFirstName">{{ i18n.t('person.firstName') }}</label>
           <input id="personModalFirstName" name="firstName" required [ngModel]="draft.first_name" (ngModelChange)="update('first_name', $event)" />

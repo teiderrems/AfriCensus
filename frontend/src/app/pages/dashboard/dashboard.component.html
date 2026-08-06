@@ -44,21 +44,25 @@
   </div>
 
   <div class="content-grid">
-    <acl-card class="card animate-fade-in-up stagger-2">
-      <h2>{{ i18n.t('dashboard.regionalProgress') }}</h2>
-      <div class="map">
-        <lucide-icon name="map-pin"></lucide-icon>
-      </div>
-      @for (zone of data.zoneProgress; track zone.id) {
-      <div class="zone-row">
-        <div>
-          <strong>{{ zone.name | aclLocalizedText }}</strong>
-          <span>{{ zone.progress }}% {{ i18n.t('dashboard.completed') }}</span>
+    <div class="regional-wrapper">
+      <acl-card class="card regional-card animate-fade-in-up stagger-2">
+        <h2>{{ i18n.t('dashboard.regionalProgress') }}</h2>
+        <div class="map">
+          <lucide-icon name="map-pin"></lucide-icon>
         </div>
-        <progress [value]="zone.progress" max="100"></progress>
-      </div>
-      }
-    </acl-card>
+        <div class="zone-list">
+          @for (zone of data.zoneProgress; track zone.id) {
+          <div class="zone-row">
+            <div>
+              <strong>{{ zone.name | aclLocalizedText }}</strong>
+              <span>{{ zone.progress }}% {{ i18n.t('dashboard.completed') }}</span>
+            </div>
+            <progress [value]="zone.progress" max="100"></progress>
+          </div>
+          }
+        </div>
+      </acl-card>
+    </div>
 
     <acl-card class="card submissions animate-fade-in-up stagger-3">
       <h2>{{ i18n.t('dashboard.recentSubmissions') }}</h2>
@@ -70,10 +74,9 @@
         </div>
         <acl-status-filter controlId="submissionStatus" [value]="submissionStatusFilter()"
           (valueChange)="setSubmissionStatusFilter($event)" />
-        <acl-page-size-select controlId="submissionPageSize" [value]="submissionPageSize()" [options]="pageSizes"
-          (valueChange)="setSubmissionPageSize($event)" />
+        
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap hide-mobile">
         <table>
           <thead>
             <tr>
@@ -100,7 +103,32 @@
           </tbody>
         </table>
       </div>
-      <acl-table-pagination ariaLabel="Pagination des soumissions récentes" [totalItems]="filteredSubmissions().length"
+      <div class="mobile-list hide-desktop">
+        @for (row of pagedSubmissions(); track row.id) {
+          <div class="mobile-card">
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('dashboard.table.record') }}</span>
+              <span class="mobile-card-value"><strong>{{ row.household_code || (row.first_name + ' ' + row.last_name) }}</strong></span>
+            </div>
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('dashboard.table.zone') }}</span>
+              <span class="mobile-card-value">{{ zoneLabel(row.zone_id) }}</span>
+            </div>
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('dashboard.table.status') }}</span>
+              <span class="mobile-card-value"><span class="chip {{ row.validation_status }}">{{ row.validation_status }}</span></span>
+            </div>
+            <div class="mobile-card-row">
+              <span class="mobile-card-label">{{ i18n.t('dashboard.table.updatedAt') }}</span>
+              <span class="mobile-card-value">{{ row.updated_at }}</span>
+            </div>
+          </div>
+        }
+        @if (!pagedSubmissions().length) {
+          <div class="mobile-card"><div class="empty-cell">{{ i18n.t('dashboard.emptySubmissions') }}</div></div>
+        }
+      </div>
+      <acl-table-pagination [limit]="submissionPageSize()" (limitChange)="setSubmissionPageSize($event)" ariaLabel="Pagination des soumissions récentes" [totalItems]="filteredSubmissions().length"
         [page]="submissionPage()" [totalPages]="submissionTotalPages()" (previous)="previousSubmissionPage()"
         (next)="nextSubmissionPage()" />
     </acl-card>

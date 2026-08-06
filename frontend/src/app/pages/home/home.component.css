@@ -6,7 +6,7 @@
     .brand lucide-icon { font-size: 32px; }
     .home-nav nav { display: flex; gap: 28px; }
     .home-nav nav a { color: var(--muted); text-decoration: none; font-weight: 800; }
-    .actions { display: flex; align-items: center; gap: 12px; }
+    .actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .public-controls { display: inline-flex; align-items: center; gap: 8px; }
     .language-toggle {
       width: 44px; height: 44px; display: grid; place-items: center; border: 2px solid var(--outline-soft);

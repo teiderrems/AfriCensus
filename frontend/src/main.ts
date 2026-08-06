@@ -1,4 +1,4 @@
-import { importProvidersFrom, isDevMode } from '@angular/core';
+import { importProvidersFrom, isDevMode, provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
@@ -13,8 +13,13 @@ import { routes } from '@/app/app.routes';
 
 bootstrapApplication(AppComponent, {
   providers: [
+    provideZonelessChangeDetection(),
     importProvidersFrom(LucideAngularModule.pick(icons)),
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withInterceptors([languageInterceptor, authInterceptor, apiErrorInterceptor])),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
 }).catch((error) => console.error(error));

@@ -1,8 +1,8 @@
 """Initial schema
 
-Revision ID: 76e12f04ed9c
+Revision ID: d675b5d4a7e3
 Revises: 
-Create Date: 2026-07-29 22:57:40.328575
+Create Date: 2026-08-01 13:03:30.014665
 """
 from typing import Sequence, Union
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '76e12f04ed9c'
+revision: str = 'd675b5d4a7e3'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,6 +41,28 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_assignments_user_id'), 'assignments', ['user_id'], unique=False)
     op.create_index(op.f('ix_assignments_zone_id'), 'assignments', ['zone_id'], unique=False)
+    op.create_table('attachments',
+    sa.Column('id', sa.String(length=64), nullable=False),
+    sa.Column('local_id', sa.String(length=120), nullable=True),
+    sa.Column('entity_type', sa.String(length=80), nullable=False),
+    sa.Column('entity_id', sa.String(length=120), nullable=False),
+    sa.Column('attachment_type', sa.String(length=80), nullable=False),
+    sa.Column('file_name', sa.String(length=255), nullable=False),
+    sa.Column('mime_type', sa.String(length=120), nullable=False),
+    sa.Column('file_size', sa.Integer(), nullable=False),
+    sa.Column('file_path', sa.String(length=500), nullable=False),
+    sa.Column('sync_status', sa.String(length=40), nullable=False),
+    sa.Column('created_by', sa.String(length=64), nullable=True),
+    sa.Column('created_at', sa.String(length=40), nullable=True),
+    sa.Column('updated_at', sa.String(length=40), nullable=True),
+    sa.Column('deleted_at', sa.String(length=40), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_attachments_attachment_type'), 'attachments', ['attachment_type'], unique=False)
+    op.create_index(op.f('ix_attachments_entity_id'), 'attachments', ['entity_id'], unique=False)
+    op.create_index(op.f('ix_attachments_entity_type'), 'attachments', ['entity_type'], unique=False)
+    op.create_index(op.f('ix_attachments_local_id'), 'attachments', ['local_id'], unique=False)
+    op.create_index(op.f('ix_attachments_sync_status'), 'attachments', ['sync_status'], unique=False)
     op.create_table('audit_logs',
     sa.Column('id', sa.String(length=64), nullable=False),
     sa.Column('user_id', sa.String(length=64), nullable=True),
@@ -180,6 +202,26 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_form_definitions_status'), 'form_definitions', ['status'], unique=False)
+    op.create_table('form_responses',
+    sa.Column('id', sa.String(length=64), nullable=False),
+    sa.Column('form_definition_id', sa.String(length=64), nullable=False),
+    sa.Column('zone_id', sa.String(length=64), nullable=True),
+    sa.Column('campaign_id', sa.String(length=64), nullable=True),
+    sa.Column('data', sa.JSON(), nullable=False),
+    sa.Column('validation_status', sa.String(length=40), nullable=False),
+    sa.Column('sync_status', sa.String(length=40), nullable=False),
+    sa.Column('decision_comment', sa.String(length=500), nullable=True),
+    sa.Column('created_by', sa.String(length=64), nullable=True),
+    sa.Column('created_at', sa.String(length=40), nullable=True),
+    sa.Column('updated_at', sa.String(length=40), nullable=True),
+    sa.Column('deleted_at', sa.String(length=40), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_form_responses_campaign_id'), 'form_responses', ['campaign_id'], unique=False)
+    op.create_index(op.f('ix_form_responses_form_definition_id'), 'form_responses', ['form_definition_id'], unique=False)
+    op.create_index(op.f('ix_form_responses_sync_status'), 'form_responses', ['sync_status'], unique=False)
+    op.create_index(op.f('ix_form_responses_validation_status'), 'form_responses', ['validation_status'], unique=False)
+    op.create_index(op.f('ix_form_responses_zone_id'), 'form_responses', ['zone_id'], unique=False)
     op.create_table('geographic_zones',
     sa.Column('id', sa.String(length=64), nullable=False),
     sa.Column('name', sa.JSON(), nullable=False),
@@ -280,6 +322,17 @@ def upgrade() -> None:
     op.create_index(op.f('ix_medical_histories_sync_status'), 'medical_histories', ['sync_status'], unique=False)
     op.create_index(op.f('ix_medical_histories_validation_status'), 'medical_histories', ['validation_status'], unique=False)
     op.create_index(op.f('ix_medical_histories_zone_id'), 'medical_histories', ['zone_id'], unique=False)
+    op.create_table('notifications',
+    sa.Column('id', sa.String(length=64), nullable=False),
+    sa.Column('user_id', sa.String(length=64), nullable=False),
+    sa.Column('title', sa.String(length=200), nullable=False),
+    sa.Column('message', sa.Text(), nullable=False),
+    sa.Column('type', sa.String(length=40), nullable=False),
+    sa.Column('is_read', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.String(length=40), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_notifications_user_id'), 'notifications', ['user_id'], unique=False)
     op.create_table('persons',
     sa.Column('id', sa.String(length=64), nullable=False),
     sa.Column('local_id', sa.String(length=120), nullable=True),
@@ -348,13 +401,20 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('id', sa.String(length=64), nullable=False),
     sa.Column('username', sa.String(length=120), nullable=False),
+    sa.Column('email', sa.String(length=120), nullable=True),
+    sa.Column('phone', sa.String(length=40), nullable=True),
     sa.Column('full_name', sa.String(length=200), nullable=False),
     sa.Column('role', sa.String(length=40), nullable=False),
     sa.Column('password_hash', sa.String(length=128), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=False),
     sa.Column('zone_ids', sa.JSON(), nullable=False),
+    sa.Column('password_changed_at', sa.String(length=40), nullable=True),
+    sa.Column('force_password_change', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('preferred_language', sa.String(length=10), server_default='fr', nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
+    op.create_index(op.f('ix_users_phone'), 'users', ['phone'], unique=True)
     op.create_index(op.f('ix_users_role'), 'users', ['role'], unique=False)
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     # ### end Alembic commands ###
@@ -364,6 +424,8 @@ def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_index(op.f('ix_users_username'), table_name='users')
     op.drop_index(op.f('ix_users_role'), table_name='users')
+    op.drop_index(op.f('ix_users_phone'), table_name='users')
+    op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
     op.drop_table('system_settings')
     op.drop_index(op.f('ix_support_tickets_user_id'), table_name='support_tickets')
@@ -380,6 +442,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_persons_first_name'), table_name='persons')
     op.drop_index(op.f('ix_persons_campaign_id'), table_name='persons')
     op.drop_table('persons')
+    op.drop_index(op.f('ix_notifications_user_id'), table_name='notifications')
+    op.drop_table('notifications')
     op.drop_index(op.f('ix_medical_histories_zone_id'), table_name='medical_histories')
     op.drop_index(op.f('ix_medical_histories_validation_status'), table_name='medical_histories')
     op.drop_index(op.f('ix_medical_histories_sync_status'), table_name='medical_histories')
@@ -406,6 +470,12 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_geographic_zones_parent_id'), table_name='geographic_zones')
     op.drop_index(op.f('ix_geographic_zones_code'), table_name='geographic_zones')
     op.drop_table('geographic_zones')
+    op.drop_index(op.f('ix_form_responses_zone_id'), table_name='form_responses')
+    op.drop_index(op.f('ix_form_responses_validation_status'), table_name='form_responses')
+    op.drop_index(op.f('ix_form_responses_sync_status'), table_name='form_responses')
+    op.drop_index(op.f('ix_form_responses_form_definition_id'), table_name='form_responses')
+    op.drop_index(op.f('ix_form_responses_campaign_id'), table_name='form_responses')
+    op.drop_table('form_responses')
     op.drop_index(op.f('ix_form_definitions_status'), table_name='form_definitions')
     op.drop_table('form_definitions')
     op.drop_table('faq_items')
@@ -441,6 +511,12 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_audit_logs_created_at'), table_name='audit_logs')
     op.drop_index(op.f('ix_audit_logs_action'), table_name='audit_logs')
     op.drop_table('audit_logs')
+    op.drop_index(op.f('ix_attachments_sync_status'), table_name='attachments')
+    op.drop_index(op.f('ix_attachments_local_id'), table_name='attachments')
+    op.drop_index(op.f('ix_attachments_entity_type'), table_name='attachments')
+    op.drop_index(op.f('ix_attachments_entity_id'), table_name='attachments')
+    op.drop_index(op.f('ix_attachments_attachment_type'), table_name='attachments')
+    op.drop_table('attachments')
     op.drop_index(op.f('ix_assignments_zone_id'), table_name='assignments')
     op.drop_index(op.f('ix_assignments_user_id'), table_name='assignments')
     op.drop_table('assignments')

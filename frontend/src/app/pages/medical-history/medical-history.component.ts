@@ -10,7 +10,7 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { FamilyMedicalRecord, FamilyMedicalSummary, MedicalSeverity, MedicalStatus, PersonRecord } from '@/app/core/models';
 import { OfflineSyncService } from '@/app/core/offline-sync.service';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
 import { CardComponent } from '@/app/shared/card/card.component';
 import { ButtonComponent } from '@/app/shared/button/button';
@@ -18,7 +18,7 @@ import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
   selector: 'acl-medical-history-page',
-  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
+  imports: [LucideAngularModule, FormsModule, DetailDrawerComponent, TablePaginationComponent, SelectComponent, CardComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './medical-history.component.html',
   styleUrl: './medical-history.component.css',
 })

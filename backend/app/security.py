@@ -33,8 +33,12 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 import jwt
 
-def create_token(subject: str, role: str, token_type: str = "access") -> str:
-    ttl = ACCESS_TOKEN_TTL if token_type == "access" else REFRESH_TOKEN_TTL
+def create_token(subject: str, role: str, token_type: str = "access", expires_delta: int | None = None) -> str:
+    if expires_delta is not None:
+        ttl = expires_delta
+    else:
+        ttl = ACCESS_TOKEN_TTL if token_type == "access" else REFRESH_TOKEN_TTL
+        
     payload = {
         "sub": subject,
         "role": role,

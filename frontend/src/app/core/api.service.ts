@@ -128,14 +128,22 @@ export class ApiService {
   }
 
 
-  users(page = 1, pageSize = 10, search = '', role = '', active: boolean | string = '', sortBy = '', sortOrder = '') {
+  users(page = 1, pageSize = 100, role?: string, active?: boolean, search = '', sortBy = '', sortOrder = '') {
     let params = new HttpParams().set('page', page).set('page_size', pageSize);
+    if (role) params = params.set('role', role);
+    if (active !== undefined) params = params.set('active', active);
     if (sortBy) params = params.set('sort_by', sortBy);
     if (sortOrder) params = params.set('sort_order', sortOrder);
     if (search) params = params.set('search', search);
-    if (role) params = params.set('role', role);
-    if (active !== '') params = params.set('active', active);
     return this.http.get<PaginatedResponse<User>>('/api/v1/users', { params });
+  }
+
+  updateProfile(payload: { preferred_language?: string }) {
+    return this.http.patch<User>('/api/v1/users/me', payload);
+  }
+
+  changePassword(oldPassword: string, newPassword: string) {
+    return this.http.post<void>('/api/v1/users/me/password', { old_password: oldPassword, password: newPassword });
   }
 
   createUser(payload: UserCreateDto) {
@@ -145,6 +153,7 @@ export class ApiService {
   updateUser(id: string, payload: UserUpdateDto) {
     return this.http.put<User>(`/api/v1/users/${id}`, payload);
   }
+
 
   duplicates(page = 1, pageSize = 100, status = '', sortBy = '', sortOrder = '') {
     let params = new HttpParams().set('page', page).set('page_size', pageSize);
@@ -293,6 +302,16 @@ export class ApiService {
     return this.http.post(`/api/v1/households/${id}/request-correction`, { comment });
   }
 
+
+  validateFormResponse(id: string) {
+    return this.http.post(`/api/v1/forms/responses/${id}/validate`, {});
+  }
+
+  requestCorrectionFormResponse(id: string, comment: string) {
+    return this.http.post(`/api/v1/forms/responses/${id}/request-correction`, { comment });
+  }
+
+
   populationSummary(lang?: string) {
     let params = new HttpParams();
     if (lang) params = params.set('lang', lang);
@@ -358,5 +377,12 @@ export class ApiService {
 
   availablePermissions() {
     return this.http.get<import('./models').PermissionModule[]>('/api/v1/roles/permissions/available');
+  }
+  systemSeed() {
+    return this.http.post<any>('/api/v1/system/seed', {});
+  }
+
+  systemReset() {
+    return this.http.post<any>('/api/v1/system/reset', {});
   }
 }

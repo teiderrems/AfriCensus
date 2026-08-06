@@ -11,6 +11,11 @@
       <lucide-icon name="list-filter" class="summary-icon"></lucide-icon>
       {{ i18n.t('table.pagination.summary', { count: totalItems, page: page, totalPages: totalPages }) }}
     </span>
+    <acl-page-size-select
+      [value]="limit"
+      [options]="limitOptions"
+      (valueChange)="limitChange.emit($event)">
+    </acl-page-size-select>
   </div>
 
   <div class="pagination-controls">

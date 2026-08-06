@@ -40,7 +40,28 @@ Comptes de démonstration :
 
 - `admin` / `admin123`
 - `superviseur` / `demo123`
-- `agent` / `demo123`
+- `agent` / `agent123`
+- `statisticien` / `stat123`
+- `auditeur` / `audit123`
+
+## Configuration du Stockage des Médias
+
+Par défaut, les fichiers téléchargés (ex: photos de profil) sont stockés localement dans le dossier `data/uploads/`.
+Vous pouvez personnaliser l'hébergeur en utilisant le fichier `.env` :
+
+### Google Drive
+Pour envoyer les fichiers directement sur Google Drive :
+```env
+MEDIA_STORAGE_PROVIDER=google_drive
+GOOGLE_DRIVE_FOLDER_ID=votre_id_de_dossier
+GOOGLE_APPLICATION_CREDENTIALS_JSON={"type": "service_account", ...}
+```
+
+### Stockage Local avec CDN personnalisé
+```env
+MEDIA_STORAGE_PROVIDER=local
+MEDIA_BASE_URL=https://cdn.monsite.com/uploads
+```
 
 ## Développement frontend
 

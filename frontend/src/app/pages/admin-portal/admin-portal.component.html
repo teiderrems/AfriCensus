@@ -84,6 +84,27 @@
       </div>
     </article>
   </section>
+
+  <section class="infra-grid" style="margin-top: 1rem;">
+    <article class="panel">
+      <div class="panel-head compact">
+        <div>
+          <h2>{{ i18n.t('admin.system.title') }}</h2>
+          <p>{{ i18n.t('admin.system.subtitle') }}</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <acl-button type="button" variant="secondary" [disabled]="isSeeding() || isResetting()" (click)="seedSystem()">
+          <lucide-icon [name]="isSeeding() ? 'loader' : 'database'" [class.animate-spin]="isSeeding()"></lucide-icon>
+          {{ i18n.t('admin.system.seed') }}
+        </acl-button>
+        <acl-button type="button" variant="danger" [disabled]="isSeeding() || isResetting()" (click)="resetSystem()">
+          <lucide-icon [name]="isResetting() ? 'loader' : 'triangle-alert'" [class.animate-spin]="isResetting()"></lucide-icon>
+          {{ i18n.t('admin.system.reset') }}
+        </acl-button>
+      </div>
+    </article>
+  </section>
   }
 
   @if (activeTab() === 'users') {
@@ -131,7 +152,7 @@
       </div>
       <a routerLink="/persons">{{ i18n.t('admin.users.viewAll') }}</a>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap hide-mobile">
       <table>
         <thead>
           <tr>
@@ -181,7 +202,54 @@
         </tbody>
       </table>
     </div>
-    <acl-table-pagination [ariaLabel]="i18n.t('admin.users.paginationLabel')" [totalItems]="filteredUsers().length"
+
+    <div class="mobile-list hide-desktop">
+      @for (user of pagedUsers(); track user.id) {
+        <div class="mobile-card">
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.users.table.user') }}</span>
+            <span class="mobile-card-value">
+              <div class="identity">
+                <span>{{ initials(user.full_name) }}</span>
+                <strong>{{ user.full_name }}</strong>
+              </div>
+            </span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.users.table.role') }}</span>
+            <span class="mobile-card-value">{{ roleLabel(user.role) }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.users.table.zones') }}</span>
+            <span class="mobile-card-value">{{ user.zone_ids.length || i18n.t('admin.users.zoneNational') }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.users.table.status') }}</span>
+            <span class="mobile-card-value"><span class="admin-chip" [class.offline]="!user.active">{{ user.active ? i18n.t('admin.users.statusActive') : i18n.t('admin.users.statusDraft') }}</span></span>
+          </div>
+          <div class="mobile-card-actions">
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.view')"
+                (click)="openUserDrawer(user)">
+                <lucide-icon name="eye"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('admin.users.action.edit')"
+                (click)="editUser(user)">
+                <lucide-icon name="pencil"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action" type="button"
+                [aclTooltip]="user.active === false ? i18n.t('admin.users.action.activate') : i18n.t('admin.users.action.deactivate')"
+                (click)="toggleUserActive(user)">
+                <lucide-icon [name]="user.active === false ? 'toggle-right' : 'toggle-left'"></lucide-icon>
+              </acl-button>
+              <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('admin.users.action.delete')"
+                (click)="deleteUser(user)">
+                <lucide-icon name="trash-2"></lucide-icon>
+              </acl-button>
+          </div>
+        </div>
+      }
+    </div>
+    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)" [ariaLabel]="i18n.t('admin.users.paginationLabel')" [totalItems]="filteredUsers().length"
       [page]="userPage()" [totalPages]="userTotalPages()" (previous)="previousUserPage()" (next)="nextUserPage()" />
   </article>
   }
@@ -233,7 +301,7 @@
       </div>
       <span>{{ filteredAuditLogs().length }} {{ i18n.t('admin.security.events') }}</span>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap hide-mobile">
       <table>
         <thead>
           <tr>
@@ -260,6 +328,37 @@
           }
         </tbody>
       </table>
+    </div>
+
+    <div class="mobile-list hide-desktop">
+      @for (log of filteredAuditLogs(); track log.id) {
+        <div class="mobile-card">
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.security.table.timestamp') }}</span>
+            <span class="mobile-card-value">{{ log.created_at | aclLocalizedDate }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.security.table.severity') }}</span>
+            <span class="mobile-card-value"><span class="severity-chip" [class.critical]="auditSeverityFor(log) === 'critical'" [class.warning]="auditSeverityFor(log) === 'warning'">{{ auditSeverityFor(log) }}</span></span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.security.table.event') }}</span>
+            <span class="mobile-card-value">{{ auditTitle(log.action) }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.security.table.user') }}</span>
+            <span class="mobile-card-value">{{ log.user_name || userName(log.user_id) }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">{{ i18n.t('admin.security.table.details') }}</span>
+            <span class="mobile-card-value">{{ log.entity_type }} {{ log.entity_name || (log.entity_id | aclShortId) }}</span>
+          </div>
+          <div class="mobile-card-actions">
+              <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('audit.table.viewDetails')"
+                (click)="openAuditLog(log)"><lucide-icon name="eye"></lucide-icon></acl-button>
+          </div>
+        </div>
+      }
     </div>
   </section>
   }
@@ -412,7 +511,10 @@
     <span><i></i> API V2.4.0</span>
     <span><i></i> MAINNET</span>
   </footer>
-  <acl-detail-drawer [open]="userDrawerOpen()" [title]="selectedUserTitle()"
+  
+</section>
+
+<acl-detail-drawer [open]="userDrawerOpen()" [title]="selectedUserTitle()"
     [subtitle]="i18n.t('admin.users.drawerSubtitle')" [items]="selectedUserDetails()"
     (closed)="selectedUser.set(null)" />
   <acl-detail-drawer [open]="auditDrawerOpen()" [title]="selectedAuditTitle()"
@@ -420,7 +522,7 @@
     (closed)="selectedAuditLog.set(null)" />
   <acl-modal [open]="userEditorOpen()"
     [title]="editingUserId() ? i18n.t('admin.user.edit.title') : i18n.t('admin.user.create.title')"
-    [subtitle]="i18n.t('admin.user.draft.subtitle')" [isForm]="true" (submitted)="saveUser()"
+    [subtitle]="i18n.t('admin.user.draft.subtitle')" [isForm]="true"  (submitted)="saveUser()"
     (closed)="closeUserEditor()">
     <div class="user-form">
       @if (userFormStatus()) {
@@ -470,4 +572,3 @@
       </acl-button>
     </ng-container>
   </acl-modal>
-</section>

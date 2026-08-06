@@ -40,6 +40,8 @@ def create_zone(
     user: dict[str, Any] = Depends(require_roles(Role.ADMIN, Role.SUPERVISOR)),
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
+    if db.scalars(select(Zone).where(Zone.code == payload.code)).first():
+        raise HTTPException(status_code=409, detail=f"Une zone avec le code {payload.code} existe déjà.")
     return db_create_item(db, "zones", payload.model_dump(), user["id"], "CREATE_ZONE")
 
 
@@ -62,6 +64,9 @@ def update_zone(
     user: dict[str, Any] = Depends(require_roles(Role.ADMIN, Role.SUPERVISOR)),
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
+    existing = db.scalars(select(Zone).where(Zone.code == payload.code, Zone.id != zone_id)).first()
+    if existing:
+        raise HTTPException(status_code=409, detail=f"Une zone avec le code {payload.code} existe déjà.")
     return db_update_item(db, "zones", zone_id, payload.model_dump(), user["id"], "UPDATE_ZONE")
 
 

@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 T = TypeVar("T")
 
@@ -84,6 +84,8 @@ class UserCreate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"x-field-i18n": field_metadata("user")})
 
     username: str = Field(..., min_length=3, description="Identifiant unique de connexion.", examples=["agent.nord01"])
+    email: EmailStr | None = Field(default=None, description="Adresse email de l'utilisateur.", examples=["agent@africensus.org"])
+    phone: str | None = Field(default=None, pattern=r"^\+?[1-9]\d{1,14}$", description="Numéro de téléphone de l'utilisateur (format E.164).", examples=["+22890000000"])
     full_name: str = Field(..., description="Nom complet de l’utilisateur.", examples=["Kossi Akakpo"])
     role: Role = Field(..., description="Rôle applicatif attribué à l’utilisateur.")
     password: str = Field(..., min_length=6, description="Mot de passe initial.")
@@ -95,9 +97,12 @@ class UserUpdate(BaseModel):
     model_config = ConfigDict(json_schema_extra={"x-field-i18n": field_metadata("user")})
 
     username: str | None = Field(default=None, min_length=3, description="Nouvel identifiant unique.")
+    email: EmailStr | None = Field(default=None, description="Nouvelle adresse email.")
+    phone: str | None = Field(default=None, pattern=r"^\+?[1-9]\d{1,14}$", description="Nouveau numéro de téléphone (format E.164).")
     full_name: str | None = Field(default=None, description="Nom complet.")
     active: bool | None = Field(default=None, description="Statut actif/inactif du compte.")
     zone_ids: list[str] | None = Field(default=None, description="Zones accessibles ou affectées.")
+    preferred_language: str | None = Field(default=None, description="Langue préférée (fr, en).")
 
 
 class UserRoleUpdate(BaseModel):
@@ -105,16 +110,23 @@ class UserRoleUpdate(BaseModel):
 
 
 class PasswordUpdate(BaseModel):
+    old_password: str = Field(..., description="Ancien mot de passe.")
+    password: str = Field(..., min_length=6, description="Nouveau mot de passe.")
+
+class AdminPasswordReset(BaseModel):
     password: str = Field(..., min_length=6, description="Nouveau mot de passe.")
 
 
 class UserOut(BaseModel):
     id: str
     username: str
+    email: EmailStr | None = None
+    phone: str | None = None
     full_name: str
     role: Role
     zone_ids: list[str] = Field(default_factory=list)
     active: bool = True
+    preferred_language: str = "fr"
 
 
 LocalizedString = str | dict[str, str]
@@ -196,6 +208,24 @@ class FormDefinitionIn(BaseModel):
 
 class FormDefinitionOut(FormDefinitionIn):
     id: str
+    created_by: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    deleted_at: str | None = None
+
+
+class FormResponseIn(BaseModel):
+    form_definition_id: str = Field(..., description="L'ID de la définition de formulaire liée.")
+    zone_id: str | None = Field(default=None, description="La zone associée.")
+    campaign_id: str | None = Field(default=None, description="La campagne associée.")
+    data: dict[str, Any] = Field(default_factory=dict, description="Les réponses sérialisées.")
+    validation_status: ValidationStatus | str = Field(default=ValidationStatus.SUBMITTED)
+
+
+class FormResponseOut(FormResponseIn):
+    id: str
+    sync_status: SyncStatus | str = Field(default=SyncStatus.SYNCED)
+    decision_comment: str | None = None
     created_by: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
@@ -400,6 +430,7 @@ class SyncPullResponse(BaseModel):
     corrections: list[dict[str, Any]]
     forms: list[dict[str, Any]]
     documents: list[dict[str, Any]] = Field(default_factory=list)
+    conversations: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class AppRoleIn(BaseModel):
@@ -521,3 +552,25 @@ class FaqOut(BaseModel):
     is_active: bool
     created_at: str | None
     updated_at: str | None
+
+
+class ForgotPasswordRequest(BaseModel):
+    username_or_email: str
+    redirect_url: str | None = None
+    sender_email: str | None = None
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+class NotificationResponse(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    message: str
+    type: str
+    is_read: bool
+    created_at: str
+
+    model_config = ConfigDict(from_attributes=True)

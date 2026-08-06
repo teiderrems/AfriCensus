@@ -1,0 +1,66 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <button type="button" class="mobile-menu-btn show-mobile" [aclTooltip]="i18n.t('a11y.toggleMenu')" (click)="layout.toggleMobileDrawer()">
+      <lucide-icon name="menu"></lucide-icon>
+    </button>
+    <div class="user-badge hide-mobile">
+      <strong>AfriCensus Link</strong>
+      <span>{{ user()?.full_name }}</span>
+    </div>
+  </div>
+  <button class="sync-status" type="button" [class.offline]="!offline.online()" [class.pending]="offline.hasPending()" (click)="offline.syncNow()" [aclTooltip]="offline.online() ? i18n.t('sync.online') : i18n.t('sync.offline')">
+    <lucide-icon [name]="offline.online() ? 'cloud' : 'cloud-off'"></lucide-icon>
+    <strong>{{ offline.online() ? i18n.t('sync.online') : i18n.t('sync.offline') }}</strong>
+    @if (offline.hasPending()) {
+      <em>{{ offline.pendingCount() }}</em>
+    }
+  </button>
+  <div class="top-actions">
+    <button type="button" class="language-toggle" [aclTooltip]="i18n.t('a11y.language')" (click)="toggleLanguage()">
+      {{ i18n.language() | uppercase }}
+    </button>
+    <button type="button" class="notification-toggle" [aclTooltip]="i18n.t('a11y.notifications')" (click)="toggleNotifications()">
+      <lucide-icon name="bell"></lucide-icon>
+      @if (notificationService.unreadCount() > 0) {
+        <span class="badge">{{ notificationService.unreadCount() }}</span>
+      }
+    </button>
+    <button type="button" [aclTooltip]="i18n.t('a11y.help')" (click)="goToHelp()"><lucide-icon name="circle-question-mark"></lucide-icon></button>
+    <button type="button" [aclTooltip]="theme.theme() === 'dark' ? i18n.t('a11y.enableLight') : i18n.t('a11y.enableDark')" (click)="theme.toggle()">
+      <lucide-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'"></lucide-icon>
+    </button>
+  </div>
+</header>
+
+@if (notificationsOpen()) {
+  <aside class="notification-panel" role="status" aria-live="polite">
+    <strong>{{ i18n.t('notifications.title') }}</strong>
+    @if (notificationService.notifications().length === 0) {
+      <p>{{ i18n.t('notifications.empty') }}</p>
+    }
+    <div class="notif-list">
+      @for (n of notificationService.notifications(); track n.id) {
+        <div class="notif-item" [class.unread]="!n.is_read" (click)="markNotifAsRead(n.id)">
+          <p class="notif-title">{{ n.title }}</p>
+          <p class="notif-msg">{{ n.message }}</p>
+        </div>
+      }
+    </div>
+  </aside>
+}
+@if (offline.hasPending() || offline.syncing() || offline.lastSyncError()) {
+  <aside class="sync-panel" role="status" aria-live="polite">
+    <strong>{{ offline.syncing() ? i18n.t('sync.inProgress') : offline.hasPending() ? i18n.t('sync.pendingTitle') : i18n.t('sync.title') }}</strong>
+    <p>
+      @if (offline.lastSyncError()) {
+        {{ offline.lastSyncError() }}
+      } @else if (offline.hasPending()) {
+        {{ i18n.t('sync.pendingMessage', { count: offline.pendingCount() }) }}
+      } @else {
+        {{ i18n.t('sync.success') }}
+      }
+    </p>
+    <button type="button" class="btn secondary" [disabled]="!offline.online() || offline.syncing() || !offline.hasPending()" (click)="offline.syncNow()">{{ i18n.t('sync.action') }}</button>
+  </aside>
+
+}

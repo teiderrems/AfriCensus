@@ -9,8 +9,8 @@ from ...database import get_db
 from ...db_services import paginate_query
 from ...dependencies import current_user, require_roles
 from ...models import User
-from ...schemas import PasswordUpdate, Role, UserCreate, UserOut, UserRoleUpdate, UserUpdate, now_iso, PaginatedResponse
-from ...security import hash_password
+from ...schemas import PasswordUpdate, Role, UserCreate, UserOut, UserRoleUpdate, UserUpdate, now_iso, PaginatedResponse, AdminPasswordReset
+from ...security import hash_password, verify_password
 from ...services import db_audit, public_user, db_find_or_404
 
 
@@ -59,14 +59,26 @@ def list_users(
 
 @router.post("", response_model=UserOut, status_code=201, summary="Créer un utilisateur")
 def create_user(payload: UserCreate, user: dict[str, Any] = Depends(require_roles(Role.ADMIN)), db: Session = Depends(get_db)) -> dict[str, Any]:
-    existing = db.scalar(select(User).where(User.username == payload.username))
-    if existing:
+    existing_username = db.scalar(select(User).where(User.username == payload.username))
+    if existing_username:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already exists")
+    
+    if payload.email:
+        existing_email = db.scalar(select(User).where(User.email == payload.email))
+        if existing_email:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already exists")
+            
+    if payload.phone:
+        existing_phone = db.scalar(select(User).where(User.phone == payload.phone))
+        if existing_phone:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Phone already exists")
     
     now = now_iso()
     new_user = User(
         id=str(uuid4()),
         username=payload.username,
+        email=payload.email,
+        phone=payload.phone,
         full_name=payload.full_name,
         role=payload.role.value,
         password_hash=hash_password(payload.password),
@@ -82,15 +94,35 @@ def create_user(payload: UserCreate, user: dict[str, Any] = Depends(require_role
 
 @router.get("/me", response_model=UserOut, summary="Lire le profil courant")
 def get_me(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
-    return public_user(user) | {"active": user.get("active", True)}
+    return public_user(user) | {"active": user.get("active", True), "preferred_language": user.get("preferred_language", "fr")}
 
+@router.patch("/me", response_model=UserOut, summary="Mettre à jour son propre profil")
+def update_me(payload: UserUpdate, user: dict[str, Any] = Depends(current_user), db: Session = Depends(get_db)):
+    db_user = db.scalar(select(User).where(User.id == user["id"]))
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if payload.preferred_language is not None:
+        db_user.preferred_language = payload.preferred_language
+        
+    db_audit(db, user["id"], "UPDATE_OWN_PROFILE", "users", user["id"])
+    db.commit()
+    db.refresh(db_user)
+    return public_user(db_user.to_dict()) | {"active": db_user.active, "preferred_language": db_user.preferred_language}
 
 @router.post("/me/password", status_code=204, summary="Mettre à jour son propre mot de passe")
 def update_my_password(payload: PasswordUpdate, user: dict[str, Any] = Depends(current_user), db: Session = Depends(get_db)):
     db_user = db.scalar(select(User).where(User.id == user["id"]))
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
+        
+    if not verify_password(payload.old_password, db_user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid old password")
+        
     db_user.password_hash = hash_password(payload.password)
+    db_user.force_password_change = False
+    db_user.password_changed_at = now_iso()
+    
     db_audit(db, user["id"], "UPDATE_OWN_PASSWORD", "users", user["id"])
     db.commit()
     return Response(status_code=204)
@@ -109,10 +141,20 @@ def update_user(user_id: str, payload: UserUpdate, user: dict[str, Any] = Depend
         raise HTTPException(status_code=404, detail="users not found")
         
     changes = payload.model_dump(exclude_unset=True)
-    if "username" in changes:
-        existing = db.scalar(select(User).where(User.username == changes["username"]).where(User.id != user_id))
-        if existing:
+    if "username" in changes and changes["username"] is not None:
+        existing_username = db.scalar(select(User).where(User.username == changes["username"]).where(User.id != user_id))
+        if existing_username:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already exists")
+            
+    if "email" in changes and changes["email"] is not None:
+        existing_email = db.scalar(select(User).where(User.email == changes["email"]).where(User.id != user_id))
+        if existing_email:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already exists")
+            
+    if "phone" in changes and changes["phone"] is not None:
+        existing_phone = db.scalar(select(User).where(User.phone == changes["phone"]).where(User.id != user_id))
+        if existing_phone:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Phone already exists")
             
     for key, value in changes.items():
         setattr(db_user, key, value)
@@ -136,7 +178,7 @@ def change_user_role(user_id: str, payload: UserRoleUpdate, user: dict[str, Any]
 
 
 @router.post("/{user_id}/password", status_code=204, summary="Réinitialiser le mot de passe")
-def reset_password(user_id: str, payload: PasswordUpdate, user: dict[str, Any] = Depends(require_roles(Role.ADMIN)), db: Session = Depends(get_db)):
+def reset_password(user_id: str, payload: AdminPasswordReset, user: dict[str, Any] = Depends(require_roles(Role.ADMIN)), db: Session = Depends(get_db)):
     db_user = db.scalar(select(User).where(User.id == user_id))
     if not db_user:
         raise HTTPException(status_code=404, detail="users not found")

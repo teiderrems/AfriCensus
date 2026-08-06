@@ -8,3 +8,7 @@
 :host([disabled]) {
   pointer-events: none;
 }
+
+button {
+  width: 100%;
+}

@@ -4,10 +4,11 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '@/app/core/api.service';
+import { LayoutService } from '@/app/core/layout.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { AuditLog } from '@/app/core/models';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
-import { PageSizeSelectComponent } from '@/app/shared/page-size-select/page-size-select.component';
+
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
 import { LocalizedDatePipe } from '@/app/shared/pipes/localized-date.pipe';
 import { ShortIdPipe } from '@/app/shared/pipes/short-id.pipe';
@@ -16,7 +17,7 @@ import { ButtonComponent } from "@/app/shared/button/button";
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
 
 @Component({
-  imports: [CardComponent, LucideAngularModule, FormsModule, DetailDrawerComponent, PageSizeSelectComponent, TablePaginationComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, ButtonComponent, AclTooltipDirective],
+  imports: [CardComponent, LucideAngularModule, FormsModule, DetailDrawerComponent, TablePaginationComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, ButtonComponent, AclTooltipDirective],
   templateUrl: './audit.component.html',
   styleUrl: './audit.component.css',
 })
@@ -49,7 +50,11 @@ export class AuditComponent implements OnInit {
   });
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredLogs().length / this.pageSize())));
   readonly pagedLogs = computed(() => {
-    const start = (Math.min(this.page(), this.totalPages()) - 1) * this.pageSize();
+    const page = Math.min(this.page(), this.totalPages());
+    if (this.layout.isMobile()) {
+      return this.filteredLogs().slice(0, page * this.pageSize());
+    }
+    const start = (page - 1) * this.pageSize();
     return this.filteredLogs().slice(start, start + this.pageSize());
   });
   readonly logDrawerOpen = computed(() => Boolean(this.selectedLog()));
@@ -71,7 +76,8 @@ export class AuditComponent implements OnInit {
     private readonly api: ApiService,
     readonly i18n: I18nService,
     private readonly shortId: ShortIdPipe,
-    private readonly localizedDate: LocalizedDatePipe
+    private readonly localizedDate: LocalizedDatePipe,
+    private readonly layout: LayoutService
   ) { }
   ngOnInit(): void {
     this.api.auditLogs().subscribe({

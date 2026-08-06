@@ -20,6 +20,7 @@
 .pagination-summary {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .summary-badge {
@@ -142,9 +143,7 @@
     justify-content: center;
   }
   .pagination-controls {
-    justify-content: center;
-    width: 100%;
-    flex-wrap: wrap;
+    display: none !important;
   }
   .btn-label {
     display: none;

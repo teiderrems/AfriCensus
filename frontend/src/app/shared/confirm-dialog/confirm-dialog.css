@@ -130,6 +130,27 @@
   margin: 0;
 }
 
+.prompt-input {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1.5px solid var(--outline-soft);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.prompt-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
 .confirm-actions {
   display: flex;
   align-items: center;
