@@ -131,8 +131,71 @@ def localized(value: Any, lang: str) -> str:
     return str(value)
 
 
+DEFAULT_HOME_DATA = {
+    "id": "default-home-content",
+    "brand": "AfriCensus Link",
+    "nav_links": [
+        {"id": "nav-1", "label": {"fr": "Accueil", "en": "Home"}, "href": "/"},
+        {"id": "nav-2", "label": {"fr": "Portail", "en": "Portal"}, "href": "/portal"},
+    ],
+    "actions": [
+        {"id": "act-1", "label": {"fr": "Se connecter", "en": "Sign In"}, "href": "/login", "style": "primary"}
+    ],
+    "hero": {
+        "badge": {"fr": "Recensement National 2026", "en": "National Census 2026"},
+        "title": {"fr": "Plateforme Numérique de Recensement & Cartographie", "en": "Digital Census & Mapping Platform"},
+        "subtitle": {"fr": "Collecte moderne, suivi terrain en temps réel et analyse démographique institutionnelle.", "en": "Modern collection, real-time field tracking, and institutional demographic analytics."},
+        "image_url": None,
+        "image_alt": None,
+        "actions": [
+            {"id": "ha-1", "label": {"fr": "Accéder au Portail", "en": "Access Portal"}, "href": "/portal", "style": "primary", "icon": "layout-dashboard"},
+            {"id": "ha-2", "label": {"fr": "Se connecter", "en": "Sign In"}, "href": "/login", "style": "secondary", "icon": "log-in"}
+        ]
+    },
+    "metrics": [
+        {"id": "m1", "value": {"fr": "100%", "en": "100%"}, "label": {"fr": "Couverture Territoriale", "en": "Territorial Coverage"}, "tone": "primary"},
+        {"id": "m2", "value": {"fr": "24/7", "en": "24/7"}, "label": {"fr": "Disponibilité Système", "en": "System Availability"}, "tone": "success"},
+        {"id": "m3", "value": {"fr": "100%", "en": "100%"}, "label": {"fr": "Conformité Normes", "en": "Standard Compliance"}, "tone": "warning"}
+    ],
+    "features_section": {
+        "eyebrow": {"fr": "Fonctionnalités Clés", "en": "Key Features"},
+        "title": {"fr": "Une Solution Complète de Gestion Démographique", "en": "A Comprehensive Demographic Management Solution"},
+        "text": {"fr": "AfriCensus Link fournit les outils nécessaires pour orchestrer l'ensemble du cycle de vie du recensement.", "en": "AfriCensus Link provides the necessary tools to orchestrate the complete census lifecycle."},
+        "bullets": [
+            {"fr": "Cartographie et découpage des zones de collecte", "en": "Mapping and collection zone division"},
+            {"fr": "Collecte mobile hors ligne avec synchronisation automatique", "en": "Offline mobile collection with automatic synchronization"},
+            {"fr": "Validation hiérarchique et détection de doublons", "en": "Hierarchical validation and duplicate detection"}
+        ]
+    },
+    "values_section": [
+        {"id": "val-1", "title": {"fr": "Souveraineté des Données", "en": "Data Sovereignty"}, "text": {"fr": "Hébergement et contrôle stricts des données statistiques nationales.", "en": "Strict hosting and control of national statistical data."}, "icon": "shield"},
+        {"id": "val-2", "title": {"fr": "Précision & Traçabilité", "en": "Accuracy & Traceability"}, "text": {"fr": "Piste d'audit complète pour chaque enregistrement démographique.", "en": "Complete audit trail for every demographic record."}, "icon": "check-circle"},
+        {"id": "val-3", "title": {"fr": "Inclusivité", "en": "Inclusivity"}, "text": {"fr": "Support multilingue et accessibilité pour tous les agents de terrain.", "en": "Multilingual support and accessibility for all field agents."}, "icon": "users"}
+    ],
+    "footer": {
+        "title": {"fr": "AfriCensus Link", "en": "AfriCensus Link"},
+        "text": {"fr": "Système National de Recensement et de Statistique.", "en": "National Census and Statistics System."},
+        "contact": {"fr": "support@africensus.org", "en": "support@africensus.org"}
+    },
+    "published": True
+}
+
+
 def _current_home_content(db: Session) -> dict[str, Any]:
     content = db.query(HomeContent).filter(HomeContent.deleted_at.is_(None)).first()
     if not content:
-        raise HTTPException(status_code=404, detail="home_content not found")
+        try:
+            content = HomeContent(
+                id=DEFAULT_HOME_DATA["id"],
+                data=DEFAULT_HOME_DATA,
+                version=1,
+                published=True
+            )
+            db.add(content)
+            db.commit()
+            db.refresh(content)
+            return content.to_dict()
+        except Exception:
+            db.rollback()
+            return DEFAULT_HOME_DATA
     return content.to_dict()
