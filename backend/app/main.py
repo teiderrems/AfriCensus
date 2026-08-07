@@ -85,8 +85,14 @@ def create_app() -> FastAPI:
     )
     if "*" not in settings.allowed_host_list:
         application.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
-    setup_security_headers(application, settings.security_headers_enabled)
-    setup_i18n(application, settings.default_language)
+    @application.get("/docs", include_in_schema=False)
+    def redirect_docs():
+        return RedirectResponse("/api/docs")
+
+    @application.get("/redoc", include_in_schema=False)
+    def redirect_redoc():
+        return RedirectResponse("/api/redoc")
+
     application.include_router(api_router)
     mount_frontend(application, settings.frontend_path, settings.frontend_public_url)
     return application
@@ -103,14 +109,12 @@ def mount_frontend(application: FastAPI, frontend_dist, frontend_public_url: str
 
             @application.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
             def redirect_to_frontend(full_path: str):
-                if full_path.startswith("api/"):
+                if full_path in ("api/docs", "api/redoc", "api/openapi.json", "docs", "redoc", "openapi.json") or full_path.startswith("api/"):
                     raise HTTPException(status_code=404, detail="API route not found")
                 return RedirectResponse(f"{public_url}/{full_path}")
 
         return
     if hasattr(application, "frontend"):
-        # FastAPI's frontend helper serves static build output after API routes,
-        # with SPA fallback behavior for Angular client-side routing.
         application.frontend("/", directory=str(frontend_dist), fallback="index.html")
         return
 
@@ -124,6 +128,8 @@ def mount_frontend(application: FastAPI, frontend_dist, frontend_public_url: str
 
     @application.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     def serve_frontend(full_path: str):
+        if full_path in ("api/docs", "api/redoc", "api/openapi.json", "docs", "redoc", "openapi.json") or full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
         requested = frontend_dist / full_path
         if requested.exists() and requested.is_file():
             return FileResponse(requested)
