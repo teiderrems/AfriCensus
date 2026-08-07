@@ -342,7 +342,7 @@ class ChatMessage(Base, DictMixin):
     dict_fields = ("id", "content", "sender_id", "receiver_id", "is_group", "timestamp", "read", "reply_to", "reactions")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    content: Mapped[str] = mapped_column(String(1000))
+    content: Mapped[str] = mapped_column(Text)
     sender_id: Mapped[str] = mapped_column(String(64), index=True)
     receiver_id: Mapped[str] = mapped_column(String(64), index=True)
     is_group: Mapped[bool] = mapped_column(Boolean, default=False)
