@@ -57,7 +57,10 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        if "*" in origins or not origins:
+            return ["*"]
+        return origins
 
     @property
     def supported_language_list(self) -> list[str]:
@@ -66,8 +69,12 @@ class Settings(BaseSettings):
     @property
     def allowed_host_list(self) -> list[str]:
         hosts = [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
-        if "*" in hosts:
+        if "*" in hosts or not hosts:
             return ["*"]
+        extra = ["*.onrender.com", "localhost", "127.0.0.1", "0.0.0.0"]
+        for item in extra:
+            if item not in hosts:
+                hosts.append(item)
         return hosts
 
     @property
