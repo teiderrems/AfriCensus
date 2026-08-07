@@ -40,7 +40,7 @@ def create_auth_token(role="AGENT", zone_id="zone1"):
             
         return create_token(user.id, user.role)
 
-def test_create_person():
+def _create_person():
     token = create_auth_token("AGENT", "zone1")
     
     # First create a household for the person
@@ -70,8 +70,11 @@ def test_create_person():
     assert data["validation_status"] == "DRAFT"
     return data["id"]
 
+def test_create_person():
+    _create_person()
+
 def test_get_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     token = create_auth_token("AGENT", "zone1")
     response = client.get(f"/api/v1/persons/{p_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
@@ -86,7 +89,7 @@ def test_list_persons():
     assert "total" in data
 
 def test_update_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     token = create_auth_token("AGENT", "zone1")
     
     # Needs to get household_id first or we will get validation errors if we omit required fields
@@ -107,21 +110,21 @@ def test_update_person():
     assert response.json()["first_name"] == "Jane"
 
 def test_submit_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     token = create_auth_token("AGENT", "zone1")
     response = client.post(f"/api/v1/persons/{p_id}/submit", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json()["validation_status"] == "SUBMITTED"
 
 def test_validate_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     admin_token = create_auth_token("ADMIN", "zone1")
     response = client.post(f"/api/v1/persons/{p_id}/validate", headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == 200
     assert response.json()["validation_status"] == "VALIDATED"
 
 def test_reject_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     admin_token = create_auth_token("ADMIN", "zone1")
     payload = {"comment": "Invalid data"}
     response = client.post(f"/api/v1/persons/{p_id}/reject", json=payload, headers={"Authorization": f"Bearer {admin_token}"})
@@ -130,7 +133,7 @@ def test_reject_person():
     assert response.json()["decision_comment"] == "Invalid data"
 
 def test_request_correction_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     admin_token = create_auth_token("ADMIN", "zone1")
     payload = {"comment": "Please fix name"}
     response = client.post(f"/api/v1/persons/{p_id}/request-correction", json=payload, headers={"Authorization": f"Bearer {admin_token}"})
@@ -139,7 +142,7 @@ def test_request_correction_person():
     assert response.json()["decision_comment"] == "Please fix name"
 
 def test_delete_person():
-    p_id = test_create_person()
+    p_id = _create_person()
     token = create_auth_token("AGENT", "zone1")
     response = client.delete(f"/api/v1/persons/{p_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 204
@@ -148,14 +151,14 @@ def test_delete_person():
     assert response.status_code == 404
 
 def test_get_duplicates():
-    p_id = test_create_person()
+    p_id = _create_person()
     token = create_auth_token("AGENT", "zone1")
     response = client.get(f"/api/v1/persons/{p_id}/duplicates", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 def test_get_relations():
-    p_id = test_create_person()
+    p_id = _create_person()
     token = create_auth_token("AGENT", "zone1")
     response = client.get(f"/api/v1/persons/{p_id}/relations", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
