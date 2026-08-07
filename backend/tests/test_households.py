@@ -40,7 +40,7 @@ def create_auth_token(role="AGENT", zone_id="zone1"):
             
         return create_token(user.id, user.role)
 
-def test_create_household():
+def _create_household():
     token = create_auth_token("AGENT", "zone1")
     payload = {
         "zone_id": "zone1",
@@ -55,8 +55,11 @@ def test_create_household():
     assert data["validation_status"] == "DRAFT"
     return data["id"]
 
+def test_create_household():
+    _create_household()
+
 def test_get_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     token = create_auth_token("AGENT", "zone1")
     response = client.get(f"/api/v1/households/{h_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
@@ -71,7 +74,7 @@ def test_list_households():
     assert "total" in data
 
 def test_update_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     token = create_auth_token("AGENT", "zone1")
     payload = {
         "zone_id": "zone1",
@@ -84,21 +87,21 @@ def test_update_household():
     assert response.json()["address_text"] == "456 New St"
 
 def test_submit_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     token = create_auth_token("AGENT", "zone1")
     response = client.post(f"/api/v1/households/{h_id}/submit", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json()["validation_status"] == "SUBMITTED"
 
 def test_validate_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     admin_token = create_auth_token("ADMIN", "zone1")
     response = client.post(f"/api/v1/households/{h_id}/validate", headers={"Authorization": f"Bearer {admin_token}"})
     assert response.status_code == 200
     assert response.json()["validation_status"] == "VALIDATED"
 
 def test_reject_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     admin_token = create_auth_token("ADMIN", "zone1")
     payload = {"comment": "Invalid data"}
     response = client.post(f"/api/v1/households/{h_id}/reject", json=payload, headers={"Authorization": f"Bearer {admin_token}"})
@@ -107,7 +110,7 @@ def test_reject_household():
     assert response.json()["decision_comment"] == "Invalid data"
 
 def test_request_correction_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     admin_token = create_auth_token("ADMIN", "zone1")
     payload = {"comment": "Please fix address"}
     response = client.post(f"/api/v1/households/{h_id}/request-correction", json=payload, headers={"Authorization": f"Bearer {admin_token}"})
@@ -116,7 +119,7 @@ def test_request_correction_household():
     assert response.json()["decision_comment"] == "Please fix address"
 
 def test_delete_household():
-    h_id = test_create_household()
+    h_id = _create_household()
     token = create_auth_token("AGENT", "zone1")
     response = client.delete(f"/api/v1/households/{h_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 204
