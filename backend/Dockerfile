@@ -4,7 +4,6 @@ WORKDIR /frontend
 COPY frontend/package*.json frontend/angular.json frontend/tsconfig*.json frontend/postcss.config.json frontend/proxy.conf.json frontend/ngsw-config.json ./
 COPY frontend/src ./src
 COPY frontend/public ./public
-ENV NPM_CONFIG_ALLOW_SCRIPTS=true
 RUN npm ci
 RUN npm run build
 
