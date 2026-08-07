@@ -83,7 +83,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    application.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
+    if "*" not in settings.allowed_host_list:
+        application.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_host_list)
     setup_security_headers(application, settings.security_headers_enabled)
     setup_i18n(application, settings.default_language)
     application.include_router(api_router)
@@ -96,11 +97,11 @@ def mount_frontend(application: FastAPI, frontend_dist, frontend_public_url: str
         if frontend_public_url:
             public_url = frontend_public_url.rstrip("/")
 
-            @application.get("/", include_in_schema=False)
+            @application.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
             def redirect_to_frontend_root():
                 return RedirectResponse(public_url)
 
-            @application.get("/{full_path:path}", include_in_schema=False)
+            @application.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
             def redirect_to_frontend(full_path: str):
                 if full_path.startswith("api/"):
                     raise HTTPException(status_code=404, detail="API route not found")
@@ -117,11 +118,11 @@ def mount_frontend(application: FastAPI, frontend_dist, frontend_public_url: str
     if assets_dir.exists():
         application.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-    @application.get("/", include_in_schema=False)
+    @application.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     def serve_frontend_root():
         return FileResponse(frontend_dist / "index.html")
 
-    @application.get("/{full_path:path}", include_in_schema=False)
+    @application.api_route("/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     def serve_frontend(full_path: str):
         requested = frontend_dist / full_path
         if requested.exists() and requested.is_file():
