@@ -435,19 +435,24 @@ async def toggle_reaction(
 
     reactions = dict(msg.reactions or {})
     emoji = payload.emoji.strip()
-    users_who_reacted = list(reactions.get(emoji, []))
+    
+    # Check if user already reacted with this specific emoji
+    already_had_this_emoji = current_user_id in reactions.get(emoji, [])
 
-    if current_user_id in users_who_reacted:
-        users_who_reacted.remove(current_user_id)
-        if not users_who_reacted:
-            reactions.pop(emoji, None)
-        else:
-            reactions[emoji] = users_who_reacted
-    else:
-        users_who_reacted.append(current_user_id)
-        reactions[emoji] = users_who_reacted
+    # Remove current_user_id from ALL reactions on this message
+    new_reactions: dict[str, list[str]] = {}
+    for e, users in reactions.items():
+        filtered = [u for u in users if u != current_user_id]
+        if filtered:
+            new_reactions[e] = filtered
 
-    msg.reactions = reactions
+    # If user didn't already have this emoji, add it (switching or adding reaction)
+    if not already_had_this_emoji:
+        current_list = new_reactions.get(emoji, [])
+        current_list.append(current_user_id)
+        new_reactions[emoji] = current_list
+
+    msg.reactions = new_reactions
     from sqlalchemy.orm.attributes import flag_modified
     flag_modified(msg, "reactions")
     db.commit()
