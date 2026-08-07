@@ -138,50 +138,27 @@ export class DatePickerComponent implements ControlValueAccessor {
     }
   }
 
-  @HostListener('window:scroll', ['$event'])
-  @HostListener('window:resize', ['$event'])
-  onWindowScrollOrResize() {
-    if (this.isOpen()) {
-      this.updatePosition();
-    }
-  }
-
-  updatePosition() {
-    if (!this.isOpen()) return;
-    const triggerEl = this.elementRef.nativeElement.querySelector('.date-trigger') || this.elementRef.nativeElement;
-    const rect = triggerEl.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-
-    const popoverWidth = 280;
-    const popoverHeight = 310;
-
-    let top = rect.bottom + 6;
-    let openAbove = false;
-
-    if (viewportHeight - rect.bottom < popoverHeight && rect.top > popoverHeight) {
-      top = rect.top - popoverHeight - 6;
-      openAbove = true;
-    } else if (viewportHeight - rect.bottom < popoverHeight) {
-      top = Math.max(10, viewportHeight - popoverHeight - 10);
-    }
-
-    let left = rect.left;
-    if (left + popoverWidth > viewportWidth - 12) {
-      left = Math.max(12, viewportWidth - popoverWidth - 12);
-    }
-
-    this.popoverTop.set(top);
-    this.popoverLeft.set(left);
-    this.openAbove.set(openAbove);
-  }
-
   toggleOpen() {
     if (this.disabled) return;
     const nextState = !this.isOpen();
     this.isOpen.set(nextState);
     if (nextState) {
-      this.updatePosition();
+      const triggerEl = this.elementRef.nativeElement.querySelector('.date-trigger') || this.elementRef.nativeElement;
+      const rect = triggerEl.getBoundingClientRect();
+      const containerEl = this.elementRef.nativeElement.closest('.modal, .modal-dialog, article.modal, form.modal, .detail-drawer');
+      
+      let distToTop = rect.top;
+      let distToBottom = window.innerHeight - rect.bottom;
+
+      if (containerEl) {
+        const cRect = containerEl.getBoundingClientRect();
+        distToTop = rect.top - cRect.top;
+        distToBottom = cRect.bottom - rect.bottom;
+      }
+
+      const popoverHeight = 310;
+      this.openAbove.set(distToBottom < popoverHeight && distToTop > distToBottom);
+
       const val = this.value();
       if (val) {
         const [y, m, d] = val.split('-').map(Number);

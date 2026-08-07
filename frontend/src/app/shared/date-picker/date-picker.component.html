@@ -1,29 +1,24 @@
-<div class="date-picker-wrapper">
+<div class="date-picker-wrapper" [class.is-open]="isOpen()">
   <button type="button" class="date-trigger" [disabled]="disabled" (click)="toggleOpen()">
-    <span [class.has-value]="!!value">{{ displayValue() }}</span>
+    <span [class.has-value]="!!value()">{{ displayValue() }}</span>
     <lucide-icon name="calendar"></lucide-icon>
   </button>
 
   @if (isOpen()) {
-    <div 
-      class="popover" 
-      [class.open-above]="openAbove()"
-      [style.top.px]="popoverTop()" 
-      [style.left.px]="popoverLeft()"
-    >
+    <div class="popover" [class.open-above]="openAbove()">
       <div class="calendar-header">
         <button type="button" class="nav-btn" [aclTooltip]="i18n.t('action.previous')" (click)="prevMonth($event)">
           <lucide-icon name="chevron-left"></lucide-icon>
         </button>
         <div class="month-year-selects">
           <acl-select
-            class="header-acl-select"
+            class="header-acl-select month-select"
             [options]="monthOptions()"
             [ngModel]="currentMonth().getMonth()"
             (ngModelChange)="setMonth($event)"
           ></acl-select>
           <acl-select
-            class="header-acl-select"
+            class="header-acl-select year-select"
             [options]="yearOptions()"
             [ngModel]="currentMonth().getFullYear()"
             (ngModelChange)="setYear($event)"

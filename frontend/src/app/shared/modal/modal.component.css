@@ -132,6 +132,15 @@ p {
   overflow: visible !important;
 }
 
+.modal:has(.is-open),
+.modal-body:has(.is-open),
+.modal:has(acl-date-picker.is-open),
+.modal-body:has(acl-date-picker.is-open),
+.modal:has(acl-select.is-open),
+.modal-body:has(acl-select.is-open) {
+  overflow: visible !important;
+}
+
 /* Global Form Styling inside Modals */
 .modal form,
 .modal-form,
