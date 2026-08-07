@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field, AliasChoices, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,7 +9,10 @@ class Settings(BaseSettings):
     app_name: str = "AfriCensus Link API"
     app_version: str = "0.1.0"
     environment: str = "development"
-    database_url: str = Field(default="sqlite:///./data/africensus.db", alias="DATABASE_URL")
+    database_url: str = Field(
+        default="sqlite:///./data/africensus.db",
+        validation_alias=AliasChoices("DATABASE_URL", "SUPEBASE_DATABASE_URL", "SUPABASE_DATABASE_URL")
+    )
 
     @field_validator("database_url", mode="after")
     @classmethod

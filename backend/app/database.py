@@ -18,7 +18,7 @@ if db_url.startswith("sqlite"):
     if db_path and db_path != ":memory:":
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
-connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {"connect_timeout": 10}
 
 try:
     engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
