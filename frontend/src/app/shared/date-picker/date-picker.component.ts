@@ -54,37 +54,37 @@ export class DatePickerComponent implements ControlValueAccessor {
     const month = this.currentMonth();
     const year = month.getFullYear();
     const m = month.getMonth();
-    
+
     const firstDayOfMonth = new Date(year, m, 1);
     const lastDayOfMonth = new Date(year, m + 1, 0);
-    
+
     let startOffset = firstDayOfMonth.getDay() - 1;
     if (startOffset === -1) startOffset = 6;
-    
+
     const days = [];
     const startDate = new Date(firstDayOfMonth);
     startDate.setDate(startDate.getDate() - startOffset);
-    
+
     const today = new Date();
-    today.setHours(0,0,0,0);
-    
+    today.setHours(0, 0, 0, 0);
+
     const val = this.value();
     const selectedDate = val ? new Date(val) : null;
-    if (selectedDate) selectedDate.setHours(0,0,0,0);
+    if (selectedDate) selectedDate.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < 42; i++) {
       const d = new Date(startDate);
       d.setDate(d.getDate() + i);
-      d.setHours(0,0,0,0);
-      
+      d.setHours(0, 0, 0, 0);
+
       const isCurrentMonth = d.getMonth() === m;
       const isToday = d.getTime() === today.getTime();
       const isSelected = selectedDate ? d.getTime() === selectedDate.getTime() : false;
-      
+
       const formatted = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       days.push({ date: d, isCurrentMonth, isSelected, isToday, formatted });
     }
-    
+
     return days;
   });
 
@@ -97,19 +97,82 @@ export class DatePickerComponent implements ControlValueAccessor {
     return formatter.format(new Date(y, m - 1, d));
   });
 
-  private onChange: (val: any) => void = () => {};
-  private onTouched: () => void = () => {};
+  readonly popoverTop = signal<number>(0);
+  readonly popoverLeft = signal<number>(0);
+
+  readonly monthOptions = computed(() => {
+    const lang = this.i18n.language();
+    const formatter = new Intl.DateTimeFormat(lang, { month: 'long' });
+    return Array.from({ length: 12 }).map((_, i) => {
+      const d = new Date(2024, i, 1);
+      const label = formatter.format(d);
+      return { value: i, label: label.charAt(0).toUpperCase() + label.slice(1) };
+    });
+  });
+
+  readonly yearOptions = computed(() => {
+    const currentYear = new Date().getFullYear();
+    const startYear = 1900;
+    const endYear = currentYear + 10;
+    const years: number[] = [];
+    for (let y = endYear; y >= startYear; y--) {
+      years.push(y);
+    }
+    return years;
+  });
+
+  private onChange: (val: any) => void = () => { };
+  private onTouched: () => void = () => { };
 
   constructor(
     private readonly elementRef: ElementRef,
     public readonly i18n: I18nService
-  ) {}
+  ) { }
 
   @HostListener('document:click', ['$event'])
+  @HostListener('document:pointerdown', ['$event'])
   onClickOutside(event: Event) {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
+    if (this.isOpen() && !this.elementRef.nativeElement.contains(event.target)) {
       this.isOpen.set(false);
     }
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  @HostListener('window:resize', ['$event'])
+  onWindowScrollOrResize() {
+    if (this.isOpen()) {
+      this.updatePosition();
+    }
+  }
+
+  updatePosition() {
+    if (!this.isOpen()) return;
+    const triggerEl = this.elementRef.nativeElement.querySelector('.date-trigger') || this.elementRef.nativeElement;
+    const rect = triggerEl.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    const popoverWidth = 280;
+    const popoverHeight = 310;
+
+    let top = rect.bottom + 6;
+    let openAbove = false;
+
+    if (viewportHeight - rect.bottom < popoverHeight && rect.top > popoverHeight) {
+      top = rect.top - popoverHeight - 6;
+      openAbove = true;
+    } else if (viewportHeight - rect.bottom < popoverHeight) {
+      top = Math.max(10, viewportHeight - popoverHeight - 10);
+    }
+
+    let left = rect.left;
+    if (left + popoverWidth > viewportWidth - 12) {
+      left = Math.max(12, viewportWidth - popoverWidth - 12);
+    }
+
+    this.popoverTop.set(top);
+    this.popoverLeft.set(left);
+    this.openAbove.set(openAbove);
   }
 
   toggleOpen() {
@@ -117,21 +180,7 @@ export class DatePickerComponent implements ControlValueAccessor {
     const nextState = !this.isOpen();
     this.isOpen.set(nextState);
     if (nextState) {
-      const rect = this.elementRef.nativeElement.getBoundingClientRect();
-      const modalEl = this.elementRef.nativeElement.closest('.modal, .modal-dialog, article.modal, form.modal');
-      
-      let distToTop = rect.top;
-      let distToBottom = window.innerHeight - rect.bottom;
-      
-      if (modalEl) {
-        const mRect = modalEl.getBoundingClientRect();
-        distToTop = rect.top - mRect.top;
-        distToBottom = mRect.bottom - rect.bottom;
-      }
-      
-      // Open above only if space below is less than 220px AND top space is greater than bottom space
-      this.openAbove.set(distToBottom < 220 && distToTop > distToBottom);
-
+      this.updatePosition();
       const val = this.value();
       if (val) {
         const [y, m, d] = val.split('-').map(Number);
@@ -142,6 +191,16 @@ export class DatePickerComponent implements ControlValueAccessor {
         this.currentMonth.set(now);
       }
     }
+  }
+
+  setMonth(mIndex: any) {
+    const current = this.currentMonth();
+    this.currentMonth.set(new Date(current.getFullYear(), Number(mIndex), 1));
+  }
+
+  setYear(year: any) {
+    const current = this.currentMonth();
+    this.currentMonth.set(new Date(Number(year), current.getMonth(), 1));
   }
 
   prevMonth(event: Event) {
@@ -159,10 +218,10 @@ export class DatePickerComponent implements ControlValueAccessor {
   selectDate(day: any, event: Event) {
     event.stopPropagation();
     if (this.disabled) return;
-    
+
     this.value.set(day.formatted);
     this.isOpen.set(false);
-    
+
     this.onChange(this.value());
     this.onTouched();
   }

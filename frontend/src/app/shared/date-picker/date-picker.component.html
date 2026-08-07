@@ -5,12 +5,28 @@
   </button>
 
   @if (isOpen()) {
-    <div class="popover" [class.open-above]="openAbove()">
+    <div 
+      class="popover" 
+      [class.open-above]="openAbove()"
+      [style.top.px]="popoverTop()" 
+      [style.left.px]="popoverLeft()"
+    >
       <div class="calendar-header">
         <button type="button" class="nav-btn" [aclTooltip]="i18n.t('action.previous')" (click)="prevMonth($event)">
           <lucide-icon name="chevron-left"></lucide-icon>
         </button>
-        <div class="month-year">{{ monthYearDisplay() }}</div>
+        <div class="month-year-selects">
+          <select class="header-select" [ngModel]="currentMonth().getMonth()" (ngModelChange)="setMonth($event)" (click)="$event.stopPropagation()">
+            @for (m of monthOptions(); track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+          <select class="header-select" [ngModel]="currentMonth().getFullYear()" (ngModelChange)="setYear($event)" (click)="$event.stopPropagation()">
+            @for (y of yearOptions(); track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
         <button type="button" class="nav-btn" [aclTooltip]="i18n.t('action.next')" (click)="nextMonth($event)">
           <lucide-icon name="chevron-right"></lucide-icon>
         </button>
