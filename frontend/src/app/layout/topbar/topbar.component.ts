@@ -1,10 +1,9 @@
 import { Component, computed, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router } from '@angular/router';
 import { UpperCasePipe } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/auth.service';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { LanguageCode } from '../../core/i18n/translations';
 import { ThemeService } from '../../core/theme.service';
 import { OfflineSyncService } from '../../core/offline-sync.service';
 import { NotificationService } from '../../core/notification.service';
@@ -15,7 +14,7 @@ import { AclTooltipDirective } from '../../shared/tooltip/tooltip';
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule, UpperCasePipe, AclTooltipDirective],
+  imports: [LucideAngularModule, UpperCasePipe, AclTooltipDirective],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.css'
 })
@@ -23,7 +22,7 @@ export class TopbarComponent {
   readonly user = this.auth.currentUser;
   readonly loggedIn = computed(() => Boolean(this.user()));
   readonly nav = computed(() => this.layout.navForRole(this.user()?.role || 'AGENT'));
-  
+
   private readonly notificationVisible = signal(false);
   readonly notificationsOpen = computed(() => this.notificationVisible());
 
@@ -36,7 +35,7 @@ export class TopbarComponent {
     readonly layout: LayoutService,
     private readonly apiService: ApiService,
     private readonly router: Router
-  ) {}
+  ) { }
 
   toggleNotifications(): void {
     this.notificationVisible.update((visible) => !visible);
@@ -45,7 +44,7 @@ export class TopbarComponent {
   toggleLanguage(): void {
     const next = this.i18n.language() === 'fr' ? 'en' : 'fr';
     this.i18n.setLanguage(next);
-    
+
     if (this.loggedIn()) {
       this.apiService.updateProfile({ preferred_language: next }).subscribe();
     }

@@ -5,11 +5,12 @@ import { LucideAngularModule } from 'lucide-angular';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
+import { SelectComponent, SelectOption } from '@/app/shared/select/select.component';
 
 @Component({
   selector: 'acl-date-picker',
   standalone: true,
-  imports: [LucideAngularModule, CommonModule, FormsModule, AclTooltipDirective],
+  imports: [LucideAngularModule, CommonModule, FormsModule, AclTooltipDirective, SelectComponent],
   templateUrl: './date-picker.component.html',
   styleUrl: './date-picker.component.css',
   providers: [
@@ -100,7 +101,7 @@ export class DatePickerComponent implements ControlValueAccessor {
   readonly popoverTop = signal<number>(0);
   readonly popoverLeft = signal<number>(0);
 
-  readonly monthOptions = computed(() => {
+  readonly monthOptions = computed<SelectOption[]>(() => {
     const lang = this.i18n.language();
     const formatter = new Intl.DateTimeFormat(lang, { month: 'long' });
     return Array.from({ length: 12 }).map((_, i) => {
@@ -110,13 +111,13 @@ export class DatePickerComponent implements ControlValueAccessor {
     });
   });
 
-  readonly yearOptions = computed(() => {
+  readonly yearOptions = computed<SelectOption[]>(() => {
     const currentYear = new Date().getFullYear();
     const startYear = 1900;
     const endYear = currentYear + 10;
-    const years: number[] = [];
+    const years: SelectOption[] = [];
     for (let y = endYear; y >= startYear; y--) {
-      years.push(y);
+      years.push({ value: y, label: String(y) });
     }
     return years;
   });
