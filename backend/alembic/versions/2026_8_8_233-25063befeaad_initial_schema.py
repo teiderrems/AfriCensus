@@ -1,8 +1,8 @@
 """Initial schema
 
-Revision ID: d675b5d4a7e3
+Revision ID: 25063befeaad
 Revises: 
-Create Date: 2026-08-01 13:03:30.014665
+Create Date: 2026-08-08 23:03:49.999722
 """
 from typing import Sequence, Union
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd675b5d4a7e3'
+revision: str = '25063befeaad'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,6 +24,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=80), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('permissions', sa.JSON(), nullable=False),
+    sa.Column('disabled_features', sa.JSON(), server_default='[]', nullable=True),
     sa.Column('created_at', sa.String(length=40), nullable=True),
     sa.Column('updated_at', sa.String(length=40), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -104,7 +105,7 @@ def upgrade() -> None:
     )
     op.create_table('chat_messages',
     sa.Column('id', sa.String(length=64), nullable=False),
-    sa.Column('content', sa.String(length=1000), nullable=False),
+    sa.Column('content', sa.Text(), nullable=False),
     sa.Column('sender_id', sa.String(length=64), nullable=False),
     sa.Column('receiver_id', sa.String(length=64), nullable=False),
     sa.Column('is_group', sa.Boolean(), nullable=False),
@@ -179,9 +180,9 @@ def upgrade() -> None:
     op.create_index(op.f('ix_family_relations_zone_id'), 'family_relations', ['zone_id'], unique=False)
     op.create_table('faq_items',
     sa.Column('id', sa.String(length=64), nullable=False),
-    sa.Column('question', sa.Text(), nullable=False),
-    sa.Column('answer', sa.Text(), nullable=False),
-    sa.Column('category', sa.String(length=80), nullable=True),
+    sa.Column('question', sa.JSON(), nullable=False),
+    sa.Column('answer', sa.JSON(), nullable=False),
+    sa.Column('category', sa.JSON(), nullable=True),
     sa.Column('order', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.String(length=40), nullable=True),
@@ -386,6 +387,7 @@ def upgrade() -> None:
     sa.Column('id', sa.String(length=64), nullable=False),
     sa.Column('title', sa.String(length=200), nullable=False),
     sa.Column('description', sa.String(length=2000), nullable=False),
+    sa.Column('category', sa.String(length=50), nullable=False),
     sa.Column('status', sa.String(length=40), nullable=False),
     sa.Column('user_id', sa.String(length=64), nullable=False),
     sa.Column('created_at', sa.String(length=40), nullable=False),
@@ -411,6 +413,7 @@ def upgrade() -> None:
     sa.Column('password_changed_at', sa.String(length=40), nullable=True),
     sa.Column('force_password_change', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('preferred_language', sa.String(length=10), server_default='fr', nullable=False),
+    sa.Column('disabled_features', sa.JSON(), server_default='[]', nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)

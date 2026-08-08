@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { UpperCasePipe } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
@@ -52,7 +52,7 @@ export class TopbarComponent {
 
   goToHelp(): void {
     if (this.loggedIn()) {
-      this.router.navigateByUrl('/portal');
+      this.router.navigateByUrl('/help');
       return;
     }
     window.location.hash = 'support';
@@ -60,5 +60,20 @@ export class TopbarComponent {
 
   markNotifAsRead(id: string): void {
     this.notificationService.markAsRead(id);
+  }
+
+  markAllAsRead(): void {
+    this.notificationService.markAllAsRead();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    const isInsideToggle = target.closest('.notification-toggle');
+    const isInsidePanel = target.closest('.notification-panel');
+
+    if (!isInsideToggle && !isInsidePanel && this.notificationVisible()) {
+      this.notificationVisible.set(false);
+    }
   }
 }

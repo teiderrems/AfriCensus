@@ -7,11 +7,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, desc
 
 from ...database import get_db, SessionLocal
-from ...dependencies import current_user, get_current_user_ws
+from ...dependencies import current_user, get_current_user_ws, require_feature
 from ...models import User, ChatMessage, ChatGroup, ChatGroupMember
 from ...schemas import ChatMessageCreate, ChatMessageOut, ChatGroupCreate, ChatGroupOut, ReactionAdd, ConversationSummary
 
 router = APIRouter()
+http_router = APIRouter(dependencies=[Depends(require_feature('messaging'))])
 
 
 def now_iso() -> str:
@@ -88,6 +89,11 @@ async def websocket_endpoint(
     db: Session = Depends(get_db)
 ):
     try:
+        from ...models import SystemSetting
+        row = db.query(SystemSetting).filter(SystemSetting.key == "app.features").first()
+        if row and not row.value_json.get("messaging", True):
+            raise ValueError("Messaging feature is disabled")
+
         from ...security import decode_token
         payload = decode_token(token)
         user = db.query(User).filter(User.id == payload["sub"]).first()
@@ -273,7 +279,7 @@ def build_conversations_for_user(db: Session, current_user_id: str) -> List[dict
     summaries.sort(key=lambda c: c.get("last_timestamp") or "", reverse=True)
     return summaries
 
-@router.get("/conversations", response_model=List[ConversationSummary])
+@http_router.get("/conversations", response_model=List[ConversationSummary])
 def get_conversations(
     user_data: dict[str, Any] = Depends(current_user),
     db: Session = Depends(get_db)
@@ -284,7 +290,7 @@ def get_conversations(
 
 
 
-@router.get("/{target_id}", response_model=List[ChatMessageOut])
+@http_router.get("/{target_id}", response_model=List[ChatMessageOut])
 def get_messages(
     target_id: str,
     user_data: dict[str, Any] = Depends(current_user),
@@ -350,7 +356,7 @@ def get_messages(
     return res
 
 
-@router.post("", response_model=ChatMessageOut)
+@http_router.post("", response_model=ChatMessageOut)
 async def send_message(
     payload: ChatMessageCreate,
     background_tasks: BackgroundTasks,
@@ -391,14 +397,56 @@ async def send_message(
         sender_name=user_data.get("full_name") or user_data.get("username")
     )
 
+    # Create in-app notifications
+    from app.models import Notification, ChatGroupMember
+    from app.sse_manager import notification_manager
+    
+    sender_name = user_data.get("full_name") or user_data.get("username")
+    recipients = []
+    if payload.is_group:
+        members = db.query(ChatGroupMember).filter(ChatGroupMember.group_id == payload.receiver_id).all()
+        recipients = [m.user_id for m in members if m.user_id != current_user_id]
+    else:
+        recipients = [payload.receiver_id]
+
+    notifications_to_send = []
+    for user_id in recipients:
+        notif_id = f"notif-{uuid.uuid4().hex[:12]}"
+        notif = Notification(
+            id=notif_id,
+            user_id=user_id,
+            title="Nouveau message",
+            message=f"{sender_name} vous a envoyé un message.",
+            type="info",
+            created_at=now_iso()
+        )
+        db.add(notif)
+        notifications_to_send.append(notif)
+    
+    db.commit()
+
     # Broadcast via active WebSockets using proper async background task
     out_event = {"type": "message_received", "payload": out.model_dump()}
     await manager.broadcast_message(out_event, current_user_id, payload.receiver_id, payload.is_group)
 
+    for notif in notifications_to_send:
+        background_tasks.add_task(
+            notification_manager.broadcast,
+            notif.user_id,
+            {
+                "id": notif.id,
+                "title": notif.title,
+                "message": notif.message,
+                "type": notif.type,
+                "created_at": notif.created_at,
+                "is_read": False
+            }
+        )
+
     return out
 
 
-@router.put("/{target_id}/read", status_code=204)
+@http_router.put("/{target_id}/read", status_code=204)
 def mark_read(
     target_id: str,
     user_data: dict[str, Any] = Depends(current_user),
@@ -420,7 +468,7 @@ def mark_read(
     db.commit()
 
 
-@router.post("/{message_id}/reactions", response_model=ChatMessageOut)
+@http_router.post("/{message_id}/reactions", response_model=ChatMessageOut)
 async def toggle_reaction(
     message_id: str,
     payload: ReactionAdd,
@@ -478,7 +526,7 @@ async def toggle_reaction(
     return out
 
 
-@router.delete("/{message_id}", status_code=200)
+@http_router.delete("/{message_id}", status_code=200)
 async def delete_message(
     message_id: str,
     user_data: dict[str, Any] = Depends(current_user),
@@ -520,7 +568,7 @@ async def delete_message(
     return {"success": True, "id": message_id}
 
 
-@router.post("/groups", response_model=ChatGroupOut)
+@http_router.post("/groups", response_model=ChatGroupOut)
 def create_group(
     payload: ChatGroupCreate,
     user_data: dict[str, Any] = Depends(current_user),
@@ -547,3 +595,4 @@ def create_group(
         name=new_group.name,
         created_at=new_group.created_at
     )
+

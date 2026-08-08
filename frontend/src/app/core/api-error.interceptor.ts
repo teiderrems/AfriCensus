@@ -17,11 +17,13 @@ export const apiErrorInterceptor: HttpInterceptorFn = (request, next) => {
 
       const appError = errors.fromHttp(error);
       const isLoginRequest = request.url.includes('/api/v1/auth/login');
-      if (!isLoginRequest) {
+      const isPublicEndpoint = request.url.includes('/api/v1/app-settings') || request.url.includes('/api/v1/home-content') || request.url.includes('/api/v1/roles');
+
+      if (!isLoginRequest && !isPublicEndpoint) {
         errors.publish(appError);
       }
 
-      if (error.status === 401 && !isLoginRequest) {
+      if (error.status === 401 && !isLoginRequest && !isPublicEndpoint) {
         auth.logout();
       }
 

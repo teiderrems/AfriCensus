@@ -40,7 +40,16 @@ def reset():
         print("Migration files deleted.")
 
     print("Dropping all tables...")
-    Base.metadata.drop_all(bind=engine)
+    try:
+        Base.metadata.drop_all(bind=engine)
+    except Exception as e:
+        print(f"Error dropping tables gracefully: {e}. Attempting forced drop.")
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+                conn.commit()
+        except Exception as e2:
+            print(f"Forced drop also failed: {e2}")
     
     with engine.connect() as conn:
         try:

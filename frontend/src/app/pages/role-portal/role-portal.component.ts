@@ -4,9 +4,21 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService } from '@/app/core/api.service';
 import { AuthService } from '@/app/core/auth.service';
+import { AppSettingsService } from '@/app/core/app-settings.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
-import { DashboardSummary, User } from '@/app/core/models';
+import { DashboardSummary, User, AppFeatures } from '@/app/core/models';
 import { CardComponent } from '@/app/shared/card/card.component';
+import { ScrollAnimateDirective } from '@/app/shared/scroll-animate/scroll-animate.directive';
+
+const FEATURE_MAP: Record<string, keyof AppFeatures> = {
+  '/messaging': 'messaging',
+  '/family-tree': 'family_tree',
+  '/medical-history': 'medical_history',
+  '/forms': 'custom_forms',
+  '/birth-declaration': 'birth_declaration',
+  '/duplicates': 'duplicates',
+  '/audit': 'audit',
+};
 
 type PortalAction = {
   label: string;
@@ -27,14 +39,23 @@ type PortalConfig = {
 
 @Component({
   selector: 'acl-role-portal-page',
-  imports: [LucideAngularModule, RouterLink, CardComponent],
+  imports: [LucideAngularModule, RouterLink, CardComponent, ScrollAnimateDirective],
   templateUrl: './role-portal.component.html',
   styleUrl: './role-portal.component.css',
 })
 export class RolePortalComponent implements OnInit {
   readonly summary = signal<DashboardSummary | null>(null);
   readonly user = this.auth.currentUser;
-  readonly config = computed(() => this.portalFor(this.user()?.role || 'AGENT'));
+  readonly config = computed(() => {
+    const raw = this.portalFor(this.user()?.role || 'AGENT');
+    const currentUser = this.user();
+    const filteredActions = raw.actions.filter(act => {
+      const featKey = FEATURE_MAP[act.path];
+      if (!featKey) return true;
+      return this.appSettings.isFeatureEnabledForUser(featKey, currentUser);
+    });
+    return { ...raw, actions: filteredActions };
+  });
   readonly indicators = computed(() => {
     const summary = this.summary();
     const role = this.user()?.role || 'AGENT';
@@ -70,7 +91,12 @@ export class RolePortalComponent implements OnInit {
     ];
   });
 
-  constructor(private readonly api: ApiService, private readonly auth: AuthService, readonly i18n: I18nService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly auth: AuthService,
+    readonly i18n: I18nService,
+    private readonly appSettings: AppSettingsService
+  ) {}
 
   ngOnInit(): void {
     this.api.dashboard().subscribe({

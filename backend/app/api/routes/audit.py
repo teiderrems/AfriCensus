@@ -6,17 +6,18 @@ from sqlalchemy import select, or_, func, desc
 from sqlalchemy.orm import Session
 
 from ...database import get_db
-from ...dependencies import require_roles
+from ...dependencies import require_roles, require_feature
 from ...models import AuditLog, User, Person, Household
 from ...schemas import AuditLogOut, Role, PaginatedResponse
 
 
-router = APIRouter(prefix="/audit-logs", tags=["audit"])
+router = APIRouter(prefix="/audit-logs", tags=["audit"], dependencies=[Depends(require_feature('audit'))])
 
 
 @router.get("", response_model=PaginatedResponse[dict[str, Any]])
 def audit_logs(
     query: str | None = Query(default=None, alias="search"),
+    entity: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=1000),
     sort_by: str | None = Query(default=None),
@@ -34,6 +35,20 @@ def audit_logs(
             User.full_name.ilike(search_lower)
         ))
         
+    if entity:
+        if entity == 'USER':
+            q = q.where(AuditLog.entity_type.in_(['user', 'users', 'app_roles']))
+        elif entity == 'PERSON':
+            q = q.where(AuditLog.entity_type.in_(['person', 'persons']))
+        elif entity == 'HOUSEHOLD':
+            q = q.where(AuditLog.entity_type.in_(['household', 'households']))
+        elif entity == 'CAMPAIGN':
+            q = q.where(AuditLog.entity_type.in_(['campaign', 'campaigns']))
+        elif entity == 'SYSTEM':
+            q = q.where(AuditLog.entity_type.in_(['system', 'system_settings', 'home_content']))
+        else:
+            q = q.where(AuditLog.entity_type.in_([entity.lower(), entity.lower() + 's']))
+            
     q = q.order_by(AuditLog.created_at.desc())
     
     count_query = select(func.count()).select_from(q.subquery())

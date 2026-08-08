@@ -116,3 +116,43 @@ async def send_supervisor_password_expiring_email(email_to: str, manager_name: s
             await smtp.send_message(message)
     except Exception as e:
         logger.error(f"Erreur envoi email superviseur à {email_to}: {e}")
+
+async def send_support_ticket_email(ticket_id: str, title: str, description: str, category: str, user_email: str) -> None:
+    settings = get_settings()
+    contact_email = settings.contact_email or settings.mail_from
+    if not contact_email:
+        logger.warning("Aucun e-mail de contact configuré pour recevoir les tickets.")
+        return
+
+    try:
+        message = EmailMessage()
+        from_email = settings.mail_from or 'noreply@africensus.org'
+        message["From"] = f"{settings.mail_from_name or 'AfriCensus Support'} <{from_email}>"
+        message["To"] = contact_email
+        message["Subject"] = f"[Support Ticket] {category}: {title}"
+        
+        content = f"""
+Nouveau ticket de support ({ticket_id})
+Catégorie: {category}
+Utilisateur: {user_email}
+
+Titre: {title}
+Description:
+{description}
+"""
+        message.set_content(content)
+
+        if not settings.smtp_host:
+            logger.warning(f"SMTP non configuré. E-mail simulé pour le ticket {ticket_id}")
+            return
+
+        smtp_args = {"hostname": settings.smtp_host, "port": settings.smtp_port, "use_tls": not settings.smtp_tls}
+        async with aiosmtplib.SMTP(**smtp_args) as smtp:
+            if settings.smtp_tls and settings.smtp_port != 465:
+                await smtp.starttls()
+            if settings.smtp_user and settings.smtp_password:
+                await smtp.login(settings.smtp_user, settings.smtp_password)
+            await smtp.send_message(message)
+            logger.info(f"E-mail de support envoyé pour le ticket {ticket_id}")
+    except Exception as e:
+        logger.error(f"Erreur lors de l'envoi de l'e-mail de support: {e}")

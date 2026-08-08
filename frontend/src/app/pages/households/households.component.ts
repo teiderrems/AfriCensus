@@ -1,6 +1,6 @@
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '@/app/core/api.service';
@@ -58,6 +58,7 @@ export class HouseholdsComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = signal(10);
   readonly pageSizes = [5, 10, 20, 50];
+  readonly totalItems = signal(0);
   readonly selectedHousehold = signal<HouseholdRecord | null>(null);
   readonly responsibleHousehold = signal<HouseholdRecord | null>(null);
   readonly responsiblePersonId = signal('');
@@ -77,24 +78,8 @@ export class HouseholdsComponent implements OnInit {
     const household = this.responsibleHousehold();
     return household ? [household] : [];
   });
-  readonly filteredHouseholds = computed(() => {
-    const query = this.search().trim().toLowerCase();
-    const status = this.statusFilter();
-    return this.households().filter((row) => {
-      const matchesStatus = !status || row.validation_status === status;
-      const searchable = `${row.household_code} ${row.address_text} ${row.member_count} ${row.validation_status}`.toLowerCase();
-      return matchesStatus && (!query || searchable.includes(query));
-    });
-  });
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredHouseholds().length / this.pageSize())));
-  readonly pagedHouseholds = computed(() => {
-    const page = Math.min(this.page(), this.totalPages());
-    if (this.layout.isMobile()) {
-      return this.filteredHouseholds().slice(0, page * this.pageSize());
-    }
-    const start = (page - 1) * this.pageSize();
-    return this.filteredHouseholds().slice(start, start + this.pageSize());
-  });
+  
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   readonly householdDrawerOpen = computed(() => Boolean(this.selectedHousehold()));
   readonly selectedHouseholdTitle = computed(() => this.selectedHousehold()?.household_code || 'Détails');
   readonly selectedHouseholdDetails = computed<DetailDrawerItem[]>(() => {
@@ -121,12 +106,28 @@ export class HouseholdsComponent implements OnInit {
     private readonly confirmService: ConfirmService,
     private readonly toastService: ToastService,
     private readonly layout: LayoutService
-  ) { }
-  ngOnInit(): void {
-    this.api.households().subscribe({
-      next: (rows) => this.households.set(rows.items),
-      error: () => this.households.set([]),
+  ) {
+    effect(() => {
+      const page = this.page();
+      const pageSize = this.pageSize();
+      const search = this.search();
+      const status = this.statusFilter();
+
+      untracked(() => {
+        this.api.households(page, pageSize, search, status).subscribe({
+          next: (res) => {
+            this.households.set(res.items);
+            this.totalItems.set(res.total);
+          },
+          error: () => {
+            this.households.set([]);
+            this.totalItems.set(0);
+          },
+        });
+      });
     });
+  }
+  ngOnInit(): void {
     this.api.campaigns().subscribe({
       next: (rows) => {
         this.campaigns.set(rows.items);

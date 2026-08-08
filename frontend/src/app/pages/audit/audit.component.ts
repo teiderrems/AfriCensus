@@ -1,6 +1,6 @@
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, computed, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ApiService } from '@/app/core/api.service';
@@ -21,7 +21,7 @@ import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
   templateUrl: './audit.component.html',
   styleUrl: './audit.component.css',
 })
-export class AuditComponent implements OnInit {
+export class AuditComponent {
   auditEntityOptions = computed(() => [
     { label: this.i18n.t('audit.entity.all'), value: '' },
     { label: this.i18n.t('audit.entity.PERSON'), value: 'PERSON' },
@@ -38,25 +38,9 @@ export class AuditComponent implements OnInit {
   readonly pageSize = signal(10);
   readonly pageSizes = [5, 10, 20, 50];
   readonly selectedLog = signal<AuditLog | null>(null);
-  readonly entityOptions = computed(() => Array.from(new Set(this.logs().map((log) => log.entity_type))).sort());
-  readonly filteredLogs = computed(() => {
-    const query = this.search().trim().toLowerCase();
-    const entity = this.entityFilter();
-    return this.logs().filter((log) => {
-      const matchesEntity = !entity || log.entity_type === entity;
-      const searchable = `${log.created_at} ${log.action} ${log.entity_type} ${log.entity_id} ${log.user_id || 'system'}`.toLowerCase();
-      return matchesEntity && (!query || searchable.includes(query));
-    });
-  });
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredLogs().length / this.pageSize())));
-  readonly pagedLogs = computed(() => {
-    const page = Math.min(this.page(), this.totalPages());
-    if (this.layout.isMobile()) {
-      return this.filteredLogs().slice(0, page * this.pageSize());
-    }
-    const start = (page - 1) * this.pageSize();
-    return this.filteredLogs().slice(start, start + this.pageSize());
-  });
+  readonly totalItems = signal(0);
+  
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   readonly logDrawerOpen = computed(() => Boolean(this.selectedLog()));
   readonly selectedLogTitle = computed(() => this.selectedLog()?.action || this.i18n.t('audit.table.details'));
   readonly selectedLogDetails = computed<DetailDrawerItem[]>(() => {
@@ -77,12 +61,26 @@ export class AuditComponent implements OnInit {
     readonly i18n: I18nService,
     private readonly shortId: ShortIdPipe,
     private readonly localizedDate: LocalizedDatePipe,
-    private readonly layout: LayoutService
-  ) { }
-  ngOnInit(): void {
-    this.api.auditLogs().subscribe({
-      next: (logs) => this.logs.set(logs.items),
-      error: () => this.logs.set([]),
+    public readonly layout: LayoutService
+  ) {
+    effect(() => {
+      const page = this.page();
+      const pageSize = this.pageSize();
+      const search = this.search();
+      const entity = this.entityFilter();
+      
+      untracked(() => {
+        this.api.auditLogs(page, pageSize, search, entity).subscribe({
+          next: (res) => {
+            this.logs.set(res.items);
+            this.totalItems.set(res.total);
+          },
+          error: () => {
+            this.logs.set([]);
+            this.totalItems.set(0);
+          },
+        });
+      });
     });
   }
 

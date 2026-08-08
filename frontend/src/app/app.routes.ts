@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/auth.guard';
 import { roleGuard } from './core/role.guard';
+import { featureGuard } from './core/feature.guard';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent) },
@@ -16,16 +17,17 @@ export const routes: Routes = [
   { path: 'users', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent) },
   { path: 'households', canActivate: [authGuard], loadComponent: () => import('./pages/households/households.component').then(m => m.HouseholdsComponent) },
   { path: 'persons', canActivate: [authGuard], loadComponent: () => import('./pages/persons/persons.component').then(m => m.PersonsComponent) },
-  { path: 'birth-declaration', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AGENT'] }, loadComponent: () => import('./pages/birth-declaration/birth-declaration.component').then(m => m.BirthDeclarationComponent) },
-  { path: 'family-tree', canActivate: [authGuard], loadComponent: () => import('./pages/family-tree/family-tree.component').then(m => m.FamilyTreeComponent) },
-  { path: 'medical-history', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN'] }, loadComponent: () => import('./pages/medical-history/medical-history.component').then(m => m.MedicalHistoryComponent) },
+  { path: 'birth-declaration', canActivate: [authGuard, roleGuard, featureGuard('birth_declaration')], data: { roles: ['ADMIN', 'SUPERVISOR', 'AGENT'] }, loadComponent: () => import('./pages/birth-declaration/birth-declaration.component').then(m => m.BirthDeclarationComponent) },
+  { path: 'family-tree', canActivate: [authGuard, featureGuard('family_tree')], loadComponent: () => import('./pages/family-tree/family-tree.component').then(m => m.FamilyTreeComponent) },
+  { path: 'medical-history', canActivate: [authGuard, roleGuard, featureGuard('medical_history')], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN'] }, loadComponent: () => import('./pages/medical-history/medical-history.component').then(m => m.MedicalHistoryComponent) },
   { path: 'validation', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'] }, loadComponent: () => import('./pages/validation/validation.component').then(m => m.ValidationComponent) },
-  { path: 'forms', canActivate: [authGuard], loadComponent: () => import('./pages/form-builder/form-builder.component').then(m => m.FormBuilderComponent) },
+  { path: 'forms', canActivate: [authGuard, featureGuard('custom_forms')], loadComponent: () => import('./pages/form-builder/form-builder.component').then(m => m.FormBuilderComponent) },
   { path: 'reports', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR', 'STATISTICIAN', 'AUDITOR'] }, loadComponent: () => import('./pages/reports/reports.component').then(m => m.ReportsComponent) },
-  { path: 'audit', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'AUDITOR'] }, loadComponent: () => import('./pages/audit/audit.component').then(m => m.AuditComponent) },
+  { path: 'audit', canActivate: [authGuard, roleGuard, featureGuard('audit')], data: { roles: ['ADMIN', 'AUDITOR'] }, loadComponent: () => import('./pages/audit/audit.component').then(m => m.AuditComponent) },
   { path: 'zones', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/zones/zones.component').then(m => m.ZonesComponent) },
   { path: 'campaigns', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/campaigns/campaigns.component').then(m => m.CampaignsComponent) },
-  { path: 'duplicates', canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/duplicates/duplicates.component').then(m => m.DuplicatesComponent) },
-  { path: 'messaging', canActivate: [authGuard], loadComponent: () => import('./pages/messaging/messaging.component').then(m => m.MessagingComponent) },
+  { path: 'duplicates', canActivate: [authGuard, roleGuard, featureGuard('duplicates')], data: { roles: ['ADMIN', 'SUPERVISOR'] }, loadComponent: () => import('./pages/duplicates/duplicates.component').then(m => m.DuplicatesComponent) },
+  { path: 'messaging', canActivate: [authGuard, featureGuard('messaging')], loadComponent: () => import('./pages/messaging/messaging.component').then(m => m.MessagingComponent) },
+  { path: 'help', canActivate: [authGuard], loadComponent: () => import('./pages/help/help.component').then(m => m.HelpComponent) },
   { path: '**', loadComponent: () => import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent) },
 ];

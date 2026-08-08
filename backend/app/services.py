@@ -213,8 +213,8 @@ def db_decision(db: Session, collection: str, item_id: str, status_value:
 
 
 def db_set_status(db: Session, collection: str, item_id: str, status_value:
-    str, user_id: str, action: str) ->dict[str, Any]:
-    return db_decision(db, collection, item_id, status_value, None, user_id,
+    str, user_id: str, action: str, comment: str | None = None) -> dict[str, Any]:
+    return db_decision(db, collection, item_id, status_value, comment, user_id,
         action)
 
 

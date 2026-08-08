@@ -8,11 +8,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ...database import get_db
-from ...dependencies import require_roles
+from ...dependencies import require_roles, require_feature
 from ...models import DuplicateCandidate, Person
 from ...schemas import PaginatedResponse, Role
 
-router = APIRouter(prefix="/duplicates", tags=["duplicates"])
+router = APIRouter(prefix="/duplicates", tags=["duplicates"], dependencies=[Depends(require_feature('duplicates'))])
 
 
 @router.get("", response_model=PaginatedResponse[dict[str, Any]])

@@ -47,6 +47,25 @@ def mark_notification_as_read(
     return notification
 
 
+@router.patch("/read-all", response_model=list[NotificationResponse])
+def mark_all_notifications_as_read(
+    user: dict = Depends(current_user),
+    db: Session = Depends(get_db)
+):
+    notifications = db.scalars(
+        select(Notification)
+        .where(Notification.user_id == user["id"])
+        .where(Notification.is_read == False)
+    ).all()
+
+    for notif in notifications:
+        notif.is_read = True
+        
+    db.commit()
+    return notifications
+
+
+
 @router.get("/stream")
 async def stream_notifications(request: Request, token: str):
     user = await get_current_user_ws(token)

@@ -10,12 +10,13 @@ import { StatusFilterComponent } from '@/app/shared/status-filter/status-filter.
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
 import { CardComponent } from '@/app/shared/card/card.component';
 import { ButtonComponent } from '@/app/shared/button/button';
+import { ScrollAnimateDirective } from '@/app/shared/scroll-animate/scroll-animate.directive';
 
 import { AclLocalizedTextPipe } from '@/app/shared/pipes/localized-text.pipe';
 
 @Component({
   selector: 'acl-dashboard-page',
-  imports: [LucideAngularModule, FormsModule, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclLocalizedTextPipe],
+  imports: [LucideAngularModule, FormsModule, StatusFilterComponent, TablePaginationComponent, CardComponent, ButtonComponent, AclLocalizedTextPipe, ScrollAnimateDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })

@@ -1,6 +1,6 @@
 <section class="portal-page">
       @if (config(); as portal) {
-        <header class="portal-hero {{ portal.tone }}">
+        <header class="portal-hero {{ portal.tone }}" aclScrollAnimate="fade-up">
           <div>
             <span>{{ portal.eyebrow }}</span>
             <h1>{{ portal.title }}</h1>
@@ -15,9 +15,9 @@
           </article>
         </header>
 
-        <section class="kpi-grid" aria-label="Indicateurs du portail">
+        <section class="kpi-grid scroll-stagger" aria-label="Indicateurs du portail">
           @for (item of indicators(); track item.label) {
-            <article class="kpi-card">
+            <article class="kpi-card" aclScrollAnimate="scale-up">
               <lucide-icon [name]="item.icon"></lucide-icon>
               <strong>{{ item.value }}</strong>
               <p>{{ item.label }}</p>
@@ -26,7 +26,7 @@
         </section>
 
         <section class="portal-grid">
-          <acl-card class="card actions-panel">
+          <acl-card class="card actions-panel" aclScrollAnimate="fade-right">
             <h2>{{ i18n.t('portal.quickActions') }}</h2>
             <div class="action-list">
               @for (action of portal.actions; track action.path + action.label) {
@@ -41,7 +41,7 @@
             </div>
           </acl-card>
 
-          <acl-card class="card scope-panel">
+          <acl-card class="card scope-panel" aclScrollAnimate="fade-left">
             <h2>{{ i18n.t('portal.scope') }}</h2>
             <dl>
               <div>

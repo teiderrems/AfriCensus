@@ -9,6 +9,7 @@ export interface UserCreateDto {
   password: string;
   active: boolean;
   zone_ids: string[];
+  disabled_features?: string[];
 }
 
 export interface UserUpdateDto {
@@ -19,6 +20,7 @@ export interface UserUpdateDto {
   role?: string;
   active?: boolean;
   zone_ids?: string[];
+  disabled_features?: string[];
 }
 
 export interface HouseholdWriteDto {
@@ -126,4 +128,5 @@ export interface AppRoleWriteDto {
   name: string | Record<string, string>;
   description?: string | Record<string, string> | null;
   permissions: string[];
+  disabled_features?: string[];
 }

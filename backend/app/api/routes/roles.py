@@ -76,6 +76,20 @@ SYSTEM_PERMISSIONS = [
             {"key": "audit:read", "label_fr": "Consulter les journaux d'audit", "label_en": "View security audit logs", "desc_fr": "Inspecter l'historique des actions utilisateurs et sécurité", "desc_en": "Inspect history of user actions and security events"},
             {"key": "system:config", "label_fr": "Configurer le système", "label_en": "System configuration", "desc_fr": "Modifier les paramètres d'infrastructure et maintenance", "desc_en": "Update infrastructure and maintenance settings"},
         ]
+    },
+    {
+        "module": "features",
+        "label_fr": "Accès aux Modules Applicatifs",
+        "label_en": "Application Module Access",
+        "permissions": [
+            {"key": "messaging:access", "label_fr": "Messagerie instantanée", "label_en": "Instant Messaging", "desc_fr": "Autoriser l'accès au module de messagerie", "desc_en": "Grant access to instant messaging module"},
+            {"key": "family_tree:access", "label_fr": "Arbre Généalogique", "label_en": "Family Tree", "desc_fr": "Autoriser l'accès à l'arbre généalogique", "desc_en": "Grant access to family tree module"},
+            {"key": "medical:read", "label_fr": "Antécédents Médicaux", "label_en": "Medical History", "desc_fr": "Autoriser l'accès aux antécédents médicaux", "desc_en": "Grant access to medical history module"},
+            {"key": "forms:access", "label_fr": "Formulaires Personnalisés", "label_en": "Custom Forms", "desc_fr": "Autoriser l'utilisation des formulaires dynamiques", "desc_en": "Grant access to dynamic forms module"},
+            {"key": "birth_declaration:access", "label_fr": "Déclarations de Naissance", "label_en": "Birth Declarations", "desc_fr": "Autoriser l'accès aux déclarations de naissance", "desc_en": "Grant access to birth declarations module"},
+            {"key": "duplicates:manage", "label_fr": "Gestion des Doublons", "label_en": "Duplicate Management", "desc_fr": "Autoriser l'accès à la détection et fusion de doublons", "desc_en": "Grant access to duplicate resolution module"},
+            {"key": "audit:read", "label_fr": "Piste d'Audit", "label_en": "Audit Trail", "desc_fr": "Autoriser l'accès aux journaux d'audit de sécurité", "desc_en": "Grant access to security audit logs"},
+        ]
     }
 ]
 
@@ -90,7 +104,8 @@ DEFAULT_ROLES = [
             "households:read", "households:write", "households:validate",
             "zones:read", "zones:write", "campaigns:read", "campaigns:write",
             "validation:manage", "duplicates:manage",
-            "reports:read", "reports:export", "audit:read", "system:config"
+            "reports:read", "reports:export", "audit:read", "system:config",
+            "messaging:access", "family_tree:access", "medical:read", "forms:access", "birth_declaration:access"
         ]
     },
     {
@@ -103,7 +118,8 @@ DEFAULT_ROLES = [
             "households:read", "households:write", "households:validate",
             "zones:read", "campaigns:read",
             "validation:manage", "duplicates:manage",
-            "reports:read", "reports:export"
+            "reports:read", "reports:export",
+            "messaging:access", "family_tree:access", "birth_declaration:access"
         ]
     },
     {
@@ -112,7 +128,8 @@ DEFAULT_ROLES = [
         "description": "Agent Recenseur de terrain pour la collecte des ménages et des individus.",
         "permissions": [
             "persons:read", "persons:write",
-            "households:read", "households:write"
+            "households:read", "households:write",
+            "messaging:access", "family_tree:access", "birth_declaration:access", "forms:access"
         ]
     },
     {
@@ -120,7 +137,8 @@ DEFAULT_ROLES = [
         "name": "STATISTICIAN",
         "description": "Analyste Démographique pour l'exploitation des données et rapports.",
         "permissions": [
-            "persons:read", "households:read", "reports:read", "reports:export"
+            "persons:read", "households:read", "reports:read", "reports:export",
+            "family_tree:access", "medical:read"
         ]
     },
     {
@@ -135,20 +153,24 @@ DEFAULT_ROLES = [
 
 
 def _ensure_default_roles(db: Session) -> None:
-    existing_count = db.scalar(select(AppRole).limit(1))
-    if not existing_count:
-        now = now_iso()
-        for role_data in DEFAULT_ROLES:
+    now = now_iso()
+    for role_data in DEFAULT_ROLES:
+        existing = db.scalar(select(AppRole).where(AppRole.id == role_data["id"]))
+        if not existing:
             db_role = AppRole(
                 id=role_data["id"],
                 name=role_data["name"],
                 description=role_data["description"],
                 permissions=role_data["permissions"],
+                disabled_features=role_data.get("disabled_features", []),
                 created_at=now,
                 updated_at=now,
             )
             db.add(db_role)
-        db.commit()
+        else:
+            if existing.disabled_features is None:
+                existing.disabled_features = []
+    db.commit()
 
 
 @router.get("/permissions/available", summary="Lister les permissions système disponibles")
@@ -199,6 +221,7 @@ def create_role(
         name=role_code,
         description=payload.description,
         permissions=payload.permissions,
+        disabled_features=payload.disabled_features,
         created_at=now,
         updated_at=now,
     )
@@ -248,6 +271,7 @@ def update_role(
         
     role.description = payload.description
     role.permissions = payload.permissions
+    role.disabled_features = payload.disabled_features
     role.updated_at = now_iso()
     
     db_audit(db, user["id"], "UPDATE_ROLE", "app_roles", role_id)

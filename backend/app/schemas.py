@@ -91,6 +91,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=6, description="Mot de passe initial.")
     active: bool = Field(default=True, description="Indique si le compte peut se connecter.")
     zone_ids: list[str] = Field(default_factory=list, description="Zones accessibles ou affectées à l’utilisateur.")
+    disabled_features: list[str] = Field(default_factory=list, description="Modules désactivés pour cet utilisateur.")
 
 
 class UserUpdate(BaseModel):
@@ -103,6 +104,7 @@ class UserUpdate(BaseModel):
     active: bool | None = Field(default=None, description="Statut actif/inactif du compte.")
     zone_ids: list[str] | None = Field(default=None, description="Zones accessibles ou affectées.")
     preferred_language: str | None = Field(default=None, description="Langue préférée (fr, en).")
+    disabled_features: list[str] | None = Field(default=None, description="Modules désactivés pour cet utilisateur.")
 
 
 class UserRoleUpdate(BaseModel):
@@ -125,6 +127,7 @@ class UserOut(BaseModel):
     full_name: str
     role: Role
     zone_ids: list[str] = Field(default_factory=list)
+    disabled_features: list[str] = Field(default_factory=list)
     active: bool = True
     preferred_language: str = "fr"
 
@@ -437,6 +440,7 @@ class AppRoleIn(BaseModel):
     name: LocalizedString = Field(..., description="Nom ou traductions du rôle.")
     description: LocalizedString | None = None
     permissions: list[str] = Field(default_factory=list)
+    disabled_features: list[str] = Field(default_factory=list, description="Liste des modules applicatifs désactivés pour ce rôle.")
 
 class AppRoleOut(AppRoleIn):
     id: str
@@ -543,15 +547,41 @@ class FaqUpdate(BaseModel):
     order: int | None = None
     is_active: bool | None = None
 
-class FaqOut(BaseModel):
+class FaqItemUpdate(BaseModel):
+    category: dict[str, str] | None = None
+    question: dict[str, str] | None = None
+    answer: dict[str, str] | None = None
+    order: int | None = None
+    is_active: bool | None = None
+
+
+class SupportTicketCreate(BaseModel):
+    title: str = Field(..., max_length=200)
+    description: str = Field(..., max_length=2000)
+    category: str = Field(..., max_length=50)
+
+
+class SupportTicketOut(BaseModel):
     id: str
-    question: str
-    answer: str
-    category: str | None
-    order: int
-    is_active: bool
-    created_at: str | None
-    updated_at: str | None
+    title: str
+    description: str
+    category: str
+    status: str
+    user_id: str
+    created_at: str
+
+
+class FaqIn(BaseModel):
+    question: dict[str, str] = Field(..., description="Questions by language.")
+    answer: dict[str, str] = Field(..., description="Answers by language.")
+    category: dict[str, str] | None = Field(default=None, description="Categories by language.")
+    order: int = 0
+    is_active: bool = True
+
+class FaqOut(FaqIn):
+    id: str
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -574,3 +604,56 @@ class NotificationResponse(BaseModel):
     created_at: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── App Settings ───────────────────────────────────────────────────────────────
+
+class AppBrandingIn(BaseModel):
+    app_name: str = Field(default="AfriCensus Link", description="Nom de l'application affiché dans la sidebar et le titre de page.")
+    logo_url: str | None = Field(default="assets/logo.png", description="URL du logo (laisser vide pour le logo par défaut).")
+    primary_color: str = Field(default="#0284c7", description="Couleur primaire CSS hex, ex: #0284c7.")
+    secondary_color: str = Field(default="#10b981", description="Couleur secondaire CSS hex, ex: #10b981.")
+    primary_color_dark: str = Field(default="#38bdf8", description="Couleur primaire CSS hex pour le mode sombre.")
+    secondary_color_dark: str = Field(default="#34d399", description="Couleur secondaire CSS hex pour le mode sombre.")
+    font_family: str = Field(default="Inter, Arial, sans-serif", description="Police par défaut de l'interface.")
+    base_font_size: str = Field(default="14px", description="Taille de police de base de l'interface (ex: 14px, 1rem).")
+    card_radius: str = Field(default="16px", description="Arrondi des cartes et panneaux (ex: 16px, 0px).")
+    button_radius: str = Field(default="8px", description="Arrondi des boutons (ex: 8px, 999px).")
+    sidebar_bg: str = Field(default="", description="Couleur de fond de la sidebar. Vide = thème par défaut.")
+    sidebar_text: str = Field(default="", description="Couleur du texte de la sidebar. Vide = thème par défaut.")
+    favicon_url: str | None = Field(default=None, description="URL ou data URI (base64) du favicon.")
+    login_heading: str | None = Field(default=None, description="Titre affiché sur la page de connexion. null = utilise app_name.")
+    login_subheading: str | None = Field(default=None, description="Sous-titre affiché sur la page de connexion.")
+    default_theme: str = Field(default="light", description="Thème par défaut : 'light' ou 'dark'.")
+
+
+class AppSettingsIn(BaseModel):
+    default_locale: str = Field(default="fr", description="Langue par défaut de l'interface : 'fr' ou 'en'.")
+    timezone: str = Field(default="Africa/Abidjan", description="Fuseau horaire IANA, ex: Africa/Dakar.")
+    date_format: str = Field(default="DD/MM/YYYY", description="Format de date affiché : 'DD/MM/YYYY' ou 'MM/DD/YYYY' ou 'YYYY-MM-DD'.")
+    max_household_size: int = Field(default=30, ge=1, le=200, description="Taille maximale d'un ménage.")
+    strict_collection_window: bool = Field(default=False, description="Si true, la saisie n'est autorisée que pendant la période de collecte active.")
+
+
+class AppFeaturesIn(BaseModel):
+    messaging: bool = Field(default=True, description="Activer le module de messagerie interne.")
+    family_tree: bool = Field(default=True, description="Activer l'arbre généalogique.")
+    medical_history: bool = Field(default=True, description="Activer le dossier médical.")
+    custom_forms: bool = Field(default=True, description="Activer les formulaires personnalisés.")
+    csv_export: bool = Field(default=True, description="Activer les exports CSV dans les rapports.")
+    birth_declaration: bool = Field(default=True, description="Activer le module de déclaration de naissance.")
+    duplicates: bool = Field(default=True, description="Activer la détection de doublons.")
+    audit: bool = Field(default=True, description="Activer le journal d'audit.")
+
+
+class AppHelpIn(BaseModel):
+    quick_guide: dict[str, str] = Field(default_factory=dict, description="Guide rapide par langue.")
+    contact_email: str | None = Field(default=None, description="Email du support technique.")
+    contact_phone: str | None = Field(default=None, description="Téléphone du support technique.")
+
+
+class AppSettingsOut(BaseModel):
+    branding: AppBrandingIn
+    settings: AppSettingsIn
+    features: AppFeaturesIn
+    help: AppHelpIn | None = None

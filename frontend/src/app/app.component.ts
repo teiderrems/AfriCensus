@@ -1,5 +1,7 @@
 import { Component, computed } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 import { AuthService } from './core/auth.service';
 import { I18nService } from './core/i18n/i18n.service';
 import { LayoutService } from './core/layout.service';
@@ -7,6 +9,9 @@ import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog';
 import { ToastContainerComponent } from './layout/toast-container/toast-container.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { TopbarComponent } from './layout/topbar/topbar.component';
+import { ScrollAnimateService } from './shared/scroll-animate/scroll-animate.service';
+
+const PUBLIC_ROUTES = ['/', '/login', '/forgot-password', '/reset-password'];
 
 @Component({
   selector: 'acl-root',
@@ -57,14 +62,25 @@ import { TopbarComponent } from './layout/topbar/topbar.component';
 export class AppComponent {
   readonly loggedIn = computed(() => Boolean(this.auth.currentUser()));
 
+  /** Reactive signal that tracks the current URL via router events — needed for zoneless change detection */
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+  );
+
+  readonly isPublicRoute = computed(() => {
+    const url = this.currentUrl() ?? '/';
+    return PUBLIC_ROUTES.some(r => url === r || url.startsWith(r + '?'));
+  });
+
   constructor(
     readonly auth: AuthService,
     readonly i18n: I18nService,
     readonly layout: LayoutService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly _scrollAnimate: ScrollAnimateService,
   ) {}
-
-  isPublicRoute(): boolean {
-    return this.router.url === '/' || this.router.url.startsWith('/login');
-  }
 }

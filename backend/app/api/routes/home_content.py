@@ -1,15 +1,14 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+
 from ...database import get_db
-from ...models import HomeContent
 from ...dependencies import require_roles
+from ...models import HomeContent, Household, Person, User, Zone
 from ...schemas import HomeContentIn, HomeContentOut, Role, now_iso
 from ...services import db_audit
-from ...services import db_audit
-
 
 router = APIRouter(prefix="/home-content", tags=["home-content"])
 
@@ -31,7 +30,7 @@ def read_home_content(
         raise HTTPException(status_code=404, detail="Home content is not published")
     if raw:
         return content
-    return resolve_home_content(content, resolve_language(lang, request.headers.get("accept-language")))
+    return resolve_home_content(content, resolve_language(lang, request.headers.get("accept-language")), db=db)
 
 
 @router.put(
@@ -66,14 +65,59 @@ def resolve_language(lang: str | None, accept_language: str | None) -> str:
     return "fr"
 
 
-def resolve_home_content(content: dict[str, Any], lang: str) -> dict[str, Any]:
+def _get_db_stats(db: Session) -> dict[str, str]:
+    try:
+        total_persons = db.scalar(select(func.count(Person.id))) or 0
+        total_households = db.scalar(select(func.count(Household.id))) or 0
+        total_zones = db.scalar(select(func.count(Zone.id))) or 0
+        active_agents = db.scalar(select(func.count(User.id)).where(User.role == 'AGENT', User.active == True)) or 0
+        
+        validated_persons = db.scalar(select(func.count(Person.id)).where(Person.validation_status == 'VALIDATED')) or 0
+        validated_households = db.scalar(select(func.count(Household.id)).where(Household.validation_status == 'VALIDATED')) or 0
+        
+        total_records = total_persons + total_households
+        validated_records = validated_persons + validated_households
+        
+        val_rate = f"{round((validated_records / total_records) * 100)}%" if total_records > 0 else "100%"
+
+        return {
+            "total_persons": f"{total_persons:,}".replace(",", " "),
+            "total_households": f"{total_households:,}".replace(",", " "),
+            "total_zones": str(total_zones),
+            "active_agents": str(active_agents),
+            "validation_rate": val_rate,
+        }
+    except Exception:
+        return {
+            "total_persons": "0",
+            "total_households": "0",
+            "total_zones": "0",
+            "active_agents": "0",
+            "validation_rate": "100%",
+        }
+
+
+def resolve_home_content(content: dict[str, Any], lang: str, db: Session | None = None) -> dict[str, Any]:
+    stats = _get_db_stats(db) if db else None
+    
+    # Resolve dynamic metrics
+    resolved_metrics = []
+    raw_metrics = content.get("metrics", [])
+    
+    # If no metrics defined or standard static defaults, use dynamic real stats metrics
+    if not raw_metrics or any("100%" in str(m.get("value")) for m in raw_metrics):
+        raw_metrics = DYNAMIC_METRICS_TEMPLATE
+        
+    for metric in raw_metrics:
+        resolved_metrics.append(resolve_metric(metric, lang, stats=stats))
+
     return {
         **content,
         "brand": localized(content.get("brand"), lang),
         "nav_links": [resolve_link(link, lang) for link in content.get("nav_links", [])],
         "actions": [resolve_link(action, lang) for action in content.get("actions", [])],
         "hero": resolve_hero(content.get("hero", {}), lang),
-        "metrics": [resolve_metric(metric, lang) for metric in content.get("metrics", [])],
+        "metrics": resolved_metrics,
         "values": [resolve_value(value, lang) for value in content.get("values", [])],
         "sections": [resolve_section(section, lang) for section in content.get("sections", [])],
         "footer": resolve_footer(content.get("footer", {}), lang),
@@ -95,8 +139,12 @@ def resolve_hero(hero: dict[str, Any], lang: str) -> dict[str, Any]:
     }
 
 
-def resolve_metric(metric: dict[str, Any], lang: str) -> dict[str, Any]:
-    return {**metric, "value": localized(metric.get("value"), lang), "label": localized(metric.get("label"), lang)}
+def resolve_metric(metric: dict[str, Any], lang: str, stats: dict[str, str] | None = None) -> dict[str, Any]:
+    val = localized(metric.get("value"), lang)
+    if stats:
+        for k, v in stats.items():
+            val = val.replace(f"{{{k}}}", v)
+    return {**metric, "value": val, "label": localized(metric.get("label"), lang)}
 
 
 def resolve_value(value: dict[str, Any], lang: str) -> dict[str, Any]:
@@ -131,6 +179,13 @@ def localized(value: Any, lang: str) -> str:
     return str(value)
 
 
+DYNAMIC_METRICS_TEMPLATE = [
+    {"id": "m1", "value": {"fr": "{total_persons}", "en": "{total_persons}"}, "label": {"fr": "Personnes Recensées", "en": "Persons Recensed"}, "tone": "primary"},
+    {"id": "m2", "value": {"fr": "{total_households}", "en": "{total_households}"}, "label": {"fr": "Ménages Enregistrés", "en": "Households Registered"}, "tone": "success"},
+    {"id": "m3", "value": {"fr": "{total_zones}", "en": "{total_zones}"}, "label": {"fr": "Zones de Collecte", "en": "Collection Zones"}, "tone": "earth"},
+    {"id": "m4", "value": {"fr": "{validation_rate}", "en": "{validation_rate}"}, "label": {"fr": "Taux de Validation", "en": "Validation Rate"}, "tone": "warning"},
+]
+
 DEFAULT_HOME_DATA = {
     "id": "default-home-content",
     "brand": "AfriCensus Link",
@@ -152,11 +207,7 @@ DEFAULT_HOME_DATA = {
             {"id": "ha-2", "label": {"fr": "Se connecter", "en": "Sign In"}, "href": "/login", "style": "secondary", "icon": "log-in"}
         ]
     },
-    "metrics": [
-        {"id": "m1", "value": {"fr": "100%", "en": "100%"}, "label": {"fr": "Couverture Territoriale", "en": "Territorial Coverage"}, "tone": "primary"},
-        {"id": "m2", "value": {"fr": "24/7", "en": "24/7"}, "label": {"fr": "Disponibilité Système", "en": "System Availability"}, "tone": "success"},
-        {"id": "m3", "value": {"fr": "100%", "en": "100%"}, "label": {"fr": "Conformité Normes", "en": "Standard Compliance"}, "tone": "warning"}
-    ],
+    "metrics": DYNAMIC_METRICS_TEMPLATE,
     "features_section": {
         "eyebrow": {"fr": "Fonctionnalités Clés", "en": "Key Features"},
         "title": {"fr": "Une Solution Complète de Gestion Démographique", "en": "A Comprehensive Demographic Management Solution"},

@@ -149,4 +149,94 @@ h1 {
   .charts-grid {
     grid-template-columns: 1fr;
   }
+  
+  /* Responsive export menu on mobile */
+  .export-dropdown-container {
+    width: 100%;
+  }
+  .export-toggle-btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+  .export-menu {
+    width: 100%;
+    right: auto;
+    left: 0;
+  }
+}
+
+/* Export Menu Styles */
+.export-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+.export-toggle-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+.export-toggle-btn .chevron {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+.export-toggle-btn.active-tool .chevron {
+  transform: rotate(180deg);
+}
+.export-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  min-width: 180px;
+  background: var(--surface);
+  border: 1.5px solid var(--outline-soft);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  animation: fadeInDown 0.15s ease-out;
+}
+.export-item {
+  width: 100% !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.export-item:hover {
+  background: var(--surface-container) !important;
+  color: var(--primary) !important;
+}
+
+/* Accessibility: Focus visible ring */
+.export-toggle-btn:focus-visible,
+.export-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.export-item lucide-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+.export-item:hover lucide-icon,
+.export-item:focus-visible lucide-icon {
+  color: var(--primary);
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

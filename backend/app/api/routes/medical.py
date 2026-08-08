@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 
-from ...dependencies import current_user, require_roles
+from ...dependencies import current_user, require_roles, require_feature
 from ...schemas import DecisionRequest, FamilyMedicalSummaryOut, MedicalHistoryIn, MedicalHistoryOut, Role, PaginatedResponse
 from ...services import db_create_item, db_decision, db_family_medical_summary, db_set_status, db_visible_item, db_soft_delete
 from fastapi import APIRouter, Depends, Query, Response
@@ -12,7 +12,7 @@ from ...models import MedicalHistory
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-router = APIRouter(tags=["medical-histories"])
+router = APIRouter(tags=["medical-histories"], dependencies=[Depends(require_feature('medical_history'))])
 
 @router.get("/medical-histories", response_model=PaginatedResponse[MedicalHistoryOut])
 def list_medical_histories(

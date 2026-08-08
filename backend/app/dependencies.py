@@ -1,6 +1,6 @@
 from typing import Any, Generator
 
-from fastapi import Depends, HTTPException, status, Query
+from fastapi import Depends, HTTPException, status, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -66,4 +66,41 @@ def require_roles(*roles_args):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
         return user
 
+    return dependency
+
+
+FEATURE_PERMISSION_MAP = {
+    'messaging': 'messaging:access',
+    'family_tree': 'family_tree:access',
+    'medical_history': 'medical:read',
+    'custom_forms': 'forms:access',
+    'birth_declaration': 'birth_declaration:access',
+    'duplicates': 'duplicates:manage',
+    'audit': 'audit:read',
+}
+
+
+def require_feature(feature_key: str):
+    """Dependency that raises 403 if the given feature flag is disabled globally or not permitted for the user's role."""
+    def dependency(user: Any = Depends(current_user), db: Session = Depends(get_db)) -> None:
+        from .models import SystemSetting
+        row = db.query(SystemSetting).filter(SystemSetting.key == "app.features").first()
+        if row and not row.value_json.get(feature_key, True):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Feature '{feature_key}' is disabled by the administrator.",
+            )
+        if isinstance(user, dict):
+            user_role_name = user.get("role")
+            if user_role_name and user_role_name != "ADMIN":
+                required_perm = FEATURE_PERMISSION_MAP.get(feature_key)
+                if required_perm:
+                    from .models import AppRole
+                    app_role = db.query(AppRole).filter(AppRole.name == user_role_name).first()
+                    if app_role and app_role.permissions is not None:
+                        if required_perm not in app_role.permissions:
+                            raise HTTPException(
+                                status_code=status.HTTP_403_FORBIDDEN,
+                                detail=f"Permission '{required_perm}' for feature '{feature_key}' is not granted for role '{user_role_name}'.",
+                            )
     return dependency

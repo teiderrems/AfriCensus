@@ -1,5 +1,5 @@
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal, effect, untracked } from '@angular/core';
 import { AttachmentService, AttachmentRecord } from '@/app/core/services/attachment.service';
 import { FormsModule } from '@angular/forms';
 
@@ -38,25 +38,10 @@ export class PersonsComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = signal(10);
   readonly pageSizes = [5, 10, 20, 50];
+  readonly totalItems = signal(0);
   readonly selectedPerson = signal<PersonRecord | null>(null);
-  readonly filteredPersons = computed(() => {
-    const query = this.search().trim().toLowerCase();
-    const status = this.statusFilter();
-    return this.persons().filter((row) => {
-      const matchesStatus = !status || row.validation_status === status;
-      const searchable = `${row.first_name} ${row.last_name} ${row.gender} ${row.validation_status}`.toLowerCase();
-      return matchesStatus && (!query || searchable.includes(query));
-    });
-  });
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredPersons().length / this.pageSize())));
-  readonly pagedPersons = computed(() => {
-    const page = Math.min(this.page(), this.totalPages());
-    if (this.layout.isMobile()) {
-      return this.filteredPersons().slice(0, page * this.pageSize());
-    }
-    const start = (page - 1) * this.pageSize();
-    return this.filteredPersons().slice(start, start + this.pageSize());
-  });
+  
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
   readonly personDrawerOpen = computed(() => Boolean(this.selectedPerson()));
   readonly selectedPersonTitle = computed(() => {
     const person = this.selectedPerson();
@@ -72,15 +57,35 @@ export class PersonsComponent implements OnInit {
     private readonly layout: LayoutService,
     private readonly attachmentService: AttachmentService
   ) {
-    import('@angular/core').then(({ effect }) => {
-      effect(() => {
-        const person = this.selectedPerson();
+    effect(() => {
+      const person = this.selectedPerson();
+      untracked(() => {
         if (person) {
           this.attachmentService.getAttachmentUrlByEntity(person.local_id || person.id, 'profile_photo')
             .then(url => this.selectedPersonAvatarUrl.set(url));
         } else {
           this.selectedPersonAvatarUrl.set(null);
         }
+      });
+    });
+
+    effect(() => {
+      const page = this.page();
+      const pageSize = this.pageSize();
+      const search = this.search();
+      const status = this.statusFilter();
+
+      untracked(() => {
+        this.api.persons(page, pageSize, search, status).subscribe({
+          next: (res) => {
+            this.persons.set(res.items);
+            this.totalItems.set(res.total);
+          },
+          error: () => {
+            this.persons.set([]);
+            this.totalItems.set(0);
+          },
+        });
       });
     });
   }
@@ -110,10 +115,6 @@ export class PersonsComponent implements OnInit {
         }
       },
       error: () => this.households.set([]),
-    });
-    this.api.persons().subscribe({
-      next: (rows) => this.persons.set(rows.items),
-      error: () => this.persons.set([]),
     });
     this.api.campaigns().subscribe({
       next: (rows) => this.campaigns.set(rows.items),

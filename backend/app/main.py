@@ -47,6 +47,7 @@ OPENAPI_TAGS = [
     {"name": "sync", "description": "Synchronisation mobile hors ligne : push et pull."},
     {"name": "reports", "description": "Rapports statistiques et exports CSV."},
     {"name": "audit", "description": "Traçabilité des actions sensibles et logs d’audit."},
+    {"name": "app-settings", "description": "Paramètres de personnalisation de l'application : branding, modules, accès."},
 ]
 
 

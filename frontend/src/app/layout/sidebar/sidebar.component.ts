@@ -6,6 +6,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { TranslationKey } from '../../core/i18n/translations';
 import { User } from '../../core/models';
 import { LayoutService } from '../../core/layout.service';
+import { AppSettingsService } from '../../core/app-settings.service';
 import { AclTooltipDirective } from '../../shared/tooltip/tooltip';
 
 @Component({
@@ -26,9 +27,20 @@ export class SidebarComponent {
     return this.i18n.t(('role.' + role) as TranslationKey);
   });
 
+  readonly brandInitials = computed(() => {
+    const name = this.appSettings.appName();
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(w => w[0]?.toUpperCase())
+      .join('');
+  });
+
   constructor(
     readonly auth: AuthService,
     readonly i18n: I18nService,
-    readonly layout: LayoutService
+    readonly layout: LayoutService,
+    readonly appSettings: AppSettingsService,
   ) {}
 }

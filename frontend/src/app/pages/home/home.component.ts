@@ -1,6 +1,6 @@
 
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { UpperCasePipe } from '@angular/common';
@@ -10,22 +10,35 @@ import { I18nService } from '@/app/core/i18n/i18n.service';
 import { LanguageCode } from '@/app/core/i18n/translations';
 import { HomeContent } from '@/app/core/models';
 import { ThemeService } from '@/app/core/theme.service';
+import { AppSettingsService } from '@/app/core/app-settings.service';
 import { AclTooltipDirective } from '@/app/shared/tooltip/tooltip';
+import { ScrollAnimateDirective } from '@/app/shared/scroll-animate/scroll-animate.directive';
 
 @Component({
   selector: 'acl-home-page',
-  imports: [LucideAngularModule, FormsModule, RouterLink, UpperCasePipe, AclTooltipDirective],
+  imports: [LucideAngularModule, FormsModule, RouterLink, UpperCasePipe, AclTooltipDirective, ScrollAnimateDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
 export class HomeComponent implements OnInit {
   readonly content = signal<HomeContent | null>(null);
+  readonly showScrollTop = signal(false);
 
   constructor(
     private readonly api: ApiService,
     readonly i18n: I18nService,
     readonly theme: ThemeService,
+    readonly appSettings: AppSettingsService,
   ) {}
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.showScrollTop.set(window.scrollY > 300);
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   ngOnInit(): void {
     this.loadContent();

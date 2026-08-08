@@ -6,6 +6,7 @@ export interface User {
   full_name: string;
   role: 'AGENT' | 'SUPERVISOR' | 'ADMIN' | 'STATISTICIAN' | 'AUDITOR';
   zone_ids: string[];
+  disabled_features?: string[];
   active?: boolean;
   preferred_language?: string;
 }
@@ -455,6 +456,7 @@ export interface AppRole {
   name: string;
   description?: string | null;
   permissions: string[];
+  disabled_features?: string[];
   user_count?: number;
   is_system?: boolean;
   created_at?: string | null;
@@ -474,4 +476,51 @@ export interface PermissionModule {
   label_fr: string;
   label_en: string;
   permissions: PermissionDefinition[];
+}
+
+// ── App Settings ──────────────────────────────────────────────────────────────
+
+export interface AppBranding {
+  app_name: string;
+  logo_url: string | null;
+  primary_color: string;
+  secondary_color: string;
+  primary_color_dark: string;
+  secondary_color_dark: string;
+  font_family: string;
+  base_font_size: string;
+  card_radius: string;
+  button_radius: string;
+  sidebar_bg: string;
+  sidebar_text: string;
+  favicon_url: string | null;
+  login_heading: string | null;
+  login_subheading: string | null;
+  default_theme: 'light' | 'dark';
+}
+
+export interface AppSettings {
+  default_locale: string;
+  timezone: string;
+  date_format: string;
+  max_household_size: number;
+  strict_collection_window: boolean;
+}
+
+export interface AppFeatures {
+  messaging: boolean;
+  family_tree: boolean;
+  medical_history: boolean;
+  custom_forms: boolean;
+  csv_export: boolean;
+  birth_declaration: boolean;
+  duplicates: boolean;
+  audit: boolean;
+}
+
+export interface AppSettingsConfig {
+  branding: AppBranding;
+  settings: AppSettings;
+  features: AppFeatures;
+  help?: any;
 }

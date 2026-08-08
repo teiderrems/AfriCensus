@@ -1,5 +1,5 @@
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -7,6 +7,7 @@ import { AuthService } from '@/app/core/auth.service';
 import { AppError } from '@/app/core/error.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ToastService } from '@/app/core/toast.service';
+import { AppSettingsService } from '@/app/core/app-settings.service';
 import { ButtonComponent } from '@/app/shared/button/button';
 
 @Component({
@@ -22,11 +23,17 @@ export class LoginComponent {
   readonly showPassword = signal(false);
   readonly loading = signal(false);
 
+  readonly brandInitials = computed(() => {
+    const name = this.appSettings.appName();
+    return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('');
+  });
+
   constructor(
     private readonly auth: AuthService,
     readonly i18n: I18nService,
     private readonly router: Router,
     private readonly toastService: ToastService,
+    readonly appSettings: AppSettingsService,
   ) {}
 
   submit(): void {

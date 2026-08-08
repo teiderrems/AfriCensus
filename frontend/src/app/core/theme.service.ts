@@ -29,7 +29,7 @@ export class ThemeService {
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
-  private apply(theme: Theme): void {
+  apply(theme: Theme): void {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.colorScheme = theme;

@@ -1,14 +1,14 @@
 import { DatePickerComponent } from '@/app/shared/date-picker/date-picker.component';
 import { SelectComponent } from '@/app/shared/select/select.component';
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
-import { AuditLog, DashboardSummary, HomeContent, User, UserCreateInput, UserRole } from '@/app/core/models';
+import { AuditLog, DashboardSummary, HomeContent, User, UserCreateInput, UserRole, AppBranding, AppFeatures, AppSettings, AppSettingsConfig } from '@/app/core/models';
 import { DetailDrawerComponent, DetailDrawerItem } from '@/app/shared/detail-drawer/detail-drawer.component';
 import { ModalComponent } from '@/app/shared/modal/modal.component';
 import { TablePaginationComponent } from '@/app/shared/table-pagination/table-pagination.component';
@@ -27,16 +27,19 @@ type HealthCard = {
   progress?: number;
 };
 
-type AdminTab = 'infra' | 'users' | 'security' | 'config';
+type AdminTab = 'infra' | 'users' | 'security' | 'config' | 'branding' | 'faq';
 
 import { ConfirmService } from '@/app/core/confirm';
 import { ToastService } from '@/app/core/toast.service';
 import { ButtonComponent } from '@/app/shared/button/button';
 import { MultilangFieldComponent } from '@/app/shared/multilang-field/multilang-field.component';
+import { AppSettingsService } from '@/app/core/app-settings.service';
+import { AdminFaqComponent } from './admin-faq/admin-faq.component';
 
 @Component({
   selector: 'acl-admin-portal-page',
-  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent],
+  standalone: true,
+  imports: [LucideAngularModule, CommonModule, FormsModule, RouterLink, DetailDrawerComponent, TablePaginationComponent, ModalComponent, LocalizedDatePipe, ShortIdPipe, SelectComponent, DatePickerComponent, ButtonComponent, AclTooltipDirective, MultilangFieldComponent, AdminFaqComponent],
   templateUrl: './admin-portal.component.html',
   styleUrl: './admin-portal.component.css',
 })
@@ -75,6 +78,8 @@ export class AdminPortalComponent implements OnInit {
       { id: 'users', label: this.i18n.t('admin.tabs.users'), icon: 'users' },
       { id: 'security', label: this.i18n.t('admin.tabs.security'), icon: 'shield' },
       { id: 'config', label: this.i18n.t('admin.tabs.config'), icon: 'settings' },
+      { id: 'branding', label: this.i18n.t('admin.tabs.branding'), icon: 'palette' },
+      { id: 'faq', label: this.i18n.t('admin.tabs.faq'), icon: 'circle-question-mark' },
     ];
   });
   readonly activeTab = signal<AdminTab>('infra');
@@ -114,6 +119,50 @@ export class AdminPortalComponent implements OnInit {
   readonly collectionEnd = signal('2026-12-31');
   readonly strictWindow = signal(true);
   readonly configStatus = signal('');
+
+  // ── Branding / App Settings tab ─────────────────────────────────────────────
+  readonly brandingStatus = signal('');
+  readonly settingsStatus = signal('');
+  readonly featuresStatus = signal('');
+
+  readonly brandingDraft = signal<AppBranding>({
+    app_name: 'AfriCensus Link',
+    logo_url: 'assets/logo.png',
+    primary_color: '#0284c7',
+    secondary_color: '#10b981',
+    primary_color_dark: '#38bdf8',
+    secondary_color_dark: '#34d399',
+    font_family: 'Inter, Arial, sans-serif',
+    base_font_size: '14px',
+    card_radius: '16px',
+    button_radius: '8px',
+    sidebar_bg: '',
+    sidebar_text: '',
+    favicon_url: null,
+    login_heading: null,
+    login_subheading: null,
+    default_theme: 'light',
+  });
+
+
+  readonly settingsDraft = signal<AppSettings>({
+    default_locale: 'fr',
+    timezone: 'Africa/Abidjan',
+    date_format: 'DD/MM/YYYY',
+    max_household_size: 30,
+    strict_collection_window: false,
+  });
+
+  readonly featuresDraft = signal<AppFeatures>({
+    messaging: true,
+    family_tree: true,
+    medical_history: true,
+    custom_forms: true,
+    csv_export: true,
+    birth_declaration: true,
+    duplicates: true,
+    audit: true,
+  });
   readonly userPage = signal(1);
   readonly selectedUser = signal<User | null>(null);
   readonly selectedAuditLog = signal<AuditLog | null>(null);
@@ -121,23 +170,8 @@ export class AdminPortalComponent implements OnInit {
   readonly lastUpdated = signal('Just now');
   readonly apiVolume = [40, 60, 35, 85, 50, 95, 70, 45, 60, 40, 72, 54];
 
-  readonly filteredUsers = computed(() => {
-    const query = this.userSearch().trim().toLowerCase();
-    const role = this.roleFilter();
-    const status = this.statusFilter();
-    return this.users().filter((user) => {
-      const searchable = `${user.full_name} ${user.username} ${user.role} ${user.zone_ids.join(' ')}`.toLowerCase();
-      const matchesQuery = !query || searchable.includes(query);
-      const matchesRole = !role || user.role === role;
-      const matchesStatus = !status || (status === 'active' ? user.active !== false : user.active === false);
-      return matchesQuery && matchesRole && matchesStatus;
-    });
-  });
-  readonly userTotalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())));
-  readonly pagedUsers = computed(() => {
-    const start = (Math.min(this.userPage(), this.userTotalPages()) - 1) * this.pageSize();
-    return this.filteredUsers().slice(start, start + this.pageSize());
-  });
+  readonly totalUsers = signal(0);
+  readonly userTotalPages = computed(() => Math.max(1, Math.ceil(this.totalUsers() / this.pageSize())));
   readonly userDrawerOpen = computed(() => Boolean(this.selectedUser()));
   readonly selectedUserTitle = computed(() => this.selectedUser()?.full_name || this.i18n.t('admin.drawer.details'));
   readonly selectedUserDetails = computed<DetailDrawerItem[]>(() => {
@@ -151,15 +185,7 @@ export class AdminPortalComponent implements OnInit {
       { label: this.i18n.t('admin.drawer.active'), value: user.active !== false },
     ];
   });
-  readonly filteredAuditLogs = computed(() => {
-    const query = this.auditSearch().trim().toLowerCase();
-    const severity = this.auditSeverity();
-    return this.auditLogs().filter((log) => {
-      const logSeverity = this.auditSeverityFor(log);
-      const searchable = `${log.action} ${log.entity_type} ${log.entity_id} ${log.user_id || 'system'}`.toLowerCase();
-      return (!severity || logSeverity === severity) && (!query || searchable.includes(query));
-    });
-  });
+  readonly totalAuditLogs = signal(0);
   readonly auditDrawerOpen = computed(() => Boolean(this.selectedAuditLog()));
   readonly selectedAuditTitle = computed(() => (this.selectedAuditLog() ? this.auditTitle(this.selectedAuditLog()!.action) : this.i18n.t('admin.drawer.details')));
   readonly selectedAuditDetails = computed<DetailDrawerItem[]>(() => {
@@ -237,22 +263,50 @@ export class AdminPortalComponent implements OnInit {
     private readonly router: Router,
     readonly i18n: I18nService,
     private readonly confirmService: ConfirmService,
-    private readonly toast: ToastService
-  ) { }
+    private readonly toast: ToastService,
+    private readonly appSettings: AppSettingsService
+  ) {
+    effect(() => {
+      const page = this.userPage();
+      const pageSize = this.pageSize();
+      const search = this.userSearch();
+      const role = this.roleFilter();
+      const status = this.statusFilter();
+
+      untracked(() => {
+        const activeFilter = status === 'active' ? true : (status === 'inactive' ? false : undefined);
+        this.api.users(page, pageSize, role || undefined, activeFilter, search).subscribe({
+          next: (res) => {
+            this.users.set(res.items);
+            this.totalUsers.set(res.total);
+          }
+        });
+      });
+    });
+
+    effect(() => {
+      const search = this.auditSearch();
+      // admin portal audit logs are a simple preview, we don't paginate them deeply here, just fetch 5.
+      untracked(() => {
+        this.api.auditLogs(1, 5, search).subscribe({
+          next: (res) => {
+            this.auditLogs.set(res.items);
+            this.totalAuditLogs.set(res.total);
+          }
+        });
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.lastUpdated.set(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     forkJoin({
-      users: this.api.users(),
       summary: this.api.dashboard(),
-      logs: this.api.auditLogs(),
       home: this.api.homeContentSource(),
       zones: this.api.zones(),
     }).subscribe({
-      next: ({ users, summary, logs, home, zones }) => {
-        this.users.set(users.items);
+      next: ({ summary, home, zones }) => {
         this.summary.set(summary);
-        this.auditLogs.set(logs.items);
         this.setHomeContent(home);
         this.zones.set(zones.items);
       },
@@ -263,6 +317,87 @@ export class AdminPortalComponent implements OnInit {
         this.zones.set([]);
       },
     });
+
+    // Load app settings
+    this.api.getAppSettings().subscribe({
+      next: (cfg) => this._applyLoadedSettings(cfg),
+      error: () => undefined,
+    });
+  }
+
+  private _applyLoadedSettings(cfg: AppSettingsConfig): void {
+    this.brandingDraft.set({ ...cfg.branding });
+    this.settingsDraft.set({ ...cfg.settings });
+    this.featuresDraft.set({ ...cfg.features });
+  }
+
+  resetBrandingDefaults(): void {
+    this.brandingDraft.set({
+      app_name: 'AfriCensus Link',
+      logo_url: 'assets/logo.png',
+      primary_color: '#0284c7',
+      secondary_color: '#10b981',
+      primary_color_dark: '#38bdf8',
+      secondary_color_dark: '#34d399',
+      font_family: 'Inter, Arial, sans-serif',
+      base_font_size: '14px',
+      card_radius: '16px',
+      button_radius: '8px',
+      sidebar_bg: '',
+      sidebar_text: '',
+      favicon_url: null,
+      login_heading: null,
+      login_subheading: null,
+      default_theme: 'light',
+    });
+  }
+
+  saveBranding(): void {
+    this.brandingStatus.set('');
+    this.api.updateBranding(this.brandingDraft()).subscribe({
+      next: (cfg) => {
+        this.appSettings.applyConfig(cfg);
+        this.brandingStatus.set(this.i18n.t('admin.status.brandingSaved'));
+        this.toast.success(this.i18n.t('admin.toast.brandingUpdated'));
+      },
+      error: () => { this.brandingStatus.set(this.i18n.t('admin.status.saveError')); },
+    });
+  }
+
+  saveSettings(): void {
+    this.settingsStatus.set('');
+    this.api.updateAppSettings(this.settingsDraft()).subscribe({
+      next: (cfg) => {
+        this._applyLoadedSettings(cfg);
+        this.settingsStatus.set(this.i18n.t('admin.status.settingsSaved'));
+        this.toast.success(this.i18n.t('admin.toast.settingsUpdated'));
+      },
+      error: () => { this.settingsStatus.set(this.i18n.t('admin.status.saveError')); },
+    });
+  }
+
+  saveFeatures(): void {
+    this.featuresStatus.set('');
+    this.api.updateFeatures(this.featuresDraft()).subscribe({
+      next: (cfg) => {
+        this._applyLoadedSettings(cfg);
+        this.featuresStatus.set(this.i18n.t('admin.status.featuresSaved'));
+        this.toast.success(this.i18n.t('admin.toast.featuresUpdated'));
+      },
+      error: () => { this.featuresStatus.set(this.i18n.t('admin.status.saveError')); },
+    });
+  }
+
+  updateBrandingDraft<K extends keyof AppBranding>(key: K, value: AppBranding[K]): void {
+    this.brandingDraft.update(d => ({ ...d, [key]: value }));
+  }
+
+  updateSettingsDraft<K extends keyof AppSettings>(key: K, value: AppSettings[K]): void {
+    this.settingsDraft.update(d => ({ ...d, [key]: value }));
+  }
+
+  updateFeaturesDraft<K extends keyof AppFeatures>(key: K, value: AppFeatures[K]): void {
+    this.featuresDraft.update(d => ({ ...d, [key]: value }));
   }
 
   setTab(tab: AdminTab): void {
@@ -279,7 +414,7 @@ export class AdminPortalComponent implements OnInit {
       'default'
     );
     if (!confirmed) return;
-    
+
     this.isSeeding.set(true);
     this.api.systemSeed().subscribe({
       next: () => {
@@ -302,7 +437,7 @@ export class AdminPortalComponent implements OnInit {
       'danger'
     );
     if (!confirmed) return;
-    
+
     this.isResetting.set(true);
     this.api.systemReset().subscribe({
       next: () => {

@@ -2,7 +2,11 @@
       @if (content(); as data) {
         <header class="home-nav" aria-label="Navigation publique">
           <a class="brand" routerLink="/" [aclTooltip]="data.brand">
-            <lucide-icon name="chart-column"></lucide-icon>
+            @if (appSettings.logoUrl()) {
+              <img [src]="appSettings.logoUrl()" [alt]="data.brand" class="brand-logo" />
+            } @else {
+              <lucide-icon name="chart-column"></lucide-icon>
+            }
             <strong>{{ data.brand }}</strong>
           </a>
           <nav [attr.aria-label]="i18n.t('home.aria.nav')">
@@ -28,7 +32,7 @@
         <section class="hero">
           <div class="hero-media" role="img" [attr.aria-label]="data.hero.image_alt || data.hero.title" [style.backgroundImage]="heroBackground(data)"></div>
           <div class="hero-shade"></div>
-          <div class="hero-content">
+          <div class="hero-content" aclScrollAnimate="fade-up">
             <span class="trust-pill">
               <lucide-icon name="badge-check"></lucide-icon>
               {{ data.hero.badge }}
@@ -48,20 +52,20 @@
           </div>
         </section>
 
-        <section id="impact" class="trust-bar" [attr.aria-label]="i18n.t('home.aria.impact')">
+        <section id="impact" class="trust-bar" [attr.aria-label]="i18n.t('home.aria.impact')" aclScrollAnimate="fade-up">
           @for (metric of data.metrics; track metric.value + metric.label) {
             <article><strong [class.earth]="metric.tone === 'earth'">{{ metric.value }}</strong><span>{{ metric.label }}</span></article>
           }
         </section>
 
         <section id="solution" class="value-section">
-          <div class="section-head">
+          <div class="section-head" aclScrollAnimate="fade-up">
             <h2>{{ data.hero.badge }}</h2>
             <p>{{ data.hero.subtitle }}</p>
           </div>
-          <div class="value-grid">
+          <div class="value-grid scroll-stagger">
             @for (item of data.values; track item.title) {
-              <article class="value-card">
+              <article class="value-card" aclScrollAnimate="scale-up">
                 <lucide-icon [name]="item.icon"></lucide-icon>
                 <h3>{{ item.title }}</h3>
                 <p>{{ item.text }}</p>
@@ -72,7 +76,7 @@
 
         @for (section of data.sections; track section.id; let index = $index) {
           <section class="split-section" [class.reverse]="index % 2 === 1" [class.mobile-feature]="section.visual === 'phone'">
-            <article class="split-copy">
+            <article class="split-copy" aclScrollAnimate="fade-right">
               <span class="eyebrow" [class.earth]="section.tone === 'earth'">{{ section.eyebrow }}</span>
               <h2>{{ section.title }}</h2>
               <p>{{ section.text }}</p>
@@ -129,11 +133,15 @@
           </section>
         }
 
-        <footer id="support" class="home-footer">
+        <footer id="support" class="home-footer" aclScrollAnimate="blur-in">
           <div class="footer-inner">
             <section class="footer-brand" [attr.aria-label]="i18n.t('home.aria.presentation')">
               <a class="footer-logo" routerLink="/" [aclTooltip]="data.brand">
-                <lucide-icon name="chart-column"></lucide-icon>
+                @if (appSettings.logoUrl()) {
+                  <img [src]="appSettings.logoUrl()" [alt]="data.brand" class="brand-logo" />
+                } @else {
+                  <lucide-icon name="chart-column"></lucide-icon>
+                }
                 <strong>{{ data.brand }}</strong>
               </a>
               <h2>{{ data.footer.title }}</h2>
@@ -159,5 +167,17 @@
         </footer>
       } @else {
         <section class="home-loading" aria-live="polite">{{ i18n.t('home.loading') }}</section>
+      }
+
+      @if (showScrollTop()) {
+        <button
+          type="button"
+          class="scroll-top-btn"
+          [aclTooltip]="i18n.t('home.aria.scrollTop')"
+          (click)="scrollToTop()"
+        >
+          <lucide-icon name="arrow-up" [size]="20"></lucide-icon>
+          <span class="scroll-top-label">{{ i18n.t('home.scrollTopLabel') }}</span>
+        </button>
       }
     </main>

@@ -1,10 +1,14 @@
 <section class="login-page">
       <div class="login-panel">
         <div class="brand">
-          <div class="mark">AL</div>
+          @if (appSettings.logoUrl()) {
+            <img class="mark-img" [src]="appSettings.logoUrl()" [alt]="appSettings.appName()" />
+          } @else {
+            <div class="mark">{{ brandInitials() }}</div>
+          }
           <div>
-            <h1>AfriCensus Link</h1>
-            <p>{{ i18n.t('login.subtitle') }}</p>
+            <h1>{{ appSettings.branding().login_heading || appSettings.appName() }}</h1>
+            <p>{{ appSettings.branding().login_subheading || i18n.t('login.subtitle') }}</p>
           </div>
         </div>
         <form (ngSubmit)="submit()" (submit)="$event.preventDefault()">

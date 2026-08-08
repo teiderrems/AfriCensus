@@ -2,11 +2,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ...dependencies import current_user, require_roles
+from ...dependencies import current_user, require_roles, require_feature
 from ...schemas import DecisionRequest, FamilyRelationIn, Role
 from ...services import db_create_item, db_decision, inverse_relation, db_set_status, db_visible_item, db_soft_delete
 
-router = APIRouter(prefix="/family-relations", tags=["family-relations"])
+router = APIRouter(prefix="/family-relations", tags=["family-relations"], dependencies=[Depends(require_feature('family_tree'))])
 from sqlalchemy.orm import Session
 from fastapi import Response
 from ...database import get_db

@@ -4,9 +4,38 @@
       <span class="eyebrow">{{ i18n.t('reports.eyebrow') }}</span>
       <h1>{{ i18n.t('reports.title') }}</h1>
     </div>
-    <a class="btn primary" href="/api/v1/exports/persons.csv">
-      <lucide-icon name="download"></lucide-icon> {{ i18n.t('reports.exportCsv') }}
-    </a>
+    <div class="export-dropdown-container">
+      <button type="button" class="btn primary export-toggle-btn" (click)="toggleExportMenu($event)"
+        [disabled]="isExporting()" aria-haspopup="menu" [attr.aria-expanded]="showExportMenu()"
+        [attr.aria-busy]="isExporting()"
+        [attr.aria-label]="isExporting() ? (i18n.t('common.loading') || 'Exportation en cours') : (i18n.t('action.export') || 'Exporter les données')">
+        @if (isExporting()) {
+        <lucide-icon name="loader-2" class="spin" aria-hidden="true"></lucide-icon>
+        <span>{{ i18n.t('common.loading') || 'Exportation...' }}</span>
+        } @else {
+        <lucide-icon name="download" aria-hidden="true"></lucide-icon>
+        <span>{{ i18n.t('action.export') || 'Exporter' }}</span>
+        <lucide-icon name="chevron-down" class="chevron" aria-hidden="true"></lucide-icon>
+        }
+      </button>
+
+      @if (showExportMenu()) {
+      <div class="export-menu" role="menu" (click)="$event.stopPropagation()">
+        <button type="button" class="export-item" role="menuitem" (click)="triggerExport('excel')" tabindex="0">
+          <lucide-icon name="table" aria-hidden="true"></lucide-icon>
+          <span>{{ i18n.t('reports.exportExcel') || 'Excel (.xlsx)' }}</span>
+        </button>
+        <button type="button" class="export-item" role="menuitem" (click)="triggerExport('csv')" tabindex="0">
+          <lucide-icon name="file-spreadsheet" aria-hidden="true"></lucide-icon>
+          <span>{{ i18n.t('reports.exportCsv') || 'CSV (.csv)' }}</span>
+        </button>
+        <button type="button" class="export-item" role="menuitem" (click)="triggerExport('txt')" tabindex="0">
+          <lucide-icon name="file-text" aria-hidden="true"></lucide-icon>
+          <span>{{ i18n.t('reports.exportTxt') || 'Texte (.txt)' }}</span>
+        </button>
+      </div>
+      }
+    </div>
   </header>
 
   @if (summary(); as data) {

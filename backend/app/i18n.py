@@ -32,7 +32,21 @@ CATALOGS: dict[str, dict[str, str]] = {
         "email.mgr.body1": "Nous vous informons que le mot de passe de votre collaborateur",
         "email.mgr.body2": "expirera dans",
         "email.mgr.block": "Si ce mot de passe n'est pas renouvelé avant cette échéance, l'accès au compte sera bloqué.",
-        "email.mgr.remind": "Merci de bien vouloir lui rappeler de procéder à ce changement."
+        "email.mgr.remind": "Merci de bien vouloir lui rappeler de procéder à ce changement.",
+        "report.official": "RAPPORT OFFICIEL",
+        "report.generated": "Généré le",
+        "report.operator": "Opérateur",
+        "report.summary": "SYNTHÈSE GLOBALE",
+        "report.total_persons": "Population totale recensée",
+        "report.total_households": "Ménages identifiés",
+        "report.avg_members": "Taille moyenne par ménage",
+        "report.no_doc": "Personnes sans document ID",
+        "report.vulnerable": "Personnes vulnérables",
+        "report.by_gender": "RÉPARTITION PAR GENRE",
+        "report.by_age": "RÉPARTITION PAR TRANCHE D'ÂGE",
+        "report.by_status": "RÉPARTITION PAR STATUT DE VALIDATION",
+        "report.by_zone": "RÉPARTITION PAR ZONE GÉOGRAPHIQUE",
+        "report.total_records": "Total d'enregistrements"
     },
     "en": {
         "api.title": "AfriCensus Link API",
@@ -59,7 +73,21 @@ CATALOGS: dict[str, dict[str, str]] = {
         "email.mgr.body1": "We would like to inform you that the password of your team member",
         "email.mgr.body2": "will expire in",
         "email.mgr.block": "If this password is not renewed before this deadline, account access will be blocked.",
-        "email.mgr.remind": "Please remind them to proceed with this change."
+        "email.mgr.remind": "Please remind them to proceed with this change.",
+        "report.official": "OFFICIAL REPORT",
+        "report.generated": "Generated on",
+        "report.operator": "Operator",
+        "report.summary": "GLOBAL SUMMARY",
+        "report.total_persons": "Total Enumerated Population",
+        "report.total_households": "Identified Households",
+        "report.avg_members": "Average Members per Household",
+        "report.no_doc": "Persons Without ID Document",
+        "report.vulnerable": "Vulnerable Persons",
+        "report.by_gender": "DISTRIBUTION BY GENDER",
+        "report.by_age": "DISTRIBUTION BY AGE GROUP",
+        "report.by_status": "DISTRIBUTION BY VALIDATION STATUS",
+        "report.by_zone": "DISTRIBUTION BY GEOGRAPHIC ZONE",
+        "report.total_records": "Total Records"
     },
 }
 

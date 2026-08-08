@@ -45,6 +45,9 @@
   background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   box-shadow: var(--card-hover-shadow); animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.notif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.mark-all-btn { background: transparent; border: none; color: var(--primary); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+.mark-all-btn:hover { color: var(--primary-hover); }
 .notif-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 300px; overflow-y: auto; }
 .notif-item { padding: 10px; background: color-mix(in srgb, var(--surface) 90%, var(--border)); border-radius: 8px; cursor: pointer; transition: background 0.2s; }
 .notif-item:hover { background: color-mix(in srgb, var(--surface) 80%, var(--border)); }

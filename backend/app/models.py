@@ -15,7 +15,7 @@ class DictMixin:
 
 class User(Base, DictMixin):
     __tablename__ = "users"
-    dict_fields = ("id", "username", "email", "phone", "full_name", "role", "password_hash", "active", "zone_ids", "password_changed_at", "force_password_change", "preferred_language")
+    dict_fields = ("id", "username", "email", "phone", "full_name", "role", "password_hash", "active", "zone_ids", "password_changed_at", "force_password_change", "preferred_language", "disabled_features")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     username: Mapped[str] = mapped_column(String(120), unique=True, index=True)
@@ -29,6 +29,7 @@ class User(Base, DictMixin):
     password_changed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     force_password_change: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     preferred_language: Mapped[str] = mapped_column(String(10), default="fr", server_default="fr")
+    disabled_features: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=True, server_default="[]")
 
 
 class Zone(Base, DictMixin):
@@ -213,12 +214,13 @@ class SystemSetting(Base, DictMixin):
 
 class AppRole(Base, DictMixin):
     __tablename__ = "app_roles"
-    dict_fields = ("id", "name", "description", "permissions", "created_at", "updated_at")
+    dict_fields = ("id", "name", "description", "permissions", "disabled_features", "created_at", "updated_at")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     name: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     permissions: Mapped[list[str]] = mapped_column(JSON, default=list)
+    disabled_features: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=True, server_default="[]")
     created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
@@ -371,11 +373,12 @@ class ChatGroupMember(Base, DictMixin):
 
 class SupportTicket(Base, DictMixin):
     __tablename__ = "support_tickets"
-    dict_fields = ("id", "title", "description", "status", "user_id", "created_at")
+    dict_fields = ("id", "title", "description", "category", "status", "user_id", "created_at")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(2000))
+    category: Mapped[str] = mapped_column(String(50), default="GENERAL_QUESTION")
     status: Mapped[str] = mapped_column(String(40), default="open", index=True)
     user_id: Mapped[str] = mapped_column(String(64), index=True)
     created_at: Mapped[str] = mapped_column(String(40))
@@ -386,9 +389,9 @@ class FaqItem(Base, DictMixin):
     dict_fields = ("id", "question", "answer", "category", "order", "is_active", "created_at", "updated_at")
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    question: Mapped[str] = mapped_column(Text)
-    answer: Mapped[str] = mapped_column(Text)
-    category: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    question: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    answer: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    category: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[str | None] = mapped_column(String(40), nullable=True)

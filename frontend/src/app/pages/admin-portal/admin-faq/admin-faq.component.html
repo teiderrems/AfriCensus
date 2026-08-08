@@ -1,0 +1,118 @@
+<div class="faq-admin-container">
+  <!-- General Help Configuration -->
+  <div class="card config-section">
+    <div class="card-header">
+      <h2>{{ i18n.t('admin.faq.quickGuideLabel') }} & Contact</h2>
+      <acl-button (click)="saveHelpConfig()" type="button">
+        <lucide-icon name="save" [size]="16"></lucide-icon> {{ i18n.t('admin.faq.saveConfig') }}
+      </acl-button>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label id="lbl-quick-guide">{{ i18n.t('admin.faq.quickGuideLabel') }}</label>
+        <acl-multilang-field type="textarea" [ngModel]="quickGuide()" (ngModelChange)="quickGuide.set($event)" [aria-label]="i18n.t('admin.faq.quickGuideLabel')"></acl-multilang-field>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="contact-email">{{ i18n.t('admin.faq.emailSupport') }}</label>
+          <input id="contact-email" type="email" [ngModel]="contactEmail()" (ngModelChange)="contactEmail.set($event)" />
+        </div>
+        <div class="field">
+          <label for="contact-phone">{{ i18n.t('admin.faq.phoneSupport') }}</label>
+          <input id="contact-phone" type="tel" [ngModel]="contactPhone()" (ngModelChange)="contactPhone.set($event)" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ List -->
+  <div class="card faq-section">
+    <div class="card-header">
+      <h2>{{ i18n.t('admin.faq.title') }}</h2>
+      <acl-button (click)="openFaqModal()" type="button">
+        <lucide-icon name="plus" [size]="16"></lucide-icon> {{ i18n.t('admin.faq.add') }}
+      </acl-button>
+    </div>
+    <div class="card-body">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ i18n.t('admin.faq.order') }}</th>
+              <th>{{ i18n.t('admin.faq.category') }}</th>
+              <th>{{ i18n.t('admin.faq.question') }}</th>
+              <th>{{ i18n.t('admin.faq.status') }}</th>
+              <th>{{ i18n.t('admin.faq.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (faq of faqs(); track faq.id) {
+            <tr>
+              <td>{{ faq.order }}</td>
+              <td>{{ faq.category?.[i18n.language()] || faq.category?.['fr'] || '-' }}</td>
+              <td>{{ faq.question?.[i18n.language()] || faq.question?.['fr'] }}</td>
+              <td>
+                <span class="badge" [class.success]="faq.is_active" [class.neutral]="!faq.is_active">
+                  {{ faq.is_active ? i18n.t('admin.faq.active') : i18n.t('admin.faq.inactive') }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" class="btn-icon" (click)="openFaqModal(faq)">
+                  <lucide-icon name="edit-2" [size]="16"></lucide-icon>
+                </button>
+                <button type="button" class="btn-icon danger" (click)="deleteFaq(faq.id)">
+                  <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+                </button>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="5" class="empty-state">{{ i18n.t('admin.faq.empty') }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<acl-modal [open]="faqModalOpen()" [title]="i18n.t('admin.faq.modalTitle')" (closed)="closeFaqModal()" [isForm]="true" (submitted)="saveFaq()">
+  @if (currentFaq()) {
+  <div class="form-grid">
+    <div class="field">
+      <label id="lbl-faq-question">{{ i18n.t('admin.faq.question') }}</label>
+      <acl-multilang-field [ngModel]="currentFaq().question" (ngModelChange)="currentFaq().question = $event" [aria-label]="i18n.t('admin.faq.question')"></acl-multilang-field>
+    </div>
+    
+    <div class="field">
+      <label id="lbl-faq-answer">{{ i18n.t('admin.faq.answer') }}</label>
+      <acl-multilang-field type="textarea" [ngModel]="currentFaq().answer" (ngModelChange)="currentFaq().answer = $event" [aria-label]="i18n.t('admin.faq.answer')"></acl-multilang-field>
+    </div>
+    
+    <div class="field">
+      <label id="lbl-faq-category">{{ i18n.t('admin.faq.categoryOptional') }}</label>
+      <acl-multilang-field [ngModel]="currentFaq().category" (ngModelChange)="currentFaq().category = $event" [aria-label]="i18n.t('admin.faq.categoryOptional')"></acl-multilang-field>
+    </div>
+    
+    <div class="field-row">
+      <div class="field">
+        <label for="faq-display-order">{{ i18n.t('admin.faq.displayOrder') }}</label>
+        <input id="faq-display-order" type="number" [ngModel]="currentFaq().order" (ngModelChange)="currentFaq().order = $event" required />
+      </div>
+      
+      <div class="field checkbox-field">
+        <label for="faq-is-active">
+          <input id="faq-is-active" type="checkbox" [ngModel]="currentFaq().is_active" (ngModelChange)="currentFaq().is_active = $event" />
+          <span>{{ i18n.t('admin.faq.active') }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  }
+  <ng-container modal-actions>
+    <acl-button type="button" variant="secondary" (click)="closeFaqModal()">{{ i18n.t('admin.faq.cancel') }}</acl-button>
+    <acl-button type="submit">{{ i18n.t('admin.faq.save') }}</acl-button>
+  </ng-container>
+</acl-modal>

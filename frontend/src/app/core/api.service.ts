@@ -385,4 +385,55 @@ export class ApiService {
   systemReset() {
     return this.http.post<any>('/api/v1/system/reset', {});
   }
+
+  // ─── FAQ & Help ──────────────────────────────────────────────────────────
+
+  getFaqs() {
+    return this.http.get<any[]>('/api/v1/faq');
+  }
+
+  createFaq(payload: any) {
+    return this.http.post<any>('/api/v1/faq', payload);
+  }
+
+  updateFaq(id: string, payload: any) {
+    return this.http.put<any>(`/api/v1/faq/${id}`, payload);
+  }
+
+  deleteFaq(id: string) {
+    return this.http.delete<void>(`/api/v1/faq/${id}`);
+  }
+
+  updateHelpConfig(payload: any) {
+    return this.http.put<any>('/api/v1/app-settings/help', payload);
+  }
+
+  // ─── Settings & Config ───────────────────────────────────────────────────
+
+  getAppSettings() {
+    return this.http.get<any>('/api/v1/app-settings');
+  }
+
+  updateBranding(payload: any) {
+    return this.http.put<any>('/api/v1/app-settings/branding', payload);
+  }
+
+  updateAppSettings(payload: any) {
+    return this.http.put<any>('/api/v1/app-settings/config', payload);
+  }
+
+  updateFeatures(payload: any) {
+    return this.http.put<any>('/api/v1/app-settings/features', payload);
+  }
+
+  exportResource(resourceType: string, format: string) {
+    let params = new HttpParams().set('format', format);
+    return this.http.get(`/api/v1/exports/${resourceType}`, { params, observe: 'response', responseType: 'blob' });
+  }
+
+  // ─── Support Tickets ───────────────────────────────────────────────────────
+
+  submitSupportTicket(ticket: { title: string; description: string; category: string }) {
+    return this.http.post<any>('/api/v1/tickets', ticket);
+  }
 }

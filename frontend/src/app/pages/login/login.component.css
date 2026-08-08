@@ -6,11 +6,12 @@
       width: min(100%, 460px); background: var(--surface); border: 2px solid var(--outline-soft);
       border-radius: 8px; padding: 32px; display: grid; gap: 28px;
     }
-    .brand { display: flex; gap: 14px; align-items: center; }
-    .mark { width: 56px; height: 56px; border-radius: 6px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-weight: 800; }
-    h1 { margin: 0; color: var(--primary); font-size: 32px; line-height: 40px; }
-    p { margin: 0; color: var(--muted); }
-    form { display: grid; gap: 18px; }
+    .brand { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
+    .mark { width: 64px; height: 64px; border-radius: 6px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-size: 24px; font-weight: 800; }
+    .mark-img { max-width: 120px; max-height: 120px; object-fit: contain; border-radius: 8px; }
+    h1 { margin: 0; color: var(--primary); font-size: 28px; line-height: 36px; word-break: break-word; }
+    p { margin: 0; color: var(--muted); word-break: break-word; }
+    form { display: grid; gap: 18px; margin-top: 10px; }
     .field { display: grid; gap: 8px; }
     .field label { font-size: 14px; font-weight: 800; color: var(--ink); }
     .field input {

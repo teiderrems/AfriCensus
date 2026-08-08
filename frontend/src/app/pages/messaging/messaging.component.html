@@ -137,14 +137,59 @@
               (click)="addReaction(msg, '❤️')">❤️</button>
             <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.laugh')"
               (click)="addReaction(msg, '😂')">😂</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.surprised')"
+            <button type="button" class="reaction-emoji-btn desktop-only-emoji" [aclTooltip]="i18n.t('messaging.reaction.surprised')"
               (click)="addReaction(msg, '😮')">😮</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.thanks')"
+            <button type="button" class="reaction-emoji-btn desktop-only-emoji" [aclTooltip]="i18n.t('messaging.reaction.thanks')"
               (click)="addReaction(msg, '🙏')">🙏</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.fire')"
+            <button type="button" class="reaction-emoji-btn desktop-only-emoji" [aclTooltip]="i18n.t('messaging.reaction.fire')"
               (click)="addReaction(msg, '🔥')">🔥</button>
-            <button type="button" class="reaction-emoji-btn" [aclTooltip]="i18n.t('messaging.reaction.party')"
+            <button type="button" class="reaction-emoji-btn desktop-only-emoji" [aclTooltip]="i18n.t('messaging.reaction.party')"
               (click)="addReaction(msg, '🎉')">🎉</button>
+
+            <!-- More Emojis Button (opens popover via CDK Overlay) -->
+            <div class="emoji-picker-container reaction-picker-container">
+              <button type="button" class="action-icon-btn more-emojis-btn" 
+                cdkOverlayOrigin #trigger="cdkOverlayOrigin"
+                [class.active]="activeReactionMessage()?.id === msg.id" 
+                [aclTooltip]="i18n.t('messaging.moreEmojis')"
+                (click)="openReactionPicker(msg, $event)"
+                aria-haspopup="true"
+                [attr.aria-expanded]="activeReactionMessage()?.id === msg.id">
+                <lucide-icon name="smile-plus"></lucide-icon>
+              </button>
+              
+              <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayOrigin]="trigger"
+                [cdkConnectedOverlayOpen]="activeReactionMessage()?.id === msg.id"
+                (overlayOutsideClick)="closeReactionPicker()"
+                [cdkConnectedOverlayPositions]="reactionPositions"
+                [cdkConnectedOverlayHasBackdrop]="false"
+              >
+                <div class="emoji-popover reaction-popover" (click)="$event.stopPropagation()">
+                  <div class="emoji-search-box">
+                    <lucide-icon name="search"></lucide-icon>
+                    <input type="text" [placeholder]="i18n.t('messaging.emoji.search')" [ngModel]="emojiSearch()" (ngModelChange)="emojiSearch.set($event)" (click)="$event.stopPropagation()" />
+                  </div>
+                  <div class="emoji-scroll-area">
+                    @for (cat of filteredEmojiCategories(); track cat.name) {
+                      <div class="emoji-category">
+                        <span class="category-name">{{ i18n.t(cat.name) }}</span>
+                        <div class="emoji-grid">
+                          @for (e of cat.emojis; track e) {
+                            <button type="button" class="emoji-item" (click)="selectReaction(e)">
+                              {{ e }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="emoji-empty">{{ i18n.t('messaging.emoji.empty') }}</div>
+                    }
+                  </div>
+                </div>
+              </ng-template>
+            </div>
             <!-- Divider -->
             <span class="actions-divider"></span>
             <!-- Copy -->

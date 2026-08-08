@@ -4,23 +4,26 @@ from sqlalchemy.orm import Session
 
 from .database import engine, Base
 from .models import (
-    User, Zone, Campaign, HomeContent, FormDefinition,
+    User, AppRole, Zone, Campaign, HomeContent, FormDefinition,
     Household, Person, FamilyRelation, MedicalHistory, AuditLog, DuplicateCandidate,
-    ChatMessage, ChatGroup, ChatGroupMember
+    ChatMessage, ChatGroup, ChatGroupMember, SystemSetting, FaqItem
 )
 from .security import hash_password
 
 logger = logging.getLogger(__name__)
 
 def init_admin(db: Session) -> None:
-    """Ensure the default administrator exists (used after migration on empty DB)."""
+    """Ensure the default administrator and system roles exist."""
     try:
+        from .api.routes.roles import _ensure_default_roles
+        _ensure_default_roles(db)
+        
         admin_uname = "admin"
         admin = db.query(User).filter(User.username == admin_uname).first()
         if not admin:
             db.add(User(
                 id="user-admin-1", username=admin_uname, full_name="Administrateur National",
-                role="ADMIN", password_hash=hash_password("admin123"), active=True, zone_ids=[]
+                role="ADMIN", password_hash=hash_password("admin123"), active=True, zone_ids=[], disabled_features=[]
             ))
             db.commit()
             logger.info("Default admin user created.")
@@ -32,6 +35,89 @@ def init_admin(db: Session) -> None:
 def init_db(db: Session) -> None:
     """Ensure database tables exist and seed default records (~50 per entity, 10-level family tree)."""
     # Base.metadata.create_all(bind=engine) is handled by Alembic migrations
+
+    # 0. Seed System Settings (Branding, Features, Global Settings)
+    try:
+        from .schemas import AppBrandingIn, AppSettingsIn, AppFeaturesIn
+        settings_to_seed = {
+            "app.branding": AppBrandingIn(
+                app_name="AfriCensus Link",
+                primary_color="#0284c7",
+                secondary_color="#10b981",
+                primary_color_dark="#38bdf8",
+                secondary_color_dark="#34d399",
+                font_family="Inter, Arial, sans-serif",
+                base_font_size="14px",
+                card_radius="16px",
+                button_radius="8px",
+                sidebar_bg="",
+                sidebar_text="",
+                logo_url="assets/logo.png",
+                favicon_url=None,
+                login_heading=None,
+                login_subheading=None,
+                default_theme="light"
+            ).model_dump(),
+            "app.settings": AppSettingsIn(
+                default_locale="fr",
+                timezone="Africa/Abidjan",
+                date_format="DD/MM/YYYY",
+                max_household_size=30,
+                strict_collection_window=False
+            ).model_dump(),
+            "app.features": AppFeaturesIn(
+                messaging=True,
+                family_tree=True,
+                medical_history=True,
+                duplicates=True,
+                custom_forms=False,
+                csv_export=False
+            ).model_dump(),
+            "app.help": {
+                "quick_guide": {
+                    "fr": "Bienvenue sur AfriCensus Link. Cette application vous permet de recenser et de valider les informations de la population. Utilisez la barre de navigation sur votre gauche pour accéder aux différents modules selon votre rôle.",
+                    "en": "Welcome to AfriCensus Link. This application allows you to enumerate and validate population information. Use the navigation bar on your left to access different modules based on your role."
+                },
+                "contact_email": "support@africensus.local",
+                "contact_phone": "+123 456 789 000"
+            }
+        }
+        for key, value in settings_to_seed.items():
+            if not db.query(SystemSetting).filter(SystemSetting.key == key).first():
+                db.add(SystemSetting(key=key, value_json=value))
+        db.commit()
+        logger.info("System settings seeded.")
+    except Exception as e:
+        logger.error(f"Error seeding system settings: {e}")
+        db.rollback()
+
+    # 0.5 Seed FAQs
+    try:
+        if db.query(FaqItem).count() == 0:
+            faqs = [
+                FaqItem(
+                    id="faq-1",
+                    category={"fr": "Général", "en": "General"},
+                    question={"fr": "Comment réinitialiser mon mot de passe ?", "en": "How to reset my password?"},
+                    answer={"fr": "Cliquez sur 'Mot de passe oublié' sur la page de connexion, puis suivez les instructions envoyées par e-mail.", "en": "Click on 'Forgot password' on the login page, then follow the instructions sent by email."},
+                    order=1,
+                    is_active=True
+                ),
+                FaqItem(
+                    id="faq-2",
+                    category={"fr": "Synchronisation", "en": "Synchronization"},
+                    question={"fr": "Que faire si la synchronisation échoue ?", "en": "What if synchronization fails?"},
+                    answer={"fr": "Vérifiez votre connexion internet. L'application mettra les données en cache et réessaiera automatiquement dès que la connexion sera rétablie.", "en": "Check your internet connection. The app will cache the data and automatically retry once the connection is restored."},
+                    order=2,
+                    is_active=True
+                )
+            ]
+            db.add_all(faqs)
+            db.commit()
+            logger.info("FAQs seeded.")
+    except Exception as e:
+        logger.error(f"Error seeding FAQs: {e}")
+        db.rollback()
 
     # 1. Seed HomeContent
     try:
@@ -295,11 +381,15 @@ def init_db(db: Session) -> None:
                         campaign_id=f"camp-seed-{(i % 10) + 1}",
                         zone_id=f"zone-seed-{(i % 10) + 1}",
                         address_text=f"{i * 12} Avenue de l'Indépendance, Secteur {i}",
+                        gps_latitude=5.34531 + (i * 0.001),
+                        gps_longitude=-4.02442 + (i * 0.001),
                         housing_type=housing_types[(i - 1) % len(housing_types)],
                         occupancy_status=occupancies[(i - 1) % len(occupancies)],
                         member_count=(i % 6) + 1,
+                        observation=f"Observation de terrain pour le ménage {i}. Ras.",
                         validation_status=val_statuses[(i - 1) % len(val_statuses)],
                         sync_status="SYNCED" if i % 2 == 0 else "PENDING",
+                        decision_comment="Validé par le superviseur régional." if i % 3 == 0 else None,
                         created_by="user-admin-1",
                         created_at="2026-01-01T00:00:00Z",
                         updated_at="2026-01-01T00:00:00Z"
@@ -356,7 +446,13 @@ def init_db(db: Session) -> None:
                         last_name=lname,
                         gender=gender,
                         birth_date=bdate,
+                        birth_place="Capitale" if "18" in bdate else "Région Ouest",
                         nationality="National",
+                        primary_language="Français",
+                        marital_status="MARRIED" if "wife" in pid or "husband" in pid else "SINGLE",
+                        occupation="Agriculteur" if "18" in bdate else "Commerçant",
+                        education_level="PRIMARY" if "18" in bdate else "SECONDARY",
+                        phone=f"+225 01 00 11 22 {pid[-1]}" if pid[-1].isdigit() else None,
                         residency_status="RESIDENT",
                         validation_status="VALIDATED",
                         sync_status="SYNCED",
@@ -384,13 +480,25 @@ def init_db(db: Session) -> None:
                         zone_id=f"zone-seed-{(i % 10) + 1}",
                         first_name=fname,
                         last_name=lname,
+                        other_names=f"{fname[:3].upper()}" if i % 4 == 0 else None,
+                        nickname=f"{fname[:2]}{lname[:2]}" if i % 3 == 0 else None,
                         gender="MALE" if is_male else "FEMALE",
                         birth_date=f"{birth_year}-{(i%12)+1:02d}-{(i%28)+1:02d}",
+                        birth_date_estimated=(i % 5 == 0),
+                        estimated_age=(2026 - birth_year) if i % 5 == 0 else None,
+                        birth_place="Ville A" if i % 2 == 0 else "Ville B",
                         nationality="National" if i % 5 != 0 else "Foreigner",
+                        primary_language="Français" if i % 2 == 0 else "Anglais",
+                        marital_status="MARRIED" if i % 3 == 0 else "SINGLE",
+                        occupation="Enseignant" if i % 4 == 0 else "Artisan",
+                        education_level="UNIVERSITY" if i % 3 == 0 else "PRIMARY",
+                        phone=f"+225 07 00 {i:02d} 11 22" if i % 2 == 0 else None,
                         residency_status="RESIDENT" if i % 4 != 0 else "TEMPORARY",
                         validation_status=val_statuses[(i - 1) % len(val_statuses)],
                         is_without_document=(i % 7 == 0),
+                        data_source_type="FIELD_SURVEY",
                         sync_status="SYNCED",
+                        decision_comment="Personne enquêtée le matin." if i % 4 == 0 else None,
                         created_by="user-admin-1",
                         created_at="2026-01-01T00:00:00Z",
                         updated_at="2026-01-01T00:00:00Z"

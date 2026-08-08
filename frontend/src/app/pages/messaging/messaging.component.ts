@@ -11,9 +11,11 @@ import { ModalComponent } from '../../shared/modal/modal.component';
 import { ButtonComponent } from "@/app/shared/button/button";
 import { AclTooltipDirective } from '../../shared/tooltip/tooltip';
 
+import { OverlayModule, ConnectionPositionPair } from '@angular/cdk/overlay';
+
 @Component({
   selector: 'acl-messaging',
-  imports: [CommonModule, FormsModule, LucideAngularModule, ModalComponent, ButtonComponent, AclTooltipDirective],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ModalComponent, ButtonComponent, AclTooltipDirective, OverlayModule],
   templateUrl: './messaging.component.html',
   styleUrl: './messaging.component.css'
 })
@@ -56,7 +58,15 @@ export class MessagingComponent implements OnInit {
 
   // Emoji Picker State & Categories
   showEmojiPicker = signal<boolean>(false);
+  activeReactionMessage = signal<ChatMessage | null>(null);
   emojiSearch = signal<string>('');
+
+  reactionPositions: ConnectionPositionPair[] = [
+    { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -12 },
+    { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: 12 },
+    { originX: 'start', originY: 'center', overlayX: 'end', overlayY: 'center', offsetX: -12 },
+    { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center', offsetX: 12 }
+  ];
 
   readonly emojiCategories = [
     {
@@ -119,10 +129,9 @@ export class MessagingComponent implements OnInit {
     const query = this.emojiSearch().toLowerCase().trim();
     if (!query) return this.emojiCategories;
 
-    return this.emojiCategories.map(cat => ({
-      ...cat,
-      emojis: cat.emojis.filter(e => e.includes(query))
-    })).filter(cat => cat.emojis.length > 0);
+    return this.emojiCategories.filter(cat => 
+      this.i18n.t(cat.name).toLowerCase().includes(query)
+    );
   });
 
   // Group Creation Modal State
@@ -228,11 +237,12 @@ export class MessagingComponent implements OnInit {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!this.showEmojiPicker()) return;
     const target = event.target as HTMLElement;
-    const pickerContainer = this.elementRef.nativeElement.querySelector('.emoji-picker-container');
-    if (pickerContainer && !pickerContainer.contains(target)) {
-      this.showEmojiPicker.set(false);
+    
+    if (this.showEmojiPicker()) {
+      if (!target.closest('.input-row .emoji-picker-container') && !target.closest('.cdk-overlay-container')) {
+        this.showEmojiPicker.set(false);
+      }
     }
   }
 
@@ -254,6 +264,23 @@ export class MessagingComponent implements OnInit {
 
   addReaction(msg: ChatMessage, emoji: string): void {
     this.messaging.toggleReaction(msg.id, emoji);
+  }
+
+  openReactionPicker(msg: ChatMessage, event?: MouseEvent): void {
+    if (event) event.stopPropagation();
+    this.activeReactionMessage.set(msg);
+  }
+
+  closeReactionPicker(): void {
+    this.activeReactionMessage.set(null);
+  }
+
+  selectReaction(emoji: string): void {
+    const msg = this.activeReactionMessage();
+    if (msg) {
+      this.addReaction(msg, emoji);
+      this.closeReactionPicker();
+    }
   }
 
   deleteMessage(msg: ChatMessage): void {

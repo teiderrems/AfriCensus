@@ -1,5 +1,6 @@
 from typing import Any
 import json
+import io
 from datetime import datetime, date
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -12,6 +13,7 @@ from ...schemas import PopulationSummaryOut, Role
 from ...database import get_db
 from ...db_services import visible_query
 from ...models import Person, Household, Zone
+from ...i18n import catalog_for
 
 
 router = APIRouter(tags=["reports"])
@@ -169,16 +171,59 @@ def export_resource(
     elif resource == "households":
         q = select(Household).where(Household.deleted_at == None)
         q = visible_query(q, Household, user)
-        items = [h.to_dict() for h in db.scalars(h).all()]
+        items = [h.to_dict() for h in db.scalars(q).all()]
         filename = f"recensement_menages_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         field_order = ["id", "household_code", "address_text", "housing_type", "occupancy_status", "member_count", "validation_status", "zone_id", "campaign_id"]
 
-    else:
+    elif resource in ["reports", "summary"]:
         # Full summary report
-        summary = population_summary(user=user, db=db)
-        items = [summary.model_dump()]
+        summary = population_summary(user=user, db=db).model_dump()
         filename = f"rapport_demographique_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        field_order = list(summary.model_dump().keys())
+        
+        if fmt in ["csv", "excel", "xlsx"]:
+            t = catalog_for(user.get("preferred_language", "fr"))
+            field_order = [
+                t.get("report.col_indicator", "Indicateur"), 
+                t.get("report.col_category", "Catégorie"), 
+                t.get("report.col_value", "Valeur")
+            ]
+            items = []
+            
+            # Simple metrics
+            simple_metrics = {
+                "totalPersons": t.get("report.total_persons", "Population totale recensée"),
+                "totalHouseholds": t.get("report.total_households", "Ménages identifiés"),
+                "averageMembersPerHousehold": t.get("report.avg_members", "Taille moyenne par ménage"),
+                "withoutDocumentCount": t.get("report.no_doc", "Personnes sans document ID"),
+                "vulnerablePersonsCount": t.get("report.vulnerable", "Personnes vulnérables"),
+            }
+            for k, label in simple_metrics.items():
+                items.append({
+                    field_order[0]: label, 
+                    field_order[1]: "-", 
+                    field_order[2]: summary.get(k, 0)
+                })
+                
+            # Grouped metrics
+            grouped_metrics = {
+                "personsByGender": t.get("report.by_gender", "Répartition par genre"),
+                "personsByAgeGroup": t.get("report.by_age", "Répartition par tranche d'âge"),
+                "personsByValidationStatus": t.get("report.by_status", "Répartition par statut de validation"),
+                "personsByZone": t.get("report.by_zone", "Répartition par zone géographique"),
+                "householdsByHousingType": t.get("report.by_housing_type", "Ménages par type de logement"),
+            }
+            
+            for k, label in grouped_metrics.items():
+                group_data = summary.get(k, {})
+                for cat, val in group_data.items():
+                    items.append({
+                        field_order[0]: label, 
+                        field_order[1]: cat, 
+                        field_order[2]: val
+                    })
+        else:
+            items = [summary]
+            field_order = list(summary.keys())
 
     # --- JSON FORMAT ---
     if fmt == "json":
@@ -191,38 +236,39 @@ def export_resource(
 
     # --- TXT FORMAT ---
     elif fmt == "txt":
+        t = catalog_for(user.get("preferred_language", "fr"))
         lines = [
             "=" * 70,
-            f"  AFRICENSUS LINK - RAPPORT OFFICIEL ({resource.upper()})",
-            f"  Généré le: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            f"  Opérateur: {user.get('full_name')} (@{user.get('username')})",
+            f"  AFRICENSUS LINK - {t.get('report.official', 'RAPPORT OFFICIEL')} ({resource.upper()})",
+            f"  {t.get('report.generated', 'Généré le')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"  {t.get('report.operator', 'Opérateur')}: {user.get('full_name')} (@{user.get('username')})",
             "=" * 70,
             "",
         ]
         if resource == "reports" or resource == "summary":
             s = items[0]
             lines.extend([
-                "--- SYNTHÈSE GLOBALE ---",
-                f"Population totale recensée : {s.get('totalPersons', 0)}",
-                f"Ménages identifiés         : {s.get('totalHouseholds', 0)}",
-                f"Taille moyenne par ménage  : {s.get('averageMembersPerHousehold', 0)} membres",
-                f"Personnes sans document ID : {s.get('withoutDocumentCount', 0)}",
-                f"Personnes vulnérables     : {s.get('vulnerablePersonsCount', 0)}",
+                f"--- {t.get('report.summary', 'SYNTHÈSE GLOBALE')} ---",
+                f"{t.get('report.total_persons', 'Population totale recensée')} : {s.get('totalPersons', 0)}",
+                f"{t.get('report.total_households', 'Ménages identifiés')}         : {s.get('totalHouseholds', 0)}",
+                f"{t.get('report.avg_members', 'Taille moyenne par ménage')}  : {s.get('averageMembersPerHousehold', 0)}",
+                f"{t.get('report.no_doc', 'Personnes sans document ID')} : {s.get('withoutDocumentCount', 0)}",
+                f"{t.get('report.vulnerable', 'Personnes vulnérables')}     : {s.get('vulnerablePersonsCount', 0)}",
                 "",
-                "--- RÉPARTITION PAR GENRE ---",
+                f"--- {t.get('report.by_gender', 'RÉPARTITION PAR GENRE')} ---",
                 *[f"  - {k}: {v}" for k, v in s.get("personsByGender", {}).items()],
                 "",
-                "--- RÉPARTITION PAR TRANCHE D'ÂGE ---",
+                "--- " + t.get('report.by_age', "RÉPARTITION PAR TRANCHE D'ÂGE") + " ---",
                 *[f"  - {k}: {v}" for k, v in s.get("personsByAgeGroup", {}).items()],
                 "",
-                "--- RÉPARTITION PAR STATUT DE VALIDATION ---",
+                f"--- {t.get('report.by_status', 'RÉPARTITION PAR STATUT DE VALIDATION')} ---",
                 *[f"  - {k}: {v}" for k, v in s.get("personsByValidationStatus", {}).items()],
                 "",
-                "--- RÉPARTITION PAR ZONE GÉOGRAPHIQUE ---",
+                f"--- {t.get('report.by_zone', 'RÉPARTITION PAR ZONE GÉOGRAPHIQUE')} ---",
                 *[f"  - {k}: {v}" for k, v in s.get("personsByZone", {}).items()],
             ])
         else:
-            lines.append(f"Total d'enregistrements : {len(items)}\n")
+            lines.append(t.get('report.total_records', "Total d'enregistrements") + f" : {len(items)}\n")
             lines.append(" | ".join(field_order))
             lines.append("-" * 70)
             for item in items:
@@ -235,12 +281,9 @@ def export_resource(
             headers={"Content-Disposition": f'attachment; filename="{filename}.txt"'},
         )
 
-    # --- EXCEL / XLSX / CSV FORMAT ---
-    else:
-        # Excel/CSV delimiter: ';' with UTF-8 BOM '\ufeff' so MS Excel opens directly with correct encoding and columns!
-        sep = ";" if fmt in ["excel", "xlsx"] else ","
-        ext = "xlsx" if fmt == "xlsx" else "csv"
-        
+    # --- CSV FORMAT ---
+    elif fmt == "csv":
+        sep = ","
         rows = [sep.join(field_order)]
         for item in items:
             row_vals = []
@@ -253,12 +296,44 @@ def export_resource(
                 row_vals.append(val)
             rows.append(sep.join(row_vals))
 
-        # UTF-8 BOM \ufeff ensures Excel opens natively without character glitches
         content = "\ufeff" + "\n".join(rows)
-        media_type = "application/vnd.ms-excel" if fmt in ["excel", "xlsx"] else "text/csv; charset=utf-8"
+        return StreamingResponse(
+            iter([content]),
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'},
+        )
+
+    # --- EXCEL / XLSX FORMAT ---
+    else:
+        from openpyxl import Workbook
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Export"
+        
+        # Write headers
+        ws.append(field_order)
+        
+        # Write rows
+        for item in items:
+            row_vals = []
+            for k in field_order:
+                val = item.get(k, "")
+                if isinstance(val, (dict, list)):
+                    val = json.dumps(val, ensure_ascii=False)
+                elif val is None:
+                    val = ""
+                else:
+                    val = str(val)
+                row_vals.append(val)
+            ws.append(row_vals)
+            
+        stream = io.BytesIO()
+        wb.save(stream)
+        content = stream.getvalue()
         
         return StreamingResponse(
             iter([content]),
-            media_type=media_type,
-            headers={"Content-Disposition": f'attachment; filename="{filename}.{ext}"'},
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{filename}.xlsx"'},
         )

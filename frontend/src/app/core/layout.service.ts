@@ -1,12 +1,26 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { User } from './models';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { User, AppFeatures } from './models';
 import { I18nService } from './i18n/i18n.service';
 import { TranslationKey } from './i18n/translations';
+import { AppSettingsService } from './app-settings.service';
+import { AuthService } from './auth.service';
+
+const FEATURE_MAP: Record<string, keyof AppFeatures> = {
+  '/messaging': 'messaging',
+  '/family-tree': 'family_tree',
+  '/medical-history': 'medical_history',
+  '/forms': 'custom_forms',
+  '/birth-declaration': 'birth_declaration',
+  '/duplicates': 'duplicates',
+  '/audit': 'audit',
+};
 
 @Injectable({
   providedIn: 'root'
 })
 export class LayoutService {
+  private readonly appSettings = inject(AppSettingsService);
+  private readonly auth = inject(AuthService);
   readonly isMobile = signal<boolean>(false);
   private readonly storageKeySidebar = 'africensus_sidebar_collapsed';
   
@@ -100,6 +114,13 @@ export class LayoutService {
         item('/reports', 'nav.reports', 'chart-pie'),
       ],
     };
-    return [...base, ...byRole[role]];
+    
+    const all = [...base, ...byRole[role]];
+    const currentUser = this.auth.currentUser();
+    return all.filter(navItem => {
+      const featKey = FEATURE_MAP[navItem.path];
+      if (!featKey) return true;
+      return this.appSettings.isFeatureEnabledForUser(featKey, currentUser);
+    });
   }
 }

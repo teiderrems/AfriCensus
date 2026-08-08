@@ -205,6 +205,32 @@ export class UsersComponent implements OnInit {
     }
   }
 
+  readonly availableFeaturesList = [
+    { key: 'messaging', label: 'Messagerie' },
+    { key: 'family_tree', label: 'Arbre Généalogique' },
+    { key: 'medical_history', label: 'Antécédents Médicaux' },
+    { key: 'custom_forms', label: 'Formulaires' },
+    { key: 'birth_declaration', label: 'Déclarations Naissance' },
+    { key: 'duplicates', label: 'Gestion Doublons' },
+    { key: 'audit', label: 'Piste d\'Audit' },
+  ];
+
+  isFeatureDisabledInDraft(featureKey: string): boolean {
+    const list = this.userDraft().disabled_features || [];
+    return list.includes(featureKey);
+  }
+
+  toggleFeatureDisabled(featureKey: string): void {
+    const current = [...(this.userDraft().disabled_features || [])];
+    const index = current.indexOf(featureKey);
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else {
+      current.push(featureKey);
+    }
+    this.userDraft.update(d => ({ ...d, disabled_features: current }));
+  }
+
   // --- USER ACTIONS ---
   openCreateUserModal(): void {
     this.editingUserId.set(null);
@@ -215,6 +241,7 @@ export class UsersComponent implements OnInit {
       password: '',
       active: true,
       zone_ids: [],
+      disabled_features: [],
     });
     this.userModalOpen.set(true);
   }
@@ -228,6 +255,7 @@ export class UsersComponent implements OnInit {
       password: '',
       active: user.active !== false,
       zone_ids: user.zone_ids || [],
+      disabled_features: user.disabled_features || [],
     });
     this.userModalOpen.set(true);
   }
@@ -245,6 +273,7 @@ export class UsersComponent implements OnInit {
         role: draft.role,
         active: draft.active,
         zone_ids: draft.zone_ids,
+        disabled_features: draft.disabled_features,
       };
       this.api.updateUser(this.editingUserId()!, updatePayload).subscribe({
         next: () => {
@@ -331,6 +360,7 @@ export class UsersComponent implements OnInit {
       name: '',
       description: '',
       permissions: [],
+      disabled_features: [],
     });
     this.roleModalOpen.set(true);
   }
@@ -341,8 +371,25 @@ export class UsersComponent implements OnInit {
       name: role.name,
       description: role.description || '',
       permissions: [...(role.permissions || [])],
+      disabled_features: [...(role.disabled_features || [])],
     });
     this.roleModalOpen.set(true);
+  }
+
+  isFeatureDisabledInRoleDraft(featureKey: string): boolean {
+    const list = this.roleDraft().disabled_features || [];
+    return list.includes(featureKey);
+  }
+
+  toggleFeatureDisabledInRole(featureKey: string): void {
+    const current = [...(this.roleDraft().disabled_features || [])];
+    const index = current.indexOf(featureKey);
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else {
+      current.push(featureKey);
+    }
+    this.roleDraft.update(d => ({ ...d, disabled_features: current }));
   }
 
   isPermissionSelected(key: string): boolean {

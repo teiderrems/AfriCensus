@@ -1,5 +1,5 @@
 import { LucideAngularModule } from 'lucide-angular';
-import { Component, OnInit, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, HostListener } from '@angular/core';
 
 import { ApiService } from '@/app/core/api.service';
 import { I18nService } from '@/app/core/i18n/i18n.service';
@@ -15,6 +15,57 @@ import { ChartComponent } from '@/app/shared/chart/chart.component';
 })
 export class ReportsComponent implements OnInit {
   readonly summary = signal<PopulationSummary | null>(null);
+  readonly showExportMenu = signal(false);
+  readonly isExporting = signal(false);
+
+  toggleExportMenu(event?: Event): void {
+    event?.stopPropagation();
+    this.showExportMenu.update(v => !v);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.showExportMenu()) {
+      this.showExportMenu.set(false);
+    }
+  }
+
+  triggerExport(format: 'excel' | 'csv' | 'txt'): void {
+    this.showExportMenu.set(false);
+    this.isExporting.set(true);
+    
+    // We export the "reports" resource which generates the summary
+    this.api.exportResource('reports', format).subscribe({
+      next: (response) => {
+        const blob = response.body;
+        if (!blob) {
+          this.isExporting.set(false);
+          return;
+        }
+        
+        // Extract filename from Content-Disposition header if possible
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `rapport_demographique.${format === 'excel' ? 'xlsx' : format}`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match && match[1]) {
+            filename = match[1];
+          }
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.isExporting.set(false);
+      },
+      error: () => {
+        this.isExporting.set(false);
+      }
+    });
+  }
 
   // Key metrics
   readonly totalPersons = computed(() => this.summary()?.totalPersons ?? 0);

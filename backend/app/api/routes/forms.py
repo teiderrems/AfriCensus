@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Response
 
-from ...dependencies import current_user, require_roles, get_db
+from ...dependencies import current_user, require_roles, get_db, require_feature
 from ...schemas import FormDefinitionIn, FormDefinitionOut, FormResponseOut, Role, PaginatedResponse
 from ...services import db_create_item, db_update_item, db_find_or_404, db_soft_delete, db_set_status
 from sqlalchemy.orm import Session
@@ -11,7 +11,7 @@ from ...models import FormDefinition
 from ...db_services import paginate_query
 
 
-router = APIRouter(prefix="/forms", tags=["forms"])
+router = APIRouter(prefix="/forms", tags=["forms"], dependencies=[Depends(require_feature('custom_forms'))])
 
 
 @router.get("", response_model=PaginatedResponse[FormDefinitionOut])

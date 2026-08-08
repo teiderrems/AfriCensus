@@ -1,0 +1,231 @@
+.help-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface-container);
+}
+
+.help-hero {
+  background: var(--surface);
+  padding: 48px 32px;
+  border-bottom: 1px solid var(--outline-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.help-hero .eyebrow {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.help-hero h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.help-hero p {
+  color: var(--muted);
+  font-size: 16px;
+  max-width: 600px;
+}
+
+.help-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.help-section {
+  margin-bottom: 40px;
+}
+
+.help-section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--outline-soft);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.card-guide {
+  padding: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.guide-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.card-guide p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* FAQ Accordion */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-faq {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px dashed var(--outline-soft);
+}
+
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--outline-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.faq-item:hover {
+  border-color: var(--primary);
+}
+
+.faq-item.expanded {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.faq-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 16px;
+  text-align: left;
+}
+
+.faq-category {
+  color: var(--primary);
+  margin-right: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.faq-toggle lucide-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+.faq-answer {
+  padding: 0 24px 24px;
+}
+
+.faq-answer p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Sidebar */
+.help-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 32px;
+}
+
+.card-contact .card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--outline-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-contact .card-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.card-contact .card-header lucide-icon {
+  color: var(--primary);
+}
+
+.card-contact .card-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-contact .card-body p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.card-contact .card-body lucide-icon {
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .help-hero {
+    padding: 32px 20px;
+  }
+  
+  .help-content {
+    padding: 20px;
+  }
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

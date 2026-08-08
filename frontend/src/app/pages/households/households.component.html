@@ -22,7 +22,7 @@
           <table>
             <thead><tr><th>{{ i18n.t('households.col.code') }}</th><th>{{ i18n.t('households.col.address') }}</th><th>{{ i18n.t('households.col.members') }}</th><th>{{ i18n.t('common.status') }}</th><th>{{ i18n.t('common.actions') }}</th></tr></thead>
             <tbody>
-              @for (row of pagedHouseholds(); track row.id) {
+              @for (row of households(); track row.id) {
                 <tr>
                   <td><strong>{{ row.household_code }}</strong></td>
                   <td>{{ row.address_text }}</td>
@@ -47,7 +47,7 @@
                   </td>
                 </tr>
               }
-              @if (!pagedHouseholds().length) {
+              @if (!households().length) {
                 <tr><td colspan="5" class="empty-cell">{{ i18n.t('households.empty') }}</td></tr>
               }
             </tbody>
@@ -55,7 +55,7 @@
         </div>
 
         <div class="mobile-list hide-desktop">
-          @for (row of pagedHouseholds(); track row.id) {
+          @for (row of households(); track row.id) {
             <div class="mobile-card">
               <div class="mobile-card-row">
                 <span class="mobile-card-label">{{ i18n.t('households.col.code') }}</span>
@@ -92,13 +92,13 @@
               </div>
             </div>
           }
-          @if (!pagedHouseholds().length) {
+          @if (!households().length) {
             <div class="mobile-card"><div class="empty-cell">{{ i18n.t('households.empty') }}</div></div>
           }
         </div>
         <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)"
           [ariaLabel]="i18n.t('households.paginationLabel')"
-          [totalItems]="filteredHouseholds().length"
+          [totalItems]="totalItems()"
           [page]="page()"
           [totalPages]="totalPages()"
           (previous)="previousPage()"

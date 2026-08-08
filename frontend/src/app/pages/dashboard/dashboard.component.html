@@ -1,5 +1,5 @@
-<section class="page animate-fade-in-up">
-  <header class="page-head">
+<section class="page">
+  <header class="page-head" aclScrollAnimate="fade-up">
     <div>
       <span class="eyebrow">{{ i18n.t('dashboard.eyebrow') }}</span>
       <h1>{{ i18n.t('dashboard.title') }}</h1>
@@ -12,29 +12,29 @@
   </header>
 
   @if (summary(); as data) {
-  <div class="stats">
-    <acl-card class="card stat animate-fade-in-up stagger-1">
+  <div class="stats scroll-stagger">
+    <acl-card class="card stat" aclScrollAnimate="scale-up">
       <div class="stat-header">
         <p>{{ i18n.t('dashboard.enumeratedHouseholds') }}</p>
         <div class="icon-wrapper primary"><lucide-icon name="house"></lucide-icon></div>
       </div>
       <strong>{{ data.totalHouseholds }}</strong>
     </acl-card>
-    <acl-card class="card stat animate-fade-in-up stagger-2">
+    <acl-card class="card stat" aclScrollAnimate="scale-up">
       <div class="stat-header">
         <p>{{ i18n.t('dashboard.individuals') }}</p>
         <div class="icon-wrapper green"><lucide-icon name="users"></lucide-icon></div>
       </div>
       <strong>{{ data.totalPersons }}</strong>
     </acl-card>
-    <acl-card class="card stat urgent animate-fade-in-up stagger-3">
+    <acl-card class="card stat urgent" aclScrollAnimate="scale-up">
       <div class="stat-header">
         <p>{{ i18n.t('dashboard.toValidate') }}</p>
         <div class="icon-wrapper danger"><lucide-icon name="triangle-alert"></lucide-icon></div>
       </div>
       <strong>{{ data.submitted }}</strong>
     </acl-card>
-    <acl-card class="card stat animate-fade-in-up stagger-4">
+    <acl-card class="card stat" aclScrollAnimate="scale-up">
       <div class="stat-header">
         <p>{{ i18n.t('dashboard.activeAgents') }}</p>
         <div class="icon-wrapper earth"><lucide-icon name="id-card"></lucide-icon></div>
@@ -45,7 +45,7 @@
 
   <div class="content-grid">
     <div class="regional-wrapper">
-      <acl-card class="card regional-card animate-fade-in-up stagger-2">
+      <acl-card class="card regional-card" aclScrollAnimate="fade-right">
         <h2>{{ i18n.t('dashboard.regionalProgress') }}</h2>
         <div class="map">
           <lucide-icon name="map-pin"></lucide-icon>
@@ -64,7 +64,7 @@
       </acl-card>
     </div>
 
-    <acl-card class="card submissions animate-fade-in-up stagger-3">
+    <acl-card class="card submissions" aclScrollAnimate="fade-left">
       <h2>{{ i18n.t('dashboard.recentSubmissions') }}</h2>
       <div class="table-controls" aria-label="Filtres des soumissions récentes">
         <div class="field">

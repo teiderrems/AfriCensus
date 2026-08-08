@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .routes import attachments, audit, auth, campaigns, dashboard, duplicates, forms, health, home_content, households, i18n, medical, messaging, notifications, persons, relations, reports, roles, sync, system, users, validation, zones
+from .routes import attachments, audit, auth, campaigns, dashboard, duplicates, faq, forms, health, home_content, households, i18n, medical, messaging, notifications, persons, relations, reports, roles, sync, system, tickets, users, validation, zones, app_settings
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health.router)
@@ -22,7 +22,11 @@ api_router.include_router(duplicates.router)
 api_router.include_router(sync.router)
 api_router.include_router(reports.router)
 api_router.include_router(audit.router)
+api_router.include_router(faq.router)
+api_router.include_router(tickets.router)
 api_router.include_router(messaging.router, prefix="/messages", tags=["messages"])
+api_router.include_router(messaging.http_router, prefix="/messages", tags=["messages"])
 api_router.include_router(attachments.router, prefix="/attachments", tags=["attachments"])
 api_router.include_router(notifications.router)
 api_router.include_router(system.router)
+api_router.include_router(app_settings.router)

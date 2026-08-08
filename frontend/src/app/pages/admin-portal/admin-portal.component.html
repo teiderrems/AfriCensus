@@ -148,7 +148,7 @@
     <div class="panel-head">
       <div>
         <h2>{{ i18n.t('admin.users.summaryTitle') }}</h2>
-        <p>{{ filteredUsers().length }} {{ i18n.t('admin.users.summaryFiltered') }} {{ users().length }}</p>
+        <p>{{ totalUsers() }} {{ i18n.t('admin.users.summaryFiltered') }}</p>
       </div>
       <a routerLink="/persons">{{ i18n.t('admin.users.viewAll') }}</a>
     </div>
@@ -165,7 +165,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (user of pagedUsers(); track user.id) {
+          @for (user of users(); track user.id) {
           <tr>
             <td>
               <div class="identity">
@@ -204,7 +204,7 @@
     </div>
 
     <div class="mobile-list hide-desktop">
-      @for (user of pagedUsers(); track user.id) {
+      @for (user of users(); track user.id) {
         <div class="mobile-card">
           <div class="mobile-card-row">
             <span class="mobile-card-label">{{ i18n.t('admin.users.table.user') }}</span>
@@ -249,7 +249,7 @@
         </div>
       }
     </div>
-    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)" [ariaLabel]="i18n.t('admin.users.paginationLabel')" [totalItems]="filteredUsers().length"
+    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)" [ariaLabel]="i18n.t('admin.users.paginationLabel')" [totalItems]="totalUsers()"
       [page]="userPage()" [totalPages]="userTotalPages()" (previous)="previousUserPage()" (next)="nextUserPage()" />
   </article>
   }
@@ -299,7 +299,7 @@
         <h2>{{ i18n.t('admin.security.timelineTitle') }}</h2>
         <p>{{ i18n.t('admin.security.timelineSubtitle') }}</p>
       </div>
-      <span>{{ filteredAuditLogs().length }} {{ i18n.t('admin.security.events') }}</span>
+      <span>{{ totalAuditLogs() }} {{ i18n.t('admin.security.events') }}</span>
     </div>
     <div class="table-wrap hide-mobile">
       <table>
@@ -314,7 +314,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (log of filteredAuditLogs(); track log.id) {
+          @for (log of auditLogs(); track log.id) {
           <tr>
             <td>{{ log.created_at | aclLocalizedDate }}</td>
             <td><span class="severity-chip" [class.critical]="auditSeverityFor(log) === 'critical'"
@@ -331,7 +331,7 @@
     </div>
 
     <div class="mobile-list hide-desktop">
-      @for (log of filteredAuditLogs(); track log.id) {
+      @for (log of auditLogs(); track log.id) {
         <div class="mobile-card">
           <div class="mobile-card-row">
             <span class="mobile-card-label">{{ i18n.t('admin.security.table.timestamp') }}</span>
@@ -503,6 +503,255 @@
         <acl-button type="button" (click)="saveHomeContent()">{{ i18n.t('admin.config.publish') }}</acl-button>
       </div>
     </div>
+  </section>
+  }
+
+  <!-- ── Onglet Personnalisation ─────────────────────────────────────────── -->
+  @if (activeTab() === 'branding') {
+  <section class="config-section">
+    <div class="config-header">
+      <div>
+        <h2>{{ i18n.t('admin.branding.title') }}</h2>
+        <p>{{ i18n.t('admin.branding.subtitle') }}</p>
+      </div>
+    </div>
+
+    <div class="form-sections">
+
+      <!-- Section Thème visuel -->
+      <div class="editor-card">
+        <h3>
+          <lucide-icon name="palette" [size]="16"></lucide-icon>
+          {{ i18n.t('admin.branding.themeHeader') }}
+        </h3>
+
+        <div class="branding-preview" [style.--preview-primary]="brandingDraft().primary_color" [style.--preview-secondary]="brandingDraft().secondary_color">
+          <div class="preview-bar">
+            <span class="preview-logo">{{ brandingDraft().app_name || 'AfriCensus' }}</span>
+            <span class="preview-pill" [style.background]="brandingDraft().primary_color">Primary</span>
+            <span class="preview-pill" [style.background]="brandingDraft().secondary_color">Secondary</span>
+          </div>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field">
+            <label for="appNameInput">{{ i18n.t('admin.branding.appName') }}</label>
+            <input id="appNameInput" type="text" [ngModel]="brandingDraft().app_name" (ngModelChange)="updateBrandingDraft('app_name', $event)" name="appName" />
+          </div>
+          <div class="field">
+            <label for="logoUrlInput">{{ i18n.t('admin.branding.logoUrl') }}</label>
+            <input id="logoUrlInput" type="url" [ngModel]="brandingDraft().logo_url || ''" (ngModelChange)="updateBrandingDraft('logo_url', $event || null)" name="logoUrl" placeholder="https://..." />
+          </div>
+          <div class="field color-field">
+            <label for="primaryColorInput">{{ i18n.t('admin.branding.primaryColor') }}</label>
+            <div class="color-input-row">
+              <input id="primaryColorInput" type="color" [ngModel]="brandingDraft().primary_color" (ngModelChange)="updateBrandingDraft('primary_color', $event)" name="primaryColor" />
+              <input type="text" aria-label="Couleur primaire texte" [ngModel]="brandingDraft().primary_color" (ngModelChange)="updateBrandingDraft('primary_color', $event)" name="primaryColorText" />
+            </div>
+          </div>
+          <div class="field color-field">
+            <label for="secondaryColorInput">{{ i18n.t('admin.branding.secondaryColor') }}</label>
+            <div class="color-input-row">
+              <input id="secondaryColorInput" type="color" [ngModel]="brandingDraft().secondary_color" (ngModelChange)="updateBrandingDraft('secondary_color', $event)" name="secondaryColor" />
+              <input type="text" aria-label="Couleur secondaire texte" [ngModel]="brandingDraft().secondary_color" (ngModelChange)="updateBrandingDraft('secondary_color', $event)" name="secondaryColorText" />
+            </div>
+          </div>
+          <div class="field color-field">
+            <label for="primaryColorDarkInput">{{ i18n.t('admin.branding.primaryColorDark') }}</label>
+            <div class="color-input-row">
+              <input id="primaryColorDarkInput" type="color" [ngModel]="brandingDraft().primary_color_dark" (ngModelChange)="updateBrandingDraft('primary_color_dark', $event)" name="primaryColorDark" />
+              <input type="text" aria-label="Couleur primaire sombre texte" [ngModel]="brandingDraft().primary_color_dark" (ngModelChange)="updateBrandingDraft('primary_color_dark', $event)" name="primaryColorDarkText" />
+            </div>
+          </div>
+          <div class="field color-field">
+            <label for="secondaryColorDarkInput">{{ i18n.t('admin.branding.secondaryColorDark') }}</label>
+            <div class="color-input-row">
+              <input id="secondaryColorDarkInput" type="color" [ngModel]="brandingDraft().secondary_color_dark" (ngModelChange)="updateBrandingDraft('secondary_color_dark', $event)" name="secondaryColorDark" />
+              <input type="text" aria-label="Couleur secondaire sombre texte" [ngModel]="brandingDraft().secondary_color_dark" (ngModelChange)="updateBrandingDraft('secondary_color_dark', $event)" name="secondaryColorDarkText" />
+            </div>
+          </div>
+          <div class="field">
+            <label>{{ i18n.t('admin.branding.defaultTheme') }}</label>
+            <div class="theme-toggle-row">
+              <button type="button" class="theme-btn" [class.active]="brandingDraft().default_theme === 'light'" (click)="updateBrandingDraft('default_theme', 'light')">
+                <lucide-icon name="sun" [size]="14"></lucide-icon> Light
+              </button>
+              <button type="button" class="theme-btn" [class.active]="brandingDraft().default_theme === 'dark'" (click)="updateBrandingDraft('default_theme', 'dark')">
+                <lucide-icon name="moon" [size]="14"></lucide-icon> Dark
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="fontFamilyInput">{{ i18n.t('admin.branding.fontFamily') }}</label>
+            <input id="fontFamilyInput" type="text" [ngModel]="brandingDraft().font_family" (ngModelChange)="updateBrandingDraft('font_family', $event)" name="fontFamily" placeholder="Inter, Arial, sans-serif" />
+          </div>
+          <div class="field">
+            <label for="baseFontSizeInput">{{ i18n.t('admin.branding.baseFontSize') }}</label>
+            <input id="baseFontSizeInput" type="text" [ngModel]="brandingDraft().base_font_size" (ngModelChange)="updateBrandingDraft('base_font_size', $event)" name="baseFontSize" placeholder="14px" />
+          </div>
+          <div class="field">
+            <label for="cardRadiusInput">{{ i18n.t('admin.branding.cardRadius') }}</label>
+            <input id="cardRadiusInput" type="text" [ngModel]="brandingDraft().card_radius" (ngModelChange)="updateBrandingDraft('card_radius', $event)" name="cardRadius" placeholder="16px" />
+          </div>
+          <div class="field">
+            <label for="buttonRadiusInput">{{ i18n.t('admin.branding.buttonRadius') }}</label>
+            <input id="buttonRadiusInput" type="text" [ngModel]="brandingDraft().button_radius" (ngModelChange)="updateBrandingDraft('button_radius', $event)" name="buttonRadius" placeholder="8px" />
+          </div>
+          <div class="field color-field">
+            <label for="sidebarBgInput">{{ i18n.t('admin.branding.sidebarBg') }}</label>
+            <div class="color-input-row">
+              <input id="sidebarBgInput" type="color" [ngModel]="brandingDraft().sidebar_bg || '#0f172a'" (ngModelChange)="updateBrandingDraft('sidebar_bg', $event)" name="sidebarBg" />
+              <input type="text" aria-label="Sidebar background text" [ngModel]="brandingDraft().sidebar_bg" (ngModelChange)="updateBrandingDraft('sidebar_bg', $event)" name="sidebarBgText" placeholder="(vide = thème par défaut)" />
+            </div>
+          </div>
+          <div class="field color-field">
+            <label for="sidebarTextInput">{{ i18n.t('admin.branding.sidebarText') }}</label>
+            <div class="color-input-row">
+              <input id="sidebarTextInput" type="color" [ngModel]="brandingDraft().sidebar_text || '#f8fafc'" (ngModelChange)="updateBrandingDraft('sidebar_text', $event)" name="sidebarText" />
+              <input type="text" aria-label="Sidebar text color" [ngModel]="brandingDraft().sidebar_text" (ngModelChange)="updateBrandingDraft('sidebar_text', $event)" name="sidebarTextText" placeholder="(vide = thème par défaut)" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="faviconUrlInput">{{ i18n.t('admin.branding.faviconUrl') }}</label>
+            <input id="faviconUrlInput" type="text" [ngModel]="brandingDraft().favicon_url || ''" (ngModelChange)="updateBrandingDraft('favicon_url', $event || null)" name="faviconUrl" placeholder="https://... ou data:image/png;base64,..." />
+          </div>
+          <div class="field">
+            <label for="loginHeadingInput">{{ i18n.t('admin.branding.loginHeading') }}</label>
+            <input id="loginHeadingInput" type="text" [ngModel]="brandingDraft().login_heading || ''" (ngModelChange)="updateBrandingDraft('login_heading', $event || null)" name="loginHeading" [placeholder]="brandingDraft().app_name" />
+          </div>
+          <div class="field">
+            <label for="loginSubheadingInput">{{ i18n.t('admin.branding.loginSubheading') }}</label>
+            <input id="loginSubheadingInput" type="text" [ngModel]="brandingDraft().login_subheading || ''" (ngModelChange)="updateBrandingDraft('login_subheading', $event || null)" name="loginSubheading" [placeholder]="i18n.t('login.subtitle')" />
+          </div>
+        </div>
+
+        @if (brandingStatus()) {
+        <p class="editor-status" [class.error]="brandingStatus().includes('Erreur')">{{ brandingStatus() }}</p>
+        }
+        <div class="editor-actions">
+          <acl-button type="button" variant="secondary" (click)="resetBrandingDefaults()">
+            <lucide-icon name="rotate-ccw" [size]="14"></lucide-icon>
+            {{ i18n.t('admin.branding.resetBranding') }}
+          </acl-button>
+          <acl-button type="button" (click)="saveBranding()">
+            <lucide-icon name="save" [size]="14"></lucide-icon>
+            {{ i18n.t('admin.branding.saveBranding') }}
+          </acl-button>
+        </div>
+      </div>
+
+      <!-- Section Paramètres globaux -->
+      <div class="editor-card">
+        <h3>
+          <lucide-icon name="sliders-horizontal" [size]="16"></lucide-icon>
+          {{ i18n.t('admin.branding.settingsHeader') }}
+        </h3>
+
+        <div class="fields-grid">
+          <div class="field">
+            <label>{{ i18n.t('admin.branding.defaultLocale') }}</label>
+            <acl-select
+              [options]="[{label:'Français',value:'fr'},{label:'English',value:'en'}]"
+              [ngModel]="settingsDraft().default_locale"
+              (ngModelChange)="updateSettingsDraft('default_locale', $event)"
+              name="defaultLocale">
+            </acl-select>
+          </div>
+          <div class="field">
+            <label>{{ i18n.t('admin.branding.dateFormat') }}</label>
+            <acl-select
+              [options]="[{label:'DD/MM/YYYY',value:'DD/MM/YYYY'},{label:'MM/DD/YYYY',value:'MM/DD/YYYY'},{label:'YYYY-MM-DD',value:'YYYY-MM-DD'}]"
+              [ngModel]="settingsDraft().date_format"
+              (ngModelChange)="updateSettingsDraft('date_format', $event)"
+              name="dateFormat">
+            </acl-select>
+          </div>
+          <div class="field">
+            <label>{{ i18n.t('admin.branding.timezone') }}</label>
+            <input type="text" [ngModel]="settingsDraft().timezone" (ngModelChange)="updateSettingsDraft('timezone', $event)" name="timezone" placeholder="Africa/Abidjan" />
+          </div>
+          <div class="field">
+            <label>{{ i18n.t('admin.branding.maxHouseholdSize') }}</label>
+            <input type="number" [ngModel]="settingsDraft().max_household_size" (ngModelChange)="updateSettingsDraft('max_household_size', +$event)" name="maxHouseholdSize" min="1" max="200" />
+          </div>
+        </div>
+
+        <label class="toggle-row compact wide">
+          <span><strong>{{ i18n.t('admin.branding.strictWindow') }}</strong><em>{{ i18n.t('admin.branding.strictWindowDesc') }}</em></span>
+          <input type="checkbox" [ngModel]="settingsDraft().strict_collection_window" (ngModelChange)="updateSettingsDraft('strict_collection_window', $event)" name="strictWindow" />
+        </label>
+
+        @if (settingsStatus()) {
+        <p class="editor-status" [class.error]="settingsStatus().includes('Erreur')">{{ settingsStatus() }}</p>
+        }
+        <div class="editor-actions">
+          <acl-button type="button" (click)="saveSettings()">
+            <lucide-icon name="save" [size]="14"></lucide-icon>
+            {{ i18n.t('admin.branding.saveSettings') }}
+          </acl-button>
+        </div>
+      </div>
+
+      <!-- Section Modules / Feature Flags -->
+      <div class="editor-card">
+        <h3>
+          <lucide-icon name="toggle-right" [size]="16"></lucide-icon>
+          {{ i18n.t('admin.branding.featuresHeader') }}
+        </h3>
+        <p class="card-desc">{{ i18n.t('admin.branding.featuresDesc') }}</p>
+
+        <div class="features-grid">
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('nav.messaging') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().messaging" (ngModelChange)="updateFeaturesDraft('messaging', $event)" name="featMessaging" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('nav.family') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().family_tree" (ngModelChange)="updateFeaturesDraft('family_tree', $event)" name="featFamilyTree" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('nav.medical') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().medical_history" (ngModelChange)="updateFeaturesDraft('medical_history', $event)" name="featMedical" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('nav.birthDeclaration') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().birth_declaration" (ngModelChange)="updateFeaturesDraft('birth_declaration', $event)" name="featBirth" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('admin.branding.featCustomForms') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().custom_forms" (ngModelChange)="updateFeaturesDraft('custom_forms', $event)" name="featForms" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('admin.branding.featCsvExport') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().csv_export" (ngModelChange)="updateFeaturesDraft('csv_export', $event)" name="featCsv" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('nav.duplicates') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().duplicates" (ngModelChange)="updateFeaturesDraft('duplicates', $event)" name="featDuplicates" />
+          </label>
+          <label class="toggle-row compact">
+            <span><strong>{{ i18n.t('nav.audit') }}</strong></span>
+            <input type="checkbox" [ngModel]="featuresDraft().audit" (ngModelChange)="updateFeaturesDraft('audit', $event)" name="featAudit" />
+          </label>
+        </div>
+
+        @if (featuresStatus()) {
+        <p class="editor-status" [class.error]="featuresStatus().includes('Erreur')">{{ featuresStatus() }}</p>
+        }
+        <div class="editor-actions">
+          <acl-button type="button" (click)="saveFeatures()">
+            <lucide-icon name="save" [size]="14"></lucide-icon>
+            {{ i18n.t('admin.branding.saveFeatures') }}
+          </acl-button>
+        </div>
+      </div>
+    </div>
+  </section>
+  }
+
+  @if (activeTab() === 'faq') {
+  <section class="admin-content" role="tabpanel" [attr.aria-hidden]="activeTab() !== 'faq'">
+    <acl-admin-faq></acl-admin-faq>
   </section>
   }
 

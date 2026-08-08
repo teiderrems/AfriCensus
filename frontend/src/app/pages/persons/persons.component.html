@@ -31,34 +31,34 @@
           </tr>
         </thead>
         <tbody>
-          @for (row of pagedPersons(); track row.id) {
+          @for (person of persons(); track person.id) {
           <tr>
-            <td><strong>{{ row.first_name }} {{ row.last_name }}</strong></td>
-            <td>{{ i18n.t($any('person.gender.' + row.gender)) }}</td>
-            <td>{{ row.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
-            <td><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status))
+            <td><strong>{{ person.first_name }} {{ person.last_name }}</strong></td>
+            <td>{{ i18n.t($any('person.gender.' + person.gender)) }}</td>
+            <td>{{ person.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</td>
+            <td><span class="chip {{ person.validation_status }}">{{ i18n.t($any('status.' + person.validation_status))
                 }}</span></td>
             <td class="row-actions">
               <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')"
-                (click)="openPerson(row)">
+                (click)="openPerson(person)">
                 <lucide-icon name="eye"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')"
-                (click)="editPerson(row)">
+                (click)="editPerson(person)">
                 <lucide-icon name="pencil"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action-warning" type="button" [aclTooltip]="i18n.t('action.submit')"
-                (click)="submitPerson(row)">
+                (click)="submitPerson(person)">
                 <lucide-icon name="circle-check"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')"
-                (click)="deletePerson(row)">
+                (click)="deletePerson(person)">
                 <lucide-icon name="trash-2"></lucide-icon>
               </acl-button>
             </td>
           </tr>
           }
-          @if (!pagedPersons().length) {
+          @if (!persons().length) {
           <tr>
             <td colspan="5" class="empty-cell">{{ i18n.t('persons.empty') }}</td>
           </tr>
@@ -68,49 +68,49 @@
     </div>
 
     <div class="mobile-list hide-desktop">
-      @for (row of pagedPersons(); track row.id) {
+      @for (person of persons(); track person.id) {
         <div class="mobile-card">
           <div class="mobile-card-row">
             <span class="mobile-card-label">{{ i18n.t('persons.table.name') }}</span>
-            <span class="mobile-card-value"><strong>{{ row.first_name }} {{ row.last_name }}</strong></span>
+            <span class="mobile-card-value"><strong>{{ person.first_name }} {{ person.last_name }}</strong></span>
           </div>
           <div class="mobile-card-row">
             <span class="mobile-card-label">{{ i18n.t('persons.table.gender') }}</span>
-            <span class="mobile-card-value">{{ i18n.t($any('person.gender.' + row.gender)) }}</span>
+            <span class="mobile-card-value">{{ i18n.t($any('person.gender.' + person.gender)) }}</span>
           </div>
           <div class="mobile-card-row">
             <span class="mobile-card-label">{{ i18n.t('persons.table.withoutDocument') }}</span>
-            <span class="mobile-card-value">{{ row.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</span>
+            <span class="mobile-card-value">{{ person.is_without_document ? i18n.t('persons.yes') : i18n.t('persons.no') }}</span>
           </div>
           <div class="mobile-card-row">
             <span class="mobile-card-label">{{ i18n.t('persons.table.status') }}</span>
-            <span class="mobile-card-value"><span class="chip {{ row.validation_status }}">{{ i18n.t($any('status.' + row.validation_status)) }}</span></span>
+            <span class="mobile-card-value"><span class="chip {{ person.validation_status }}">{{ i18n.t($any('status.' + person.validation_status)) }}</span></span>
           </div>
           <div class="mobile-card-actions">
               <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.view')"
-                (click)="openPerson(row)">
+                (click)="openPerson(person)">
                 <lucide-icon name="eye"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action" type="button" [aclTooltip]="i18n.t('action.edit')"
-                (click)="editPerson(row)">
+                (click)="editPerson(person)">
                 <lucide-icon name="pencil"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action-warning" type="button" [aclTooltip]="i18n.t('action.submit')"
-                (click)="submitPerson(row)">
+                (click)="submitPerson(person)">
                 <lucide-icon name="circle-check"></lucide-icon>
               </acl-button>
               <acl-button variant="icon-action-danger" type="button" [aclTooltip]="i18n.t('action.delete')"
-                (click)="deletePerson(row)">
+                (click)="deletePerson(person)">
                 <lucide-icon name="trash-2"></lucide-icon>
               </acl-button>
           </div>
         </div>
       }
-      @if (!pagedPersons().length) {
+      @if (!persons().length) {
         <div class="mobile-card"><div class="empty-cell">{{ i18n.t('persons.empty') }}</div></div>
       }
     </div>
-    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)" [ariaLabel]="i18n.t('persons.paginationAriaLabel')" [totalItems]="filteredPersons().length" [page]="page()"
+    <acl-table-pagination [limit]="pageSize()" (limitChange)="setPageSize($event)" [ariaLabel]="i18n.t('persons.paginationAriaLabel')" [totalItems]="totalItems()" [page]="page()"
       [totalPages]="totalPages()" (previous)="previousPage()" (next)="nextPage()" />
   </acl-card>
 </section>

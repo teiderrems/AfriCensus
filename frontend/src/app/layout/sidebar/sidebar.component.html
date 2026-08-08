@@ -1,10 +1,14 @@
 <div class="sidebar-backdrop" [class.active]="layout.mobileDrawerOpen()" (click)="layout.closeMobileDrawer()" aria-hidden="true"></div>
 <aside class="sidebar" [class.collapsed]="layout.sidebarCollapsed() && !layout.isMobile()" [class.mobile-open]="layout.mobileDrawerOpen()" aria-label="Navigation principale">
   <div class="brand">
-    <div class="mark" aria-hidden="true" [aclTooltip]="layout.sidebarCollapsed() && !layout.mobileDrawerOpen() ? 'AfriCensus Link' : ''">AL</div>
+    @if (appSettings.logoUrl()) {
+      <img class="brand-logo" [src]="appSettings.logoUrl()" [alt]="appSettings.appName()" />
+    } @else {
+      <div class="mark" aria-hidden="true" [aclTooltip]="layout.sidebarCollapsed() && !layout.mobileDrawerOpen() ? appSettings.appName() : ''">{{ brandInitials() }}</div>
+    }
     @if (!layout.sidebarCollapsed() || layout.mobileDrawerOpen()) {
       <div>
-        <strong>AfriCensus Link</strong>
+        <strong>{{ appSettings.appName() }}</strong>
         <span>{{ portalRoleLabel() }}</span>
       </div>
     }

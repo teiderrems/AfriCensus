@@ -1,0 +1,107 @@
+<section class="help-page">
+  <header class="help-hero">
+    <div>
+      <span class="eyebrow">{{ i18n.t('a11y.help') }}</span>
+      <h1>{{ i18n.t('help.title') }}</h1>
+      <p>{{ i18n.t('help.subtitle') }}</p>
+    </div>
+  </header>
+
+  <div class="help-content">
+    <div class="help-grid">
+      <div class="help-main">
+        <section class="help-section">
+          <h2>{{ i18n.t('help.quickGuide') }}</h2>
+          <div class="card card-guide">
+            <lucide-icon name="book-open" class="guide-icon"></lucide-icon>
+            <p>{{ helpConfig?.quick_guide?.[i18n.language()] || helpConfig?.quick_guide?.['fr'] || i18n.t('help.quickGuide.content') }}</p>
+          </div>
+        </section>
+
+        <section class="help-section">
+          <h2>{{ i18n.t('help.faq') }}</h2>
+          <div class="faq-list">
+            @for (faq of faqs(); track faq.id) {
+            <div class="faq-item" [class.expanded]="expandedFaq() === faq.id">
+              <button type="button" class="faq-toggle" (click)="toggleFaq(faq.id)" [attr.aria-expanded]="expandedFaq() === faq.id">
+                <span>
+                  @if (faq.category && (faq.category[i18n.language()] || faq.category['fr'])) {
+                    <strong class="faq-category">{{ faq.category[i18n.language()] || faq.category['fr'] }} : </strong>
+                  }
+                  {{ faq.question?.[i18n.language()] || faq.question?.['fr'] }}
+                </span>
+                <lucide-icon [name]="expandedFaq() === faq.id ? 'chevron-up' : 'chevron-down'"></lucide-icon>
+              </button>
+              <div class="faq-answer" *ngIf="expandedFaq() === faq.id">
+                <p>{{ faq.answer?.[i18n.language()] || faq.answer?.['fr'] }}</p>
+              </div>
+            </div>
+            } @empty {
+            <div class="empty-faq">
+              <p>{{ i18n.t('help.emptyFaq') }}</p>
+            </div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <aside class="help-sidebar">
+        <div class="card card-contact">
+          <div class="card-header">
+            <h3>{{ i18n.t('help.contact') }}</h3>
+            <lucide-icon name="headset"></lucide-icon>
+          </div>
+          <div class="card-body">
+            @if (helpConfig?.contact_email) {
+            <p><lucide-icon name="mail" [size]="16"></lucide-icon> {{ helpConfig.contact_email }}</p>
+            }
+            @if (helpConfig?.contact_phone) {
+            <p><lucide-icon name="phone" [size]="16"></lucide-icon> {{ helpConfig.contact_phone }}</p>
+            }
+            <div style="margin-top: 16px;">
+              <acl-button type="button" variant="primary" style="width: 100%" (click)="openTicketModal()">
+                <lucide-icon name="life-buoy" [size]="16" style="margin-right: 8px;"></lucide-icon> {{ i18n.t('help.createTicket') }}
+              </acl-button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- Support Ticket Modal -->
+<acl-modal [open]="ticketModalOpen()" [title]="i18n.t('help.ticket.modalTitle')" (closed)="closeTicketModal()" [isForm]="true" (submitted)="submitTicket()">
+  <div class="form-grid">
+    <div class="field">
+      <label for="ticket-category">{{ i18n.t('help.ticket.category') }}</label>
+      <select id="ticket-category" [ngModel]="ticketCategory()" (ngModelChange)="ticketCategory.set($event)" name="category" required>
+        <option value="TECHNICAL_ISSUE">{{ i18n.t('help.ticket.category.technical') }}</option>
+        <option value="SYNC_ISSUE">{{ i18n.t('help.ticket.category.sync') }}</option>
+        <option value="DATA_CORRECTION">{{ i18n.t('help.ticket.category.data') }}</option>
+        <option value="ACCOUNT_ACCESS">{{ i18n.t('help.ticket.category.account') }}</option>
+        <option value="FEATURE_REQUEST">{{ i18n.t('help.ticket.category.feature') }}</option>
+        <option value="GENERAL_QUESTION">{{ i18n.t('help.ticket.category.question') }}</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="ticket-subject">{{ i18n.t('help.ticket.subject') }}</label>
+      <input id="ticket-subject" type="text" [ngModel]="ticketTitle()" (ngModelChange)="ticketTitle.set($event)" name="title" required maxlength="200" />
+    </div>
+
+    <div class="field">
+      <label for="ticket-message">{{ i18n.t('help.ticket.message') }}</label>
+      <textarea id="ticket-message" [ngModel]="ticketDescription()" (ngModelChange)="ticketDescription.set($event)" name="description" required rows="5" maxlength="2000"></textarea>
+    </div>
+  </div>
+
+  <ng-container modal-actions>
+    <acl-button type="button" variant="secondary" (click)="closeTicketModal()" [disabled]="submittingTicket()">
+      {{ i18n.t('help.ticket.cancel') }}
+    </acl-button>
+    <acl-button type="submit" [disabled]="submittingTicket() || !ticketTitle() || !ticketDescription()">
+      {{ i18n.t('help.ticket.submit') }}
+    </acl-button>
+  </ng-container>
+</acl-modal>

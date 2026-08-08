@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import '@angular/cdk/overlay-prebuilt.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -131,20 +132,21 @@ button {
   }
 }
 
-/* Custom Ultra-Subtle & Barely Perceptible Scrollbars */
+/* Custom Discreet Scrollbars (Global) */
 @supports (-moz-appearance: none) {
   * {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
+
   *:hover {
-    scrollbar-color: rgba(130, 130, 130, 0.15) transparent;
+    scrollbar-color: color-mix(in srgb, var(--outline-soft) 80%, transparent) transparent;
   }
 }
 
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -152,20 +154,16 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 999px;
+  background-color: transparent;
+  border-radius: 10px;
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-:root.dark *:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background-color: color-mix(in srgb, var(--outline) 40%, transparent);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2) !important;
+  background-color: var(--outline) !important;
 }
 
 :root.dark ::-webkit-scrollbar-thumb:hover {

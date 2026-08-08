@@ -8,16 +8,28 @@ export class NotificationService implements OnDestroy {
   readonly notifications = signal<AppNotification[]>([]);
   readonly unreadCount = signal<number>(0);
   private eventSource?: EventSource;
+  private pollingInterval?: number;
 
   constructor(private readonly http: HttpClient, private readonly auth: AuthService) {
     if (this.auth.isLoggedIn()) {
       this.fetchNotifications();
       this.connectSSE();
+      
+      // Polling de secours (toutes les 30 secondes) pour s'assurer que les notifications sont à jour
+      // même si la connexion SSE venait à être interrompue ou instable.
+      this.pollingInterval = window.setInterval(() => {
+        if (this.auth.isLoggedIn()) {
+          this.fetchNotifications();
+        }
+      }, 30000);
     }
   }
 
   ngOnDestroy(): void {
     this.disconnectSSE();
+    if (this.pollingInterval) {
+      window.clearInterval(this.pollingInterval);
+    }
   }
 
   fetchNotifications(): void {
@@ -71,6 +83,14 @@ export class NotificationService implements OnDestroy {
       const updated = this.notifications().map(n => n.id === id ? { ...n, is_read: true } : n);
       this.notifications.set(updated);
       this.updateUnreadCount(updated);
+    });
+  }
+
+  markAllAsRead(): void {
+    this.http.patch(`/api/v1/notifications/read-all`, {}).subscribe(() => {
+      const updated = this.notifications().map(n => ({ ...n, is_read: true }));
+      this.notifications.set(updated);
+      this.unreadCount.set(0);
     });
   }
 
